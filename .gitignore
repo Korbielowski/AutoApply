@@ -6,11 +6,20 @@ dist/
 wheels/
 *.egg-info
 
+# Ruff, Mypy, Pytest cache
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+
 # Pyenv
 .python-version
 
 # Virtual environments
-.venv
+.venv/
+venv/
 
-# Environment
+# Environment variables
 .env
+
+# VS Code
+.vscode/
