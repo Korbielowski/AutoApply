@@ -1,8 +1,11 @@
-from fastapi import FastAPI
+from app_setup import app, templates
+from fastapi import Request
+from fastapi.responses import HTMLResponse
 
-app = FastAPI()
+# from utils import authenticate_user
 
 
-@app.get("/")
-async def root() -> dict:
-    return {"ald": "aldi"}
+@app.get("/", response_class=HTMLResponse)
+# @authenticate_user
+async def root(request: Request):
+    return templates.TemplateResponse(request=request, name="index.html")
