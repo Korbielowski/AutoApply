@@ -72,7 +72,7 @@ erDiagram
         varchar description
         varchar link
     }
-    SOCIALPLATFORM {
+    SOCIAL_PLATFORM {
         int id
         int profile_id
         varchar name
@@ -87,5 +87,5 @@ erDiagram
     PROFILE ||--o{ EDUCATION : has
     PROFILE ||--o{ EXPERIENCE : has
     PROFILE ||--o{ PROJECT : has
-    PROFILE ||--o{ SOCIALPLATFORM : has
+    PROFILE ||--o{ SOCIAL_PLATFORM : has
 ```
