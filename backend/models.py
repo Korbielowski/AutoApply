@@ -1,26 +1,76 @@
-from sqlmodel import Field, SQLModel
+from sqlmodel import Field, DateTime, SQLModel
 
 
 class Profile(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     name: str
-    password: str
+    middlename: str
+    surname: str
+    age: int
 
 
-class ProfileInfo(SQLModel, table=True):
+class ProgrammingLanguage(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    location_id: int | None = Field(default=None, foreign_key=True)
-
-
-class ProfileLocationInfo(SQLModel, table=True):
-    location_id: int | None = Field(default=None, primary_key=True)
-    country: str | None
-    city: str | None
-    postal_code: str | None
-
-
-class ProfileLanguageInfo(SQLModel, table=True):
-    language_id: int | None = Field(default=None, primary_key=True)
     profile_id: int | None = Field(default=None, foreign_key=True)
-    language: str | None
-    proficiency: str | None
+    language: str
+    level: int  # Maybe in the future change to str
+
+
+class Language(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    profile_id: int | None = Field(default=None, foreign_key=True)
+    language: str
+    level: str  # Maybe in the future change to int
+
+
+class Tool(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    profile_id: int | None = Field(default=None, foreign_key=True)
+    name: str
+    level: int  # Maybe in the future change to str
+
+
+class Certificate(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    profile_id: int | None = Field(default=None, foreign_key=True)
+    name: str
+    description: str
+    organisation: str
+
+
+class Charity(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    profile_id: int | None = Field(default=None, foreign_key=True)
+    name: str
+    description: str
+    organistaion: str
+    start_date: DateTime
+    end_date: DateTime
+
+
+class Education(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    profile_id: int | None = Field(default=None, foreign_key=True)
+    school: str
+    major: str
+    description: str
+    start_date: DateTime
+    end_date: DateTime
+
+
+class Experience(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    profile_id: int | None = Field(default=None, foreign_key=True)
+    company: str
+    position: str
+    description: str
+    start_date: DateTime
+    end_date: DateTime
+
+
+class Project(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    profile_id: int | None = Field(default=None, foreign_key=True)
+    name: str
+    description: str
+    link: str
