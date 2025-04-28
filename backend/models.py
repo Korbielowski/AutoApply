@@ -13,7 +13,7 @@ class ProgrammingLanguage(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     profile_id: int | None = Field(default=None, foreign_key=True)
     language: str
-    level: int  # Maybe in the future change to str
+    level: str  # Maybe in the future change to int
 
 
 class Language(SQLModel, table=True):
@@ -27,7 +27,7 @@ class Tool(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     profile_id: int | None = Field(default=None, foreign_key=True)
     name: str
-    level: int  # Maybe in the future change to str
+    level: str  # Maybe in the future change to int
 
 
 class Certificate(SQLModel, table=True):
@@ -73,4 +73,11 @@ class Project(SQLModel, table=True):
     profile_id: int | None = Field(default=None, foreign_key=True)
     name: str
     description: str
+    link: str
+
+
+class SocialPlatform(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    profile_id: int | None = Field(default=None, foreign_key=True)
+    name: str
     link: str
