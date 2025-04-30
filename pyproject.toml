@@ -1,12 +1,13 @@
 [project]
 name = "AutoApply"
 version = "0.1.0"
-description = "AI Agents that create CV's, cover letter's, and apply for specified jobs. All of that automatically, no more need to do it all by yourself"
+description = "AI agents that create tailored CVs and cover letters, and even apply to jobs for you. Fully automated — no more manual effort"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "fastapi[standard]>=0.115.12",
     "openai-agents>=0.0.13",
+    "playwright>=1.51.0",
     "psycopg>=3.2.6",
     "pydantic>=2.11.3",
     "sqlmodel>=0.0.24",
