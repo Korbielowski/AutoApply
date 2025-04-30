@@ -11,7 +11,7 @@ from sqlalchemy import URL, Engine
 from sqlmodel import SQLModel, create_engine
 
 # TODO: Check if user can specify custom drivers, so that they would not break SQLAlchemy
-DRIVERNAME = "postgresql"
+DRIVERNAME = "postgresql+psycopg"
 engine: Engine
 OPENAI_API_KEY: str | None
 
@@ -19,6 +19,7 @@ OPENAI_API_KEY: str | None
 # This will be used in the future for loading postgre and other stuff
 @asynccontextmanager
 async def setup(app: FastAPI) -> AsyncGenerator:
+    global engine
     username = os.environ.get("POSTGRE_USERNAME")
     password = os.environ.get("POSTGRE_PASSWORD")
     host = os.environ.get("POSTGRE_HOST")
@@ -37,7 +38,7 @@ async def setup(app: FastAPI) -> AsyncGenerator:
     if not OPENAI_API_KEY:
         raise Exception("OPENAI_API_KEY environmental variable not specified")
 
-    url_oject = URL(
+    url_oject = URL.create(
         drivername=DRIVERNAME,
         username=username,
         password=password,
@@ -48,13 +49,12 @@ async def setup(app: FastAPI) -> AsyncGenerator:
         url_oject, echo=True
     )  # TODO: Remove 'echo' parameter when releasing
     SQLModel.metadata.create_all(engine)
-
     yield
 
     # TODO: In the future release all resources
 
 
-app = FastAPI(debug=True)  # TODO: FastAPI(debug=True, lifespan=setup)
+app = FastAPI(debug=True, lifespan=setup)  # TODO: FastAPI(debug=True, lifespan=setup)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 templates = Jinja2Templates(directory="templates")
