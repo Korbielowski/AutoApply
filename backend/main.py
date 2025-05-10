@@ -1,4 +1,5 @@
-from .app_setup import app, templates, engine
+from .app_setup import app, templates
+import backend.app_setup as app_setup
 from sqlmodel import Session
 from .models import (
     ProfileInfoModel,
@@ -30,7 +31,8 @@ async def load_user_form(request: Request):
 
 @app.post("/user_creation", response_class=RedirectResponse)
 async def create_user(request: Request, profile_information: ProfileInfoModel):
-    with Session(engine) as session:
+    print(f"We are here and something works: {profile_information}")
+    with Session(app_setup.engine) as session:
         info_validated = (
             i.__class__.model_validate(i) for i in profile_information.model_dump()
         )
