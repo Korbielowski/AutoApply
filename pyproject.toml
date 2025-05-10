@@ -5,6 +5,7 @@ description = "AI agents that create tailored CVs and cover letters, and even ap
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "dotenv>=0.9.9",
     "fastapi[standard]>=0.115.12",
     "openai-agents>=0.0.13",
     "playwright>=1.51.0",
