@@ -1,19 +1,37 @@
-from sqlmodel import Column, Field, DateTime, SQLModel, TIMESTAMP, text
+from sqlmodel import Field, SQLModel
+
+# from pydantic import Da
 
 
 class Profile(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    name: str
+    fristname: str
     middlename: str
     surname: str
     age: int
 
 
 class ProfileModel(SQLModel):
-    name: str
+    firstname: str
     middlename: str
     surname: str
     age: int
+
+
+class Location(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    profile_id: int | None = Field(default=None, foreign_key="profile.id")
+    country: str
+    state: str
+    city: str
+    zipcode: str
+
+
+class LocationModel(SQLModel):
+    country: str
+    state: str
+    city: str
+    zipcode: str
 
 
 class ProgrammingLanguage(SQLModel, table=True):
@@ -72,30 +90,30 @@ class Charity(SQLModel, table=True):
     name: str
     description: str
     organistaion: str
-    start_date: DateTime = Field(
-        sa_column=Column(
-            TIMESTAMP(timezone=True),
-            nullable=False,
-            server_default=text("CURRENT_TIMESTAMP"),
-            server_onupdate=text("CURRENT_TIMESTAMP"),
-        )
-    )
-    end_date: DateTime = Field(
-        sa_column=Column(
-            TIMESTAMP(timezone=True),
-            nullable=False,
-            server_default=text("CURRENT_TIMESTAMP"),
-            server_onupdate=text("CURRENT_TIMESTAMP"),
-        )
-    )
+    # start_date: DateTime = Field(
+    #     sa_column=Column(
+    #         TIMESTAMP(timezone=True),
+    #         nullable=False,
+    #         server_default=text("CURRENT_TIMESTAMP"),
+    #         server_onupdate=text("CURRENT_TIMESTAMP"),
+    #     )
+    # )
+    # end_date: DateTime = Field(
+    #     sa_column=Column(
+    #         TIMESTAMP(timezone=True),
+    #         nullable=False,
+    #         server_default=text("CURRENT_TIMESTAMP"),
+    #         server_onupdate=text("CURRENT_TIMESTAMP"),
+    #     )
+    # )
 
 
 class CharityModel(SQLModel):
     name: str
     description: str
     organistaion: str
-    start_date: DateTime
-    end_date: DateTime
+    # start_date: DateTime
+    # end_date: DateTime
 
 
 class Education(SQLModel, table=True):
@@ -104,44 +122,44 @@ class Education(SQLModel, table=True):
     school: str
     major: str
     description: str
-    start_date: DateTime = Field(
-        sa_column=Column(
-            TIMESTAMP(timezone=True),
-            nullable=False,
-            server_default=text("CURRENT_TIMESTAMP"),
-            server_onupdate=text("CURRENT_TIMESTAMP"),
-        )
-    )
-    end_date: DateTime = Field(
-        sa_column=Column(
-            TIMESTAMP(timezone=True),
-            nullable=False,
-            server_default=text("CURRENT_TIMESTAMP"),
-            server_onupdate=text("CURRENT_TIMESTAMP"),
-        )
-    )
+    # start_date: DateTime = Field(
+    #     sa_column=Column(
+    #         TIMESTAMP(timezone=True),
+    #         nullable=False,
+    #         server_default=text("CURRENT_TIMESTAMP"),
+    #         server_onupdate=text("CURRENT_TIMESTAMP"),
+    #     )
+    # )
+    # end_date: DateTime = Field(
+    #     sa_column=Column(
+    #         TIMESTAMP(timezone=True),
+    #         nullable=False,
+    #         server_default=text("CURRENT_TIMESTAMP"),
+    #         server_onupdate=text("CURRENT_TIMESTAMP"),
+    #     )
+    # )
 
 
 class EducationModel(SQLModel):
     school: str
     major: str
     description: str
-    start_date: DateTime = Field(
-        sa_column=Column(
-            TIMESTAMP(timezone=True),
-            nullable=False,
-            server_default=text("CURRENT_TIMESTAMP"),
-            server_onupdate=text("CURRENT_TIMESTAMP"),
-        )
-    )
-    end_date: DateTime = Field(
-        sa_column=Column(
-            TIMESTAMP(timezone=True),
-            nullable=False,
-            server_default=text("CURRENT_TIMESTAMP"),
-            server_onupdate=text("CURRENT_TIMESTAMP"),
-        )
-    )
+    # start_date: DateTime = Field(
+    #     sa_column=Column(
+    #         TIMESTAMP(timezone=True),
+    #         nullable=False,
+    #         server_default=text("CURRENT_TIMESTAMP"),
+    #         server_onupdate=text("CURRENT_TIMESTAMP"),
+    #     )
+    # )
+    # end_date: DateTime = Field(
+    #     sa_column=Column(
+    #         TIMESTAMP(timezone=True),
+    #         nullable=False,
+    #         server_default=text("CURRENT_TIMESTAMP"),
+    #         server_onupdate=text("CURRENT_TIMESTAMP"),
+    #     )
+    # )
 
 
 class Experience(SQLModel, table=True):
@@ -150,44 +168,44 @@ class Experience(SQLModel, table=True):
     company: str
     position: str
     description: str
-    start_date: DateTime = Field(
-        sa_column=Column(
-            TIMESTAMP(timezone=True),
-            nullable=False,
-            server_default=text("CURRENT_TIMESTAMP"),
-            server_onupdate=text("CURRENT_TIMESTAMP"),
-        )
-    )
-    end_date: DateTime = Field(
-        sa_column=Column(
-            TIMESTAMP(timezone=True),
-            nullable=False,
-            server_default=text("CURRENT_TIMESTAMP"),
-            server_onupdate=text("CURRENT_TIMESTAMP"),
-        )
-    )
+    # start_date: DateTime = Field(
+    #     sa_column=Column(
+    #         TIMESTAMP(timezone=True),
+    #         nullable=False,
+    #         server_default=text("CURRENT_TIMESTAMP"),
+    #         server_onupdate=text("CURRENT_TIMESTAMP"),
+    #     )
+    # )
+    # end_date: DateTime = Field(
+    #     sa_column=Column(
+    #         TIMESTAMP(timezone=True),
+    #         nullable=False,
+    #         server_default=text("CURRENT_TIMESTAMP"),
+    #         server_onupdate=text("CURRENT_TIMESTAMP"),
+    #     )
+    # )
 
 
 class ExperienceModel(SQLModel):
     company: str
     position: str
     description: str
-    start_date: DateTime = Field(
-        sa_column=Column(
-            TIMESTAMP(timezone=True),
-            nullable=False,
-            server_default=text("CURRENT_TIMESTAMP"),
-            server_onupdate=text("CURRENT_TIMESTAMP"),
-        )
-    )
-    end_date: DateTime = Field(
-        sa_column=Column(
-            TIMESTAMP(timezone=True),
-            nullable=False,
-            server_default=text("CURRENT_TIMESTAMP"),
-            server_onupdate=text("CURRENT_TIMESTAMP"),
-        )
-    )
+    # start_date: DateTime = Field(
+    #     sa_column=Column(
+    #         TIMESTAMP(timezone=True),
+    #         nullable=False,
+    #         server_default=text("CURRENT_TIMESTAMP"),
+    #         server_onupdate=text("CURRENT_TIMESTAMP"),
+    #     )
+    # )
+    # end_date: DateTime = Field(
+    #     sa_column=Column(
+    #         TIMESTAMP(timezone=True),
+    #         nullable=False,
+    #         server_default=text("CURRENT_TIMESTAMP"),
+    #         server_onupdate=text("CURRENT_TIMESTAMP"),
+    #     )
+    # )
 
 
 class Project(SQLModel, table=True):
@@ -218,12 +236,18 @@ class SocialPlatformModel(SQLModel):
 
 class ProfileInfoModel(SQLModel):
     profile: ProfileModel
-    programming_language: list[ProgrammingLanguageModel] | None
-    language: list[LanguageModel] | None
-    tool: list[ToolModel] | None
-    certificate: list[CertificateModel] | None
-    charity: list[CharityModel] | None
-    education: list[EducationModel] | None
-    experience: list[ExperienceModel] | None
-    project: list[ProjectModel] | None
-    social_platform: list[SocialPlatformModel] | None
+    locations: list[LocationModel] | None  # TODO: In the future make this priority list
+    programming_languages: list[ProgrammingLanguageModel] | None
+    languages: list[LanguageModel] | None
+    tools: list[ToolModel] | None
+    certificates: list[CertificateModel] | None
+    charitys: list[CharityModel] | None
+    educations: list[EducationModel] | None
+    experiences: list[ExperienceModel] | None
+    projects: list[ProjectModel] | None
+    social_platforms: list[SocialPlatformModel] | None
+
+
+class TestInfo(SQLModel):
+    ProfileModel
+    # location: LocationModel
