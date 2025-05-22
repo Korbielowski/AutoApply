@@ -26,51 +26,84 @@
 </head>
 
 <body>
-    <form class="row g-3">
-        <div class="col-md-6">
-            <label for="inputEmail4" class="form-label">Email</label>
-            <input type="email" class="form-control" id="inputEmail4">
-        </div>
-        <div class="col-md-6">
-            <label for="inputPassword4" class="form-label">Password</label>
-            <input type="password" class="form-control" id="inputPassword4">
-        </div>
-        <div class="col-12">
-            <label for="inputAddress" class="form-label">Address</label>
-            <input type="text" class="form-control" id="inputAddress" placeholder="1234 Main St">
-        </div>
-        <div class="col-12">
-            <label for="inputAddress2" class="form-label">Address 2</label>
-            <input type="text" class="form-control" id="inputAddress2" placeholder="Apartment, studio, or floor">
-        </div>
+    <form class="row g-3" onsubmit="sendFromData()">
+        <input name="firstname" class="form-control" type="text" placeholder="First Name"
+            aria-label="default input example">
+        <input name="middlename" class="form-control" type="text" placeholder="Second name"
+            aria-label="default input example">
+        <input name="surname" class="form-control" type="text" placeholder="Surname" aria-label="default input example">
         <div class="col-md-3">
-            <label for="inptuCountry" class="form-label">Country</label>
-            <input type="text" class="form-control" id="inptuCountry">
+            <label for="customRange1" class="form-label">Enter your age</label>
+            <input name="age" type="range" class="form-range" id="customRange1">
         </div>
+        <label for="inputCountry" class="form-label">Country</label>
+        <input name="country" type="text" class="form-control" id="inputCountry">
         <div class="col-md-3">
             <label for="inputState" class="form-label">State</label>
-            <input type="text" class="form-control" id="inputSate">
+            <input name="state" type="text" class="form-control" id="inputSate">
         </div>
         <div class="col-md-3">
             <label for="inputCity" class="form-label">City</label>
-            <input type="text" class="form-control" id="inputCity">
-        </div>
-        <div class="col-md-2">
-            <label for="inputZip" class="form-label">Zip</label>
-            <input type="text" class="form-control" id="inputZip">
+            <input name="city" type="text" class="form-control" id="inputCity">
         </div>
         <div class="col-md-2">
             <label for="level" class="form-label">Zip</label>
-            <input type="text" class="form-control" id="level">
+            <input name="zipcode" type="text" class="form-control" id="level">
         </div>
         <div class="col-md-2">
             <label for="languageName" class="form-label">Language</label>
-            <input type="text" class="form-control" id="languageName">
+            <input name="language" type="text" class="form-control" id="languageName">
         </div>
         <div class="col-12">
-            <button type="submit" class="btn btn-primary">Sign in</button>
+            <button type="button" class="btn btn-primary" onclick="sendFromData()">Sign in</button>
         </div>
     </form>
 </body>
+
+<script>
+    // {
+    //     "country": form.get("country"),
+    //         "state": form.get("state"),
+    //             "city": form.get("city"),
+    //                 "zipcode": form.get("zipcode"),
+    //         },
+    const form = new FormData(document.querySelector('form'));
+
+    function getLocations() {
+        const languages = ["go", "cpp"]//form.getAll("language");
+        const levels = ["2", "10"] //form.getAll("language-level");
+        const x = languages.map(function (e, i) {
+            return [{ "langauge": e, "level": levels[i], }]
+        });
+        console.log(x);
+    }
+
+
+    function sendFromData() {
+        console.log("Elo");
+        let dataJson = {
+            "profile": {
+                "firstname": form.get("firstname"),
+                "middlename": form.get("middlename"),
+                "surname": form.get("surname"),
+                "age": form.get("age"),
+            },
+            "locations": getLocations(),
+            "programming_languages": getLanguages(),
+            // "languages": ,
+            // "tools": ,
+            // "certificates": ,
+            // "charitys": ,
+            // "educations": ,
+            // "experiences": ,
+            // "projects": ,
+            // "social_platforms": ,
+        };
+        // Array.from(data.keys()).reduce((result, key) => {
+        //     result[key] = data.get(key);
+        //     return result;
+        // }, {});
+    }
+</script>
 
 </html>
