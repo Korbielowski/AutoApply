@@ -1,0 +1,125 @@
+<html>
+
+<head>
+    <title>Registration Page</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-SgOJa3DmI69IUzQ2PVdRZhwQ+dy64/BUtbMJw1MZ8t5HZApcHrRKUc4W0kG879m7" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-k6d4wzSIapyDyv1kpU366/PK5hCdSbCRGRCMv+eplOQJWyd1fbcAu9OCUj5zNLiq"
+        crossorigin="anonymous"></script>
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            padding: 10px;
+        }
+
+        html {
+            overflow-x: hidden;
+        }
+    </style>
+    <!-- TODO: In the future it may have to be changed -->
+</head>
+
+<body>
+    <form class="row g-3" onsubmit="sendFromData()">
+        <input name="firstname" class="form-control" type="text" placeholder="First Name"
+            aria-label="default input example">
+        <input name="middlename" class="form-control" type="text" placeholder="Second name"
+            aria-label="default input example">
+        <input name="surname" class="form-control" type="text" placeholder="Surname" aria-label="default input example">
+        <div class="col-md-3">
+            <label for="customRange1" class="form-label">Enter your age</label>
+            <input name="age" type="range" class="form-range" id="customRange1">
+        </div>
+        <label for="inputCountry" class="form-label">Country</label>
+        <input name="country" type="text" class="form-control" id="inputCountry">
+        <div class="col-md-3">
+            <label for="inputState" class="form-label">State</label>
+            <input name="state" type="text" class="form-control" id="inputSate">
+        </div>
+        <div class="col-md-3">
+            <label for="inputCity" class="form-label">City</label>
+            <input name="city" type="text" class="form-control" id="inputCity">
+        </div>
+        <div class="col-md-2">
+            <label for="level" class="form-label">Zip</label>
+            <input name="zipcode" type="text" class="form-control" id="level">
+        </div>
+        <div class="col-md-2">
+            <label for="languageName" class="form-label">Language</label>
+            <input name="language" type="text" class="form-control" id="languageName">
+        </div>
+        <div class="col-12">
+            <button type="button" class="btn btn-primary" onclick="sendFromData()">Sign in</button>
+        </div>
+    </form>
+</body>
+
+<script>
+    // {
+    //     "country": form.get("country"),
+    //         "state": form.get("state"),
+    //             "city": form.get("city"),
+    //                 "zipcode": form.get("zipcode"),
+    //         },
+    const form = new FormData(document.querySelector('form'));
+
+    function getLocations() {
+        const laguages = ["english", "polish"]
+        const levels = ["2", "9"]
+        languages.map(function (e, i) {
+            return [{ "langauge": e, "level": levels[i], }]
+        });
+    }
+
+    function getProgrammingLanguages() {
+        const languages = ["go", "cpp"]//form.getAll("language");
+        const levels = ["2", "10"] //form.getAll("language-level");
+        languages.map(function (e, i) {
+            return [{ "langauge": e, "level": levels[i], }]
+        });
+    }
+
+
+    function postFormData() {
+        let dataJson = {
+            "profile": {
+                "firstname": form.get("firstname"),
+                "middlename": form.get("middlename"),
+                "surname": form.get("surname"),
+                "age": form.get("age"),
+            },
+            "locations": getLocations(),
+            "programming_languages": getProgrammingLanguages(),
+            "languages": getLanguages(),
+            "tools": getTools(),
+            "certificates": getCertificates(),
+            "charities": getCharities(),
+            "educations": getEducations(),
+            "experiences": getExperiences(),
+            "projects": getProjects(),
+            "social_platforms": GetSocialPlatforms(),
+        };
+
+        const response = await fetch("{}", {
+            method: "POST",
+            headers: {
+                'Content-Type': 'application/json; charset=utf-8'
+            },
+            body: JSON.stringify(dataJson)
+        })
+
+        console.log("status: ", response.status)
+        // Array.from(data.keys()).reduce((result, key) => {
+        //     result[key] = data.get(key);
+        //     return result;
+        // }, {});
+    }
+</script>
+
+</html>
