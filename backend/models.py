@@ -15,7 +15,7 @@ class ProfileModel(SQLModel):
     firstname: str
     middlename: str
     surname: str
-    age: int
+    age: str
 
 
 class Location(SQLModel, table=True):
@@ -89,7 +89,7 @@ class Charity(SQLModel, table=True):
     profile_id: int | None = Field(default=None, foreign_key="profile.id")
     name: str
     description: str
-    organistaion: str
+    organisation: str
     # start_date: DateTime = Field(
     #     sa_column=Column(
     #         TIMESTAMP(timezone=True),
@@ -111,7 +111,7 @@ class Charity(SQLModel, table=True):
 class CharityModel(SQLModel):
     name: str
     description: str
-    organistaion: str
+    organisation: str
     # start_date: DateTime
     # end_date: DateTime
 
@@ -236,18 +236,15 @@ class SocialPlatformModel(SQLModel):
 
 class ProfileInfoModel(SQLModel):
     profile: ProfileModel
-    locations: list[LocationModel] | None  # TODO: In the future make this priority list
     programming_languages: list[ProgrammingLanguageModel] | None
     languages: list[LanguageModel] | None
     tools: list[ToolModel] | None
     certificates: list[CertificateModel] | None
-    charitys: list[CharityModel] | None
+    charities: list[CharityModel] | None
     educations: list[EducationModel] | None
     experiences: list[ExperienceModel] | None
     projects: list[ProjectModel] | None
     social_platforms: list[SocialPlatformModel] | None
 
 
-class TestInfo(SQLModel):
-    ProfileModel
-    # location: LocationModel
+# locations: list[LocationModel] | None  # TODO: In the future make this priority list

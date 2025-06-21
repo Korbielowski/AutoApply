@@ -36,26 +36,26 @@
             <label for="customRange1" class="form-label">Enter your age</label>
             <input name="age" type="range" class="form-range" id="customRange1">
         </div>
-        <label for="inputCountry" class="form-label">Country</label>
-        <input name="country" type="text" class="form-control" id="inputCountry">
-        <div class="col-md-3">
-            <label for="inputState" class="form-label">State</label>
-            <input name="state" type="text" class="form-control" id="inputSate">
-        </div>
-        <div class="col-md-3">
-            <label for="inputCity" class="form-label">City</label>
-            <input name="city" type="text" class="form-control" id="inputCity">
-        </div>
-        <div class="col-md-2">
-            <label for="level" class="form-label">Zip</label>
-            <input name="zipcode" type="text" class="form-control" id="level">
-        </div>
-        <div class="col-md-2">
-            <label for="languageName" class="form-label">Language</label>
-            <input name="language" type="text" class="form-control" id="languageName">
-        </div>
+        <!-- <label for="inputCountry" class="form-label">Country</label> -->
+        <!-- <input name="country" type="text" class="form-control" id="inputCountry"> -->
+        <!-- <div class="col-md-3"> -->
+        <!--     <label for="inputState" class="form-label">State</label> -->
+        <!--     <input name="state" type="text" class="form-control" id="inputSate"> -->
+        <!-- </div> -->
+        <!-- <div class="col-md-3"> -->
+        <!--     <label for="inputCity" class="form-label">City</label> -->
+        <!--     <input name="city" type="text" class="form-control" id="inputCity"> -->
+        <!-- </div> -->
+        <!-- <div class="col-md-2"> -->
+        <!--     <label for="level" class="form-label">Zip</label> -->
+        <!--     <input name="zipcode" type="text" class="form-control" id="level"> -->
+        <!-- </div> -->
+        <!-- <div class="col-md-2"> -->
+        <!--     <label for="languageName" class="form-label">Language</label> -->
+        <!--     <input name="language" type="text" class="form-control" id="languageName"> -->
+        <!-- </div> -->
         <div class="col-12">
-            <button type="button" class="btn btn-primary" onclick="sendFromData()">Sign in</button>
+            <button type="button" class="btn btn-primary" onclick="postFormData()">Sign in</button>
         </div>
     </form>
 </body>
@@ -67,34 +67,113 @@
     //             "city": form.get("city"),
     //                 "zipcode": form.get("zipcode"),
     //         },
-    const form = new FormData(document.querySelector('form'));
 
-    function getLocations() {
-        const laguages = ["english", "polish"]
+    function getLocations(){
+        const locations = ["Berlin", "Wroclaw"]
         const levels = ["2", "9"]
-        languages.map(function (e, i) {
-            return [{ "langauge": e, "level": levels[i], }]
+        const tmp = languages.map(function (e, i) {
+            return {"language": e, "level": levels[i]}
         });
+        return tmp
     }
 
     function getProgrammingLanguages() {
         const languages = ["go", "cpp"]//form.getAll("language");
         const levels = ["2", "10"] //form.getAll("language-level");
-        languages.map(function (e, i) {
-            return [{ "langauge": e, "level": levels[i], }]
+        const tmp = languages.map(function (e, i) {
+            return { "language": e, "level": levels[i], }
         });
+        return tmp;
     }
 
+    function getLanguages() {
+        const languages = ["english", "polish"]
+        const levels = ["2", "9"]
+        const tmp = languages.map(function (e, i) {
+            return { "language": e, "level": levels[i], }
+        });
+        return tmp;
+    }
 
-    function postFormData() {
+    function getTools(){
+        const names = ["Jira", "Github"]
+        const levels = ["2", "9"]
+        const tmp = names.map(function (e, i) {
+            return { "name": e, "level": levels[i], }
+        });
+        return tmp;
+    }
+
+    function getCertificates(){
+        const names = ["DevOps cerificate", "Pythonista"]
+        const descriptions = ["Very important certificate", "Very good certificate"]
+        const organisations = ["Nokia", "Google"]
+        const tmp = names.map(function (e, i) {
+            return { "name": e, "description": descriptions[i], "organisation": organisations[i]}
+        });
+        return tmp;
+    }
+
+    function getCharities(){
+        const names = ["Charity 1", "Charity 2"]
+        const descriptions = ["Good charity", "Super duper charity"]
+        const organisations = ["Microsoft", "Meta"]
+        const tmp = names.map(function (e, i) {
+            return { "name": e, "description": descriptions[i], "organisation": organisations[i]}
+        });
+        return tmp;
+    }
+
+    function getEducations(){
+        const schools = ["uwr", "pwr"]
+        const majors = ["CS", "Math"]
+        const descriptions = ["Very good university", "Good university"]
+        const tmp = schools.map(function (e, i) {
+            return { "school": e, "major": majors[i], "description": descriptions[i]}
+        });
+        return tmp;
+    }
+
+    function getExperiences(){
+        const companies = ["Google", "OpenAI"]
+        const positions = ["Line manager", "Developer"]
+        const descriptions = ["Did lots stuff", "Did little stuff"]
+        const tmp = companies.map(function (e, i) {
+            return { "company": e, "position": positions[i], "description": descriptions[i]}
+        });
+        return tmp;
+    }
+
+    function getProjects(){
+        const names = ["GBD", "BDG"]
+        const descriptions = ["super duper project", "cos cos"]
+        const links = ["https", "http"]
+        const tmp = names.map(function (e, i) {
+            return { "name": e, "description": descriptions[i], "link": links[i]}
+        });
+        return tmp;
+    }
+
+    function getSocialPlatforms(){
+        const names = ["fb", "linkedin"]
+        const links = ["http", "https"]
+        const tmp = names.map(function (e, i) {
+            return { "name": e, "link": links[i], }
+        });
+        return tmp;
+    }
+
+    async function postFormData() {
+        const formData = new FormData(document.querySelector('form'));
+
         let dataJson = {
             "profile": {
-                "firstname": form.get("firstname"),
-                "middlename": form.get("middlename"),
-                "surname": form.get("surname"),
-                "age": form.get("age"),
+                "firstname": formData.get("firstname"),
+                "middlename": formData.get("middlename"),
+                "surname": formData.get("surname"),
+                "age": formData.get("age"),
             },
-            "locations": getLocations(),
+            // "locations": getLocations(),
             "programming_languages": getProgrammingLanguages(),
             "languages": getLanguages(),
             "tools": getTools(),
@@ -103,18 +182,21 @@
             "educations": getEducations(),
             "experiences": getExperiences(),
             "projects": getProjects(),
-            "social_platforms": GetSocialPlatforms(),
+            "social_platforms": getSocialPlatforms(),
         };
 
-        const response = await fetch("{}", {
+        console.log(JSON.stringify(dataJson, null , 2))
+
+        const response = await fetch("{{ url_for('create_user') }}", {
             method: "POST",
             headers: {
-                'Content-Type': 'application/json; charset=utf-8'
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
             },
-            body: JSON.stringify(dataJson)
-        })
+            body: JSON.stringify(dataJson),
+        });
 
-        console.log("status: ", response.status)
+        console.log("status: ", response.status);
         // Array.from(data.keys()).reduce((result, key) => {
         //     result[key] = data.get(key);
         //     return result;
@@ -122,4 +204,4 @@
     }
 </script>
 
-</html>
+</html

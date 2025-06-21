@@ -1,42 +1,35 @@
 from .app_setup import app, templates
-import backend.app_setup as app_setup
-from sqlmodel import Session
-from .models import (
-    ProfileInfoModel,
-    # Profile,
-    # Language,
-    # ProgrammingLanguage,
-    # Tool,
-    # Certificate,
-    # Charity,
-    # Education,
-    # Experience,
-    # Project,
-    # SocialPlatform,
-)
+from .models import ProfileInfoModel
 from fastapi import Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 
 
-@app.get("/", response_class=HTMLResponse)
+@app.get("/")
 # @authenticate_user
 async def root(request: Request):
-    return templates.TemplateResponse(request=request, name="index.html")
+    print("Elo")
+    return RedirectResponse(url=request.url_for("create_user"))
+    # return templates.TemplateResponse(request=request, name="index.html")
 
 
-@app.get("/user_creation", response_class=HTMLResponse)
+@app.get("/create_user")
 async def load_user_form(request: Request):
-    return templates.TemplateResponse(request=request, name="user_creation.html")
+    return templates.TemplateResponse(request=request, name="create_user.html")
 
 
-@app.post("/user_creation", response_class=RedirectResponse)
-async def create_user(request: Request, profile_information: ProfileInfoModel):
-    print(f"We are here and something works: {profile_information}")
-    with Session(app_setup.engine) as session:
-        info_validated = (
-            i.__class__.model_validate(i) for i in profile_information.model_dump()
-        )
-        session.add_all(info_validated)
-        session.commit()
-        # session.refresh()
-    return RedirectResponse(url=request.url_for("index"))
+@app.post("/create_user/")
+async def create_user(form_data: ProfileInfoModel):  # form: Annotated[TestInfo, Form()]
+    print(form_data)
+    # with Session(app_setup.engine) as session:
+    #     info_validated = (
+    #         i.__class__.model_validate(i) for i in profile_information.model_dump()
+    #     )
+    # session.add_all(info_validated)
+    # session.commit()
+    # session.refresh()
+    # return RedirectResponse(url=app.url_path_for("test"))
+
+
+@app.post("/test")
+async def test(request: Request):
+    return HTMLResponse("<h1>Hello</h1>")
