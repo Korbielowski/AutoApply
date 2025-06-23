@@ -197,10 +197,8 @@
         });
 
         console.log("status: ", response.status);
-        // Array.from(data.keys()).reduce((result, key) => {
-        //     result[key] = data.get(key);
-        //     return result;
-        // }, {});
+        console.log("body: ", response.body);
+        window.location.href = response.url;
     }
 </script>
 
