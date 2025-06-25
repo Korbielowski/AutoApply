@@ -33,6 +33,6 @@ async def create_user(
     )
 
 
-@app.get("/test")
-async def test(request: Request):
-    return templates.TemplateResponse(request=request, name="index.html")
+@app.get("/panel")
+async def panel(request: Request):
+    return templates.TemplateResponse(request=request, name="panel.html")
