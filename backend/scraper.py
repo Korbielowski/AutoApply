@@ -9,35 +9,37 @@ PASSWORD = os.getenv("PASSWORD", "")
 
 
 # TODO: Add ability to log into many pages
-async def login_to_page(page: Page, link: str):
-    page.goto(link)
-    page.wait_for_load_state("load")
+async def login_to_page(page: Page, link: str) -> None:
+    await page.goto(link)
+    await page.wait_for_load_state("load")
     # page.get_by_label("Email or phone").click()
-    page.get_by_label("Email or phone").fill(USER_EMAIL)
+    await page.get_by_label("Email or phone").fill(USER_EMAIL)
     # page.get_by_label("Password").click()
-    page.get_by_label("Password").fill(PASSWORD)
+    await page.get_by_label("Password").fill(PASSWORD)
+    await page.get_by_label("Sign in").last.click()
+    await page.wait_for_load_state("load")
 
 
-async def run(playwright: Playwright, link: str):
+async def scrape(playwright: Playwright, link: str) -> None:
     chrome = playwright.chromium
     browser = await chrome.launch(headless=False)
     page = await browser.new_page()
 
-    login_to_page(page, link)
-
-    with open("file.txt", "w") as f:
+    await login_to_page(page, link)
+    with open("linkedin.html", "w") as f:
         c = await page.content()
         f.write(c)
     await browser.close()
 
 
-async def main():
+# TODO: Add link: str parameter to this function
+async def run_scraper() -> None:
     async with async_playwright() as playwright:
-        await run(
+        await scrape(
             playwright,
             "https://www.linkedin.com/jobs/collections/recommended/?currentJobId=3706084909",
         )
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    asyncio.run(run_scraper())
