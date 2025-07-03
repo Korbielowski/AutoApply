@@ -1,10 +1,17 @@
 import asyncio
 from playwright.async_api import async_playwright, Playwright, Page, Locator
+from sqlmodel import Session, select
 from dotenv import load_dotenv
+
+from app_setup import enigne
+from models import JobEntry
 
 import os
 import re
 import json
+import logging
+
+logging.basicConfig(format="%(levelname)s: %(message)s", level=logging.INFO)
 
 
 load_dotenv()
@@ -18,6 +25,9 @@ async def _init_playwright_page(playwright: Playwright) -> Page:
 
     return page
 
+
+async def apply_for_job_entry(page: Page) -> None:
+    pass
 
 # TODO: Add ability to log into many pages
 async def _login_to_page(page: Page, link: str) -> None:
@@ -34,13 +44,38 @@ async def _get_job_entries(page: Page) -> tuple[Locator, ...]:
     pass
 
 
-async def _process_job_entry(page: Page, locator: Locator = None) -> None:
-    # TODO: Check if job id is already in database, if so, go to next job entry
-    content = await page.content()
+async def _process_job_entry(page: Page, locator: Locator = None, retry: int = 3) -> None:
+    data = None
 
-    job_data = json.loads(re.search(r"{\"data\":{\"dashEntityUrn\":.*}", content))
-    with open("output.json", "w") as file:
-        file.write(job_data)
+    # TODO: Make this loop make more sense, by maybe doing something more
+    while data is None:
+        if retry <= 0:
+            logger.error("Cannot get information about job entry")
+            break
+        page_content = await page.content()
+        data = re.search(r"{\"data\":{\"dashEntityUrn\":.*}", page_content)
+        retry -= 1
+
+    job_data = json.loads(data.group())
+    posting_id = int(job_data["data"]["jobPostingId"])
+    # TODO: Check if job id is already in database, if so, go to next job entry
+    # with Session(engine) as session:
+    #     stmt = select(JobEntry).where(JobEntry.posting_id == posting_id)
+    #     result = session.exec(stmt)
+    #     if not result:
+    #         logger.error("Job posting is already in database")
+
+    description = job_data["data"]["description"]
+    location = job_data["data"]["formattedLocation"]
+    company_url = job_data["data"]["applyMethod"]["companyApplyUrl"]
+
+    logging.info(f"job posting id: {posting_id}")
+    # logging.info(description)
+    # logging.info(location)
+    # logging.info(company_url)
+
+    # with open("output.json", "w") as file:
+    #     file.write(json.dumps(job_data, indent=4))
 
 
 async def _go_to_next_page(page: Page) -> bool:
@@ -50,7 +85,7 @@ async def _go_to_next_page(page: Page) -> bool:
 async def find_job_entries(page: Page, link: str) -> None:
     await _login_to_page(page, link)
 
-    _process_job_entry(page)
+    await _process_job_entry(page)
     # running = True
     # while running:
     #     for job_locator in await _get_job_entries(page):

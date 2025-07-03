@@ -2,6 +2,10 @@ from sqlmodel import Field, SQLModel
 
 # from pydantic import Da
 
+class JobEntry(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    posting_id: int
+
 
 class Profile(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)

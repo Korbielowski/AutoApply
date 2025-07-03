@@ -1,4 +1,4 @@
-from .app_setup import app, templates
+from .app_setup import app, templates, engine
 from .models import ProfileInfoModel
 from fastapi import Request, status
 from fastapi.responses import RedirectResponse
