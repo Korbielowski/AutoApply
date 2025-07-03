@@ -2,9 +2,10 @@ import asyncio
 from playwright.async_api import async_playwright, Playwright, Page, Locator
 from sqlmodel import Session, select
 from dotenv import load_dotenv
+from openai import OpenAI
 
-from app_setup import enigne
-from models import JobEntry
+# from app_setup import enigne
+# from models import JobEntry
 
 import os
 import re
@@ -17,6 +18,8 @@ logging.basicConfig(format="%(levelname)s: %(message)s", level=logging.INFO)
 load_dotenv()
 USER_EMAIL = os.getenv("USER_EMAIL", "")
 PASSWORD = os.getenv("PASSWORD", "")
+API_KEY = os.getenv("API_KEY", "")
+LLM = OpenAI(base_url="https://openrouter.ai/api/v1", api_key=API_KEY)
 
 
 async def _init_playwright_page(playwright: Playwright) -> Page:
@@ -43,6 +46,15 @@ async def _login_to_page(page: Page, link: str) -> None:
 async def _get_job_entries(page: Page) -> tuple[Locator, ...]:
     pass
 
+def _is_valuable_job(description: str) -> bool:
+    # TODO: Make LLM compare user's skills with skills in the description
+    prompt = "Get skills and other qualifications required for this role from the description and return only them in your response."
+    completion = LLM.chat.completions.create(model="deepseek/deepseek-r1-distill-llama-70b:free", messages=[{"role": "user", "content": prompt + str(description)}])
+    # response = LLM.responses.create(model="deepseek/deepseek-r1-distill-llama-70b:free", instructions=prompt, input=str(description))
+    # logging.info(f"Response from LLM: {response}")
+    logging.info(f"Message got from LLM: {completion.choices[0].message.content}")
+    return True
+
 
 async def _process_job_entry(page: Page, locator: Locator = None, retry: int = 3) -> None:
     data = None
@@ -50,7 +62,7 @@ async def _process_job_entry(page: Page, locator: Locator = None, retry: int = 3
     # TODO: Make this loop make more sense, by maybe doing something more
     while data is None:
         if retry <= 0:
-            logger.error("Cannot get information about job entry")
+            logging.error("Cannot get information about job entry")
             break
         page_content = await page.content()
         data = re.search(r"{\"data\":{\"dashEntityUrn\":.*}", page_content)
@@ -58,6 +70,7 @@ async def _process_job_entry(page: Page, locator: Locator = None, retry: int = 3
 
     job_data = json.loads(data.group())
     posting_id = int(job_data["data"]["jobPostingId"])
+    logging.info(f"job posting id: {posting_id}")
     # TODO: Check if job id is already in database, if so, go to next job entry
     # with Session(engine) as session:
     #     stmt = select(JobEntry).where(JobEntry.posting_id == posting_id)
@@ -69,13 +82,9 @@ async def _process_job_entry(page: Page, locator: Locator = None, retry: int = 3
     location = job_data["data"]["formattedLocation"]
     company_url = job_data["data"]["applyMethod"]["companyApplyUrl"]
 
-    logging.info(f"job posting id: {posting_id}")
-    # logging.info(description)
-    # logging.info(location)
-    # logging.info(company_url)
-
-    # with open("output.json", "w") as file:
-    #     file.write(json.dumps(job_data, indent=4))
+    # TODO: Evaluate job entry based on comparison between job's description and user's skills
+    if _is_valuable_job(description):
+        pass
 
 
 async def _go_to_next_page(page: Page) -> bool:
