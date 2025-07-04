@@ -18,8 +18,7 @@ logging.basicConfig(format="%(levelname)s: %(message)s", level=logging.INFO)
 load_dotenv()
 USER_EMAIL = os.getenv("USER_EMAIL", "")
 PASSWORD = os.getenv("PASSWORD", "")
-API_KEY = os.getenv("API_KEY", "")
-LLM = OpenAI(base_url="https://openrouter.ai/api/v1", api_key=API_KEY)
+LLM = OpenAI(base_url="https://openrouter.ai/api/v1", api_key=os.getenv("API_KEY", ""))
 
 
 async def _init_playwright_page(playwright: Playwright) -> Page:
@@ -48,12 +47,20 @@ async def _get_job_entries(page: Page) -> tuple[Locator, ...]:
 
 def _is_valuable_job(description: str) -> bool:
     # TODO: Make LLM compare user's skills with skills in the description
-    prompt = "Get skills and other qualifications required for this role from the description and return only them in your response."
-    completion = LLM.chat.completions.create(model="deepseek/deepseek-r1-distill-llama-70b:free", messages=[{"role": "user", "content": prompt + str(description)}])
+    prompt = f"Get only skills, qualifications, place required for this role from the description and return only them in your response and nothing more. {str(description)}"
+    completion = LLM.chat.completions.create(model="deepseek/deepseek-r1-distill-llama-70b:free", messages=[{"role": "user", "content": prompt}])
     # response = LLM.responses.create(model="deepseek/deepseek-r1-distill-llama-70b:free", instructions=prompt, input=str(description))
     # logging.info(f"Response from LLM: {response}")
-    logging.info(f"Message got from LLM: {completion.choices[0].message.content}")
-    return True
+    logging.info(f"Important information about the posiotion: {completion.choices[0].message.content}")
+    user_needs = "C, Rust, Poland, Python"
+    prompt = f"Compare my qualifications and needs: {user_needs}. With these from job offer: {completion.choices[0].message.content}. Return only one word, True if I should apply, and False if not and no other words/characters"
+    completion = LLM.chat.completions.create(model="deepseek/deepseek-r1-distill-llama-70b:free", messages=[{"role": "user", "content": prompt + str(description)}])
+    out = completion.choices[0].message.content
+    logging.info(f"LLM evalutaion: {out}")
+    if "True" in out:
+        return True
+    else:
+        return False
 
 
 async def _process_job_entry(page: Page, locator: Locator = None, retry: int = 3) -> None:
@@ -67,6 +74,10 @@ async def _process_job_entry(page: Page, locator: Locator = None, retry: int = 3
         page_content = await page.content()
         data = re.search(r"{\"data\":{\"dashEntityUrn\":.*}", page_content)
         retry -= 1
+
+    if data is None:
+        logging.error("Did not get information about the job entry")
+        return
 
     job_data = json.loads(data.group())
     posting_id = int(job_data["data"]["jobPostingId"])
@@ -84,7 +95,11 @@ async def _process_job_entry(page: Page, locator: Locator = None, retry: int = 3
 
     # TODO: Evaluate job entry based on comparison between job's description and user's skills
     if _is_valuable_job(description):
-        pass
+        logging.info("You should apply")
+        cv = _create_cv(description, location, company_url)
+        _apply_for_job(page, cv)
+    else:
+        logging.info("You should not apply")
 
 
 async def _go_to_next_page(page: Page) -> bool:
