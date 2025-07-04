@@ -4,6 +4,7 @@ from sqlmodel import Session, select
 from dotenv import load_dotenv
 from openai import OpenAI
 
+from .pdf import _create_cv
 # from app_setup import enigne
 # from models import JobEntry
 
