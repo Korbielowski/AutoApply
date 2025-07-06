@@ -1,149 +1,120 @@
-import markdown
-import pdfkit
+# TODO: Two possbile backends, first one markdown + pdfkit, second one pypandoc
+# import markdown
+# import pdfkit
+import pypandoc
+
+from llm import send_req_to_llm
+
+import os
+from pathlib import Path
+import tempfile
+import datetime
 
 
+PDF_ENGINE = "tectonic"
+CV_DIR_NAME = "cv"
+# CV_FILE_NAME = "cv.pdf"
+TEMPLATE = """
 
-def _create_cv(description: str, location: str, company_url: str) -> str:
-    css = """
-    <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      max-width: 850px;
-      margin: auto;
-      padding: 20px;
-      line-height: 1.6;
-      color: #333;
-    }
-    h1 {
-      border-bottom: 3px solid #555;
-      padding-bottom: 5px;
-      margin-bottom: 20px;
-    }
-    h2 {
-      color: #00539C;
-      margin-top: 40px;
-      border-bottom: 1px solid #ccc;
-      padding-bottom: 5px;
-    }
-    ul {
-      margin-top: 0;
-    }
-    .contact {
-      font-size: 0.95em;
-      margin-bottom: 30px;
-      color: #555;
-    }
-    .contact a {
-      color: #00539C;
-      text-decoration: none;
-    }
-    .section {
-      margin-bottom: 30px;
-    }
-    .job-title {
-      font-weight: bold;
-      color: #222;
-    }
-    .job-company {
-      font-style: italic;
-      color: #666;
-    }
-    .job-dates {
-      float: right;
-      color: #999;
-    }
-    .project-title {
-      font-weight: bold;
-      color: #222;
-    }
-  </style>
+"""
 
-    """
-    template = """
-      # {name}
 
-      <div class="contact">
-        📧 <a href="mailto:{email}">{email}</a> &nbsp; | &nbsp;
-        📞 {phone_number} &nbsp; | &nbsp;
-        <a href="{linkedin}">LinkedIn</a> &nbsp; | &nbsp;
-        <a href="{github}">GitHub</a> &nbsp; | &nbsp;
-        <a href="{personal_website}">Website</a>
-      </div>
+def _get_info_for_cv() -> dict[str:str]:
+    pass
 
-      ---
 
-      ## 🧑‍💼 Profile
-      {profile}
-
-      ---
-
-      ## 💼 Experience
-      {experience}
-
-      ---
-
-      ## 🎓 Education
-      {education}
-
-      ---
-
-      ## 🛠️ Skills
-      {skills}
-
-      ---
-
-      ## 📂 Projects
-      {projects}
-
-      ---
-
-      ## 📜 Certifications
-      {certificates}
-
-      ---
-
-      ## 💬 Languages
-      {languages}
-    """
-
+def _create_cv(
+    posting_id: str,
+    description: str,
+    location: str,
+    company_url: str,
+    use_llm: bool = False,
+) -> str:
     # TODO: Here we will get data from the database
-    name = ""
-    email = ""
-    phone_number = ""
-    linkedin = ""
-    github = ""
-    personal_website = ""
-    profile = ""
-    experience = ""
-    education = ""
-    skills = ""
-    projects = ""
-    certificates = ""
-    languages = ""
-
+    if use_llm:
+        skills = _get_info_for_cv()
+        prompt = f"Select skills and other qualifications from my set of skills: {skills} that match those of the job description: {description}"
+        response = send_req_to_llm(prompt)
+        prompt = f"Create a cv in markdown, based upon these skills and qualifications: {response}"
+        cv = send_req_to_llm(prompt)
+    else:
+        skills = _get_info_for_cv()
+        name = "test"
+        email = "test"
+        phone_number = "test"
+        linkedin = "test"
+        github = "test"
+        personal_website = "test.com"
+        profile = "test"
+        experience = "test"
+        education = "test"
+        skills = "test"
+        projects = "test"
+        certificates = "test"
+        languages = "test"
+        cv = TEMPLATE.format(
+            name=name,
+            email=email,
+            phone_number=phone_number,
+            linkedin=linkedin,
+            github=github,
+            personal_website=personal_website,
+            profile=profile,
+            experience=experience,
+            education=education,
+            skills=skills,
+            projects=projects,
+            certificates=certificates,
+            languages=languages,
+        )
     # TODO: Make LLM compare and choose skills etc. that fit the description and then add them to the template:
     # 1) Simply get and process LLM output to put it into the template
     # 2) Make LLM put adequate skills etc. into the template string
 
-    html = markdown.markdown(template)
-    pdfkit.from_string(css + html, "cv.pdf")
+    # html = markdown.markdown(template)
+    # pdfkit.from_string(css + html, "cv.pdf")
 
-    # return template.format(
-    #     name=name,
-    #     email=email,
-    #     phone_number=phone_number,
-    #     linkedin=linkedin,
-    #     github=github,
-    #     personal_website=personal_website,
-    #     profile=profile,
-    #     experience=experience,
-    #     education=education,
-    #     skills=skills,
-    #     projects=projects,
-    #     certificates=certificates,
-    #     languages=languages,
-    # )
+    # WARNING: When using pypandoc we have to save markdown to a file in order to use convert_file function, beacause
+    # when using convert_string function, the behaviour and output are not that good as when using first method
+
+    current_time = datetime.datetime.today().strftime("%Y-%m-%d %H:%M:%S")
+    cv_file_name = f"{current_time}_{posting_id}.pdf"
+
+    if not os.path.isdir(CV_DIR_NAME):
+        os.mkdir(CV_DIR_NAME)
+
+    with tempfile.NamedTemporaryFile("w+", delete=False) as content_file:
+        # styling_file = tempfile.NamedTemporaryFile("w+")
+        content_file.write(cv)
+        content_file.seek(0)
+        print(
+            f"File name: {content_file.name}, content:\n{''.join(content_file.readlines())}"
+        )
+        content_file.seek(0)
+        pypandoc.convert_file(
+            content_file.name,
+            to="pdf",
+            format="md",
+            extra_args=[f"--pdf-engine={PDF_ENGINE}"],
+            outputfile=Path().joinpath(CV_DIR_NAME).joinpath(cv_file_name),
+        )
+        # pypandoc.convert_text(
+        #     template,
+        #     to="pdf",
+        #     format="md",
+        #     extra_args=[f"--pdf-engine={PDF_ENGINE}"],
+        #     outputfile=Path().joinpath(CV_DIR_NAME).joinpath(CV_FILE_NAME),
+        # )
+
+    return Path().joinpath(CV_DIR_NAME).joinpath(cv_file_name)
+
+    # TODO: Maybe use try and finally blocks with tmpfiles
+    # finally:
+    #     content_file.close()
+    #     os.unlink(content_file.name)
+
+    # os.remove(Path().joinpath(CV_DIR_NAME).joinpath(CV_FILE_NAME))
 
 
 if __name__ == "__main__":
-    _create_cv("fas", "", "")
+    _create_cv("123", "", "", "")
