@@ -1,10 +1,8 @@
 import asyncio
 from playwright.async_api import async_playwright, Playwright, Page, Locator
-from sqlmodel import Session, select
-from dotenv import load_dotenv
-from openai import OpenAI
 
-from .pdf import _create_cv
+from llm import send_req_to_llm
+from pdf import _create_cv
 # from app_setup import enigne
 # from models import JobEntry
 
@@ -16,10 +14,8 @@ import logging
 logging.basicConfig(format="%(levelname)s: %(message)s", level=logging.INFO)
 
 
-load_dotenv()
 USER_EMAIL = os.getenv("USER_EMAIL", "")
 PASSWORD = os.getenv("PASSWORD", "")
-LLM = OpenAI(base_url="https://openrouter.ai/api/v1", api_key=os.getenv("API_KEY", ""))
 
 
 async def _init_playwright_page(playwright: Playwright) -> Page:
@@ -31,6 +27,7 @@ async def _init_playwright_page(playwright: Playwright) -> Page:
 
 async def apply_for_job_entry(page: Page) -> None:
     pass
+
 
 # TODO: Add ability to log into many pages
 async def _login_to_page(page: Page, link: str) -> None:
@@ -46,25 +43,27 @@ async def _login_to_page(page: Page, link: str) -> None:
 async def _get_job_entries(page: Page) -> tuple[Locator, ...]:
     pass
 
+
 def _is_valuable_job(description: str) -> bool:
     # TODO: Make LLM compare user's skills with skills in the description
     prompt = f"Get only skills, qualifications, place required for this role from the description and return only them in your response and nothing more. {str(description)}"
-    completion = LLM.chat.completions.create(model="deepseek/deepseek-r1-distill-llama-70b:free", messages=[{"role": "user", "content": prompt}])
+    response = send_req_to_llm(prompt)
     # response = LLM.responses.create(model="deepseek/deepseek-r1-distill-llama-70b:free", instructions=prompt, input=str(description))
     # logging.info(f"Response from LLM: {response}")
-    logging.info(f"Important information about the posiotion: {completion.choices[0].message.content}")
+    logging.info(f"Important information about the posiotion: {response}")
     user_needs = "C, Rust, Poland, Python"
-    prompt = f"Compare my qualifications and needs: {user_needs}. With these from job offer: {completion.choices[0].message.content}. Return only one word, True if I should apply, and False if not and no other words/characters"
-    completion = LLM.chat.completions.create(model="deepseek/deepseek-r1-distill-llama-70b:free", messages=[{"role": "user", "content": prompt + str(description)}])
-    out = completion.choices[0].message.content
-    logging.info(f"LLM evalutaion: {out}")
-    if "True" in out:
+    prompt = f"Compare my qualifications and needs: {user_needs}. With these from job offer: {response}. Return only one word, True if I should apply, and False if not and no other words/characters"
+    response = send_req_to_llm(prompt + str(description))
+    logging.info(f"LLM evalutaion: {response}")
+    if "True" in response:
         return True
     else:
         return False
 
 
-async def _process_job_entry(page: Page, locator: Locator = None, retry: int = 3) -> None:
+async def _process_job_entry(
+    page: Page, locator: Locator = None, retry: int = 3
+) -> None:
     data = None
 
     # TODO: Make this loop make more sense, by maybe doing something more
@@ -97,8 +96,9 @@ async def _process_job_entry(page: Page, locator: Locator = None, retry: int = 3
     # TODO: Evaluate job entry based on comparison between job's description and user's skills
     if _is_valuable_job(description):
         logging.info("You should apply")
-        cv = _create_cv(description, location, company_url)
-        _apply_for_job(page, cv)
+        cv = _create_cv(posting_id, description, location, company_url)
+        print("CV: ", cv)
+        # _apply_for_job(page, cv)
     else:
         logging.info("You should not apply")
 
