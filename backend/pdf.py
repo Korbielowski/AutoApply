@@ -1,9 +1,25 @@
 # TODO: Two possbile backends, first one markdown + pdfkit, second one pypandoc
 # import markdown
 # import pdfkit
+from sqlalchemy import URL
+from sqlmodel import SQLModel, create_engine, Session, select
+from dotenv import load_dotenv
 import pypandoc
 
+# from app_setup import engine
 from llm import send_req_to_llm
+from models import (
+    Profile,
+    ProgrammingLanguage,
+    Language,
+    Tool,
+    Certificate,
+    Charity,
+    Education,
+    Experience,
+    Project,
+    SocialPlatform,
+)
 
 import os
 from pathlib import Path
@@ -17,60 +33,81 @@ CV_DIR_NAME = "cv"
 TEMPLATE = """
 
 """
+DRIVERNAME = "postgresql+psycopg"
 
 
 def _get_info_for_cv() -> dict[str:str]:
-    pass
+    load_dotenv()  # TODO: Path to .env is "../.env"
+    username = os.environ.get("POSTGRE_USERNAME")
+    password = os.environ.get("POSTGRE_PASSWORD")
+    host = os.environ.get("POSTGRE_HOST")
+    database = os.environ.get("POSTGRE_DATABASE")
+    url_oject = URL.create(
+        drivername=DRIVERNAME,
+        username=username,
+        password=password,
+        host=host,
+        database=database,
+    )
+    engine = create_engine(url_oject)  # TODO: Remove 'echo' parameter when releasing
+    SQLModel.metadata.create_all(engine)
+    model_classes = (
+        Profile,
+        ProgrammingLanguage,
+        Language,
+        Tool,
+        Certificate,
+        Charity,
+        Education,
+        Experience,
+        Project,
+        SocialPlatform,
+    )
+    with Session(engine) as session:
+        return {c.__name__: session.execute(select(c)) for c in model_classes}
 
 
 def _create_cv(
     posting_id: str,
-    description: str,
+    requirements: str,
     location: str,
     company_url: str,
-    use_llm: bool = False,
-) -> str:
+    mode: str = "",
+) -> Path:
     # TODO: Here we will get data from the database
-    if use_llm:
-        skills = _get_info_for_cv()
-        prompt = f"Select skills and other qualifications from my set of skills: {skills} that match those of the job description: {description}"
+    # TODO: Make LLM compare and choose skills etc. that fit the description and then add them to the template:
+    # 1) Get and process LLM output to put it into the template
+    # 2) Make LLM put adequate skills etc. into the template string
+    # 3) Make LLM write the CV from the ground up DONE
+    # 4) Make algorthm for putting relevant skills into CV without use of LLM
+    if mode == "llm-selection":
+        info = _get_info_for_cv()
+        prompt = f"Select skills and other qualifications from information: {info} that match those of job requirements: {requirements}"
         response = send_req_to_llm(prompt)
         prompt = f"Create a cv in markdown, based upon these skills and qualifications: {response}"
         cv = send_req_to_llm(prompt)
     else:
-        skills = _get_info_for_cv()
-        name = "test"
-        email = "test"
-        phone_number = "test"
-        linkedin = "test"
-        github = "test"
-        personal_website = "test.com"
-        profile = "test"
-        experience = "test"
-        education = "test"
-        skills = "test"
-        projects = "test"
-        certificates = "test"
-        languages = "test"
-        cv = TEMPLATE.format(
-            name=name,
-            email=email,
-            phone_number=phone_number,
-            linkedin=linkedin,
-            github=github,
-            personal_website=personal_website,
-            profile=profile,
-            experience=experience,
-            education=education,
-            skills=skills,
-            projects=projects,
-            certificates=certificates,
-            languages=languages,
-        )
-    # TODO: Make LLM compare and choose skills etc. that fit the description and then add them to the template:
-    # 1) Simply get and process LLM output to put it into the template
-    # 2) Make LLM put adequate skills etc. into the template string
-
+        info = _get_info_for_cv()
+        for k, v in info.items():
+            for x in v:
+                print(f"Value: {x}")
+        cv = "halo"
+        # cv = TEMPLATE.format(
+        #     name=name,
+        #     email=email,
+        #     phone_number=phone_number,
+        #     linkedin=linkedin,
+        #     github=github,
+        #     personal_website=personal_website,
+        #     profile=profile,
+        #     experience=experience,
+        #     education=education,
+        #     skills=skills,
+        #     projects=projects,
+        #     certificates=certificates,
+        #     languages=languages,
+        # )
+        #
     # html = markdown.markdown(template)
     # pdfkit.from_string(css + html, "cv.pdf")
 

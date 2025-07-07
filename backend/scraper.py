@@ -44,21 +44,19 @@ async def _get_job_entries(page: Page) -> tuple[Locator, ...]:
     pass
 
 
-def _is_valuable_job(description: str) -> bool:
+def _evaluate_job(description: str) -> tuple[bool, str]:
     # TODO: Make LLM compare user's skills with skills in the description
     prompt = f"Get only skills, qualifications, place required for this role from the description and return only them in your response and nothing more. {str(description)}"
-    response = send_req_to_llm(prompt)
-    # response = LLM.responses.create(model="deepseek/deepseek-r1-distill-llama-70b:free", instructions=prompt, input=str(description))
-    # logging.info(f"Response from LLM: {response}")
-    logging.info(f"Important information about the posiotion: {response}")
+    requirements = send_req_to_llm(prompt)
+    logging.info(f"Important information about the posiotion: {requirements}")
     user_needs = "C, Rust, Poland, Python"
-    prompt = f"Compare my qualifications and needs: {user_needs}. With these from job offer: {response}. Return only one word, True if I should apply, and False if not and no other words/characters"
+    prompt = f"Compare my qualifications and needs: {user_needs}. With these from job offer: {requirements}. Return only one word, True if I should apply, and False if not and no other words/characters"
     response = send_req_to_llm(prompt + str(description))
     logging.info(f"LLM evalutaion: {response}")
     if "True" in response:
-        return True
+        return (True, requirements)
     else:
-        return False
+        return (False, requirements)
 
 
 async def _process_job_entry(
@@ -94,9 +92,11 @@ async def _process_job_entry(
     company_url = job_data["data"]["applyMethod"]["companyApplyUrl"]
 
     # TODO: Evaluate job entry based on comparison between job's description and user's skills
-    if _is_valuable_job(description):
+    is_valuable, requirements = _evaluate_job(description)
+
+    if is_valuable:
         logging.info("You should apply")
-        cv = _create_cv(posting_id, description, location, company_url)
+        cv = _create_cv(posting_id, requirements, location, company_url)
         print("CV: ", cv)
         # _apply_for_job(page, cv)
     else:

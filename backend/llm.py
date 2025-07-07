@@ -1,14 +1,15 @@
-from dotenv import load_dotenv
 from openai import OpenAI
 
-import os
 
-load_dotenv()
-LLM = OpenAI(base_url="https://openrouter.ai/api/v1", api_key=os.getenv("API_KEY", ""))
+from app_setup import API_KEY
+
+LLM = OpenAI(base_url="https://openrouter.ai/api/v1", api_key=API_KEY)
 MODEL = "deepseek/deepseek-r1-distill-llama-70b:free"
 
 
 def send_req_to_llm(prompt: str) -> str:
+    # response = LLM.responses.create(model="deepseek/deepseek-r1-distill-llama-70b:free", instructions=prompt, input=str(description))
+    # logging.info(f"Response from LLM: {response}")
     try:
         completion = LLM.chat.completions.create(
             model=MODEL,
