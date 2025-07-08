@@ -30,13 +30,114 @@ import datetime
 PDF_ENGINE = "tectonic"
 CV_DIR_NAME = "cv"
 # CV_FILE_NAME = "cv.pdf"
+
+# TODO: Use HTML and CSS instead of markdown, try maybe latex
+CSS = """
+<style>
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    max-width: 850px;
+    margin: auto;
+    padding: 20px;
+    line-height: 1.6;
+    color: #333;
+  }
+  h1 {
+    border-bottom: 3px solid #555;
+    padding-bottom: 5px;
+    margin-bottom: 20px;
+  }
+  h2 {
+    color: #00539C;
+    margin-top: 40px;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 5px;
+  }
+  ul {
+    margin-top: 0;
+  }
+  .contact {
+    font-size: 0.95em;
+    margin-bottom: 30px;
+    color: #555;
+  }
+  .contact a {
+    color: #00539C;
+    text-decoration: none;
+  }
+  .section {
+    margin-bottom: 30px;
+  }
+  .job-title {
+    font-weight: bold;
+    color: #222;
+  }
+  .job-company {
+    font-style: italic;
+    color: #666;
+  }
+  .job-dates {
+    float: right;
+    color: #999;
+  }
+  .project-title {
+    font-weight: bold;
+    color: #222;
+  }
+</style>
+"""
 TEMPLATE = """
+# {name}
+
+<div class="contact">
+  <a href="{email}">{email}</a> &nbsp; | &nbsp;
+  {phone_number} &nbsp; | &nbsp;
+  <a href="{linkedin}">LinkedIn</a> &nbsp; | &nbsp;
+  <a href="{github}">{github}</a> &nbsp; | &nbsp;
+  <a href="{personal_website}">Personal Website</a>
+</div>
+
+---
+
+## Profile
+
+Results-driven software engineer with 7+ years of experience building scalable web platforms, leading cross-functional teams, and mentoring junior developers. Passionate about clean code, problem solving, and building impactful digital products.
+
+---
+
+## Experience
+{experience}
+
+---
+
+## Education
+{education}
+
+---
+
+## Skills
+{skills}
+
+---
+
+## Projects
+{projects}
+
+---
+
+## Certifications
+{certificates}
+
+---
+
+## Languages
+{languages}
 
 """
 DRIVERNAME = "postgresql+psycopg"
 
 
-def _get_info_for_cv() -> dict[str:str]:
+def _get_info_for_cv(mode: str) -> dict[str, str]:
     load_dotenv()  # TODO: Path to .env is "../.env"
     username = os.environ.get("POSTGRE_USERNAME")
     password = os.environ.get("POSTGRE_PASSWORD")
@@ -49,10 +150,9 @@ def _get_info_for_cv() -> dict[str:str]:
         host=host,
         database=database,
     )
-    engine = create_engine(url_oject)  # TODO: Remove 'echo' parameter when releasing
+    engine = create_engine(url_oject)
     SQLModel.metadata.create_all(engine)
     model_classes = (
-        Profile,
         ProgrammingLanguage,
         Language,
         Tool,
@@ -61,10 +161,35 @@ def _get_info_for_cv() -> dict[str:str]:
         Education,
         Experience,
         Project,
-        SocialPlatform,
     )
     with Session(engine) as session:
-        return {c.__name__: session.execute(select(c)) for c in model_classes}
+        profile_query = session.execute(
+            select(Profile)
+        ).first()  # TODO: Add checks for currently logged user
+        links_query = session.execute(select(SocialPlatform))
+        firstname = profile_query.firstname if profile_query else ""
+        middlename = profile_query.middle_name if profile_query else ""
+        surname = profile_query.surname if profile_query else ""
+        output = {
+            "name": f"{firstname} {middlename} {surname}",
+        }
+        if mode == "llm-selection":
+            links_arr = (link.link for link in links_query)
+            output["links"] = ",".join(links_arr)
+            for c in model_classes:
+                query = session.execute(select(c))
+                arr = (row for row in query)
+                output["skills"] += ",".join(arr)
+        else:
+            output["links"] = {}
+            for link in links_query:
+                output["links"][link.name] = link.link
+            output["skills"] = ""
+            for c in model_classes:
+                query = session.execute(select(c))
+                arr = (row for row in query)
+                output[c.__name__] = ",".join(arr)
+        return output
 
 
 def _create_cv(
@@ -81,33 +206,39 @@ def _create_cv(
     # 3) Make LLM write the CV from the ground up DONE
     # 4) Make algorthm for putting relevant skills into CV without use of LLM
     if mode == "llm-selection":
-        info = _get_info_for_cv()
-        prompt = f"Select skills and other qualifications from information: {info} that match those of job requirements: {requirements}"
+        info = _get_info_for_cv(mode)
+        skills = info["skills"]
+        profile = (
+            info["profile"]["firstname"]
+            + info["profile"]["secondname"]
+            + info["profile"]["surname"]
+        )
+        links = info["links"]
+        prompt = f"Select skills and other qualifications from information: {skills} that match those of job requirements: {requirements}"
         response = send_req_to_llm(prompt)
-        prompt = f"Create a cv in markdown, based upon these skills and qualifications: {response}"
+        prompt = f"Create a cv in markdown, based upon these qualifications: {response}. Candidate information: {profile}. Links: {links}"
         cv = send_req_to_llm(prompt)
-    else:
-        info = _get_info_for_cv()
         for k, v in info.items():
-            for x in v:
-                print(f"Value: {x}")
-        cv = "halo"
-        # cv = TEMPLATE.format(
-        #     name=name,
-        #     email=email,
-        #     phone_number=phone_number,
-        #     linkedin=linkedin,
-        #     github=github,
-        #     personal_website=personal_website,
-        #     profile=profile,
-        #     experience=experience,
-        #     education=education,
-        #     skills=skills,
-        #     projects=projects,
-        #     certificates=certificates,
-        #     languages=languages,
-        # )
-        #
+            print(k, v)
+    else:
+        info = _get_info_for_cv(mode)
+        cv = TEMPLATE.format(
+            name=info.get("name", "Jan Kolon Movano"),
+            email=info.get("email", "jakkolon123@gmail.com"),
+            phone_number=info.get("phone_number", "+4 320 932 913"),
+            linkedin=info.get("links", {}).get("linkedin", "https://linkedin.com"),
+            github=info.get("links", {}).get("github", "https://github.com"),
+            personal_website=info.get("links", {}).get(
+                "personal_website", "https://personal_website.com"
+            ),
+            experience=info.get("experience", "placeholder"),
+            education=info.get("education", "placeholder"),
+            skills=info.get("skills", "placeholder"),
+            projects=info.get("projects", "placeholder"),
+            certificates=info.get("certificates", "placeholder"),
+            languages=info.get("languages", "placeholder"),
+        )
+
     # html = markdown.markdown(template)
     # pdfkit.from_string(css + html, "cv.pdf")
 
@@ -131,7 +262,7 @@ def _create_cv(
         pypandoc.convert_file(
             content_file.name,
             to="pdf",
-            format="md",
+            format="html",
             extra_args=[f"--pdf-engine={PDF_ENGINE}"],
             outputfile=Path().joinpath(CV_DIR_NAME).joinpath(cv_file_name),
         )
