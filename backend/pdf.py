@@ -1,10 +1,7 @@
-# TODO: Two possbile backends, first one markdown + pdfkit, second one pypandoc
-# import markdown
-# import pdfkit
 from sqlalchemy import URL
 from sqlmodel import SQLModel, create_engine, Session, select
 from dotenv import load_dotenv
-import pypandoc
+from weasyprint import HTML, CSS
 
 # from app_setup import engine
 from llm import send_req_to_llm
@@ -23,122 +20,103 @@ from models import (
 
 import os
 from pathlib import Path
-import tempfile
 import datetime
 
 
-PDF_ENGINE = "tectonic"
+PDF_ENGINE = "weasyprint"
 CV_DIR_NAME = "cv"
-# CV_FILE_NAME = "cv.pdf"
 
 # TODO: Use HTML and CSS instead of markdown, try maybe latex
-CSS = """
-<style>
-  body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    max-width: 850px;
-    margin: auto;
-    padding: 20px;
-    line-height: 1.6;
-    color: #333;
-  }
-  h1 {
-    border-bottom: 3px solid #555;
-    padding-bottom: 5px;
-    margin-bottom: 20px;
-  }
-  h2 {
-    color: #00539C;
-    margin-top: 40px;
-    border-bottom: 1px solid #ccc;
-    padding-bottom: 5px;
-  }
-  ul {
-    margin-top: 0;
-  }
-  .contact {
-    font-size: 0.95em;
-    margin-bottom: 30px;
-    color: #555;
-  }
-  .contact a {
-    color: #00539C;
-    text-decoration: none;
-  }
-  .section {
-    margin-bottom: 30px;
-  }
-  .job-title {
-    font-weight: bold;
-    color: #222;
-  }
-  .job-company {
-    font-style: italic;
-    color: #666;
-  }
-  .job-dates {
-    float: right;
-    color: #999;
-  }
-  .project-title {
-    font-weight: bold;
-    color: #222;
-  }
-</style>
+STYLING = """
+body {
+font-family: Arial, sans-serif;
+max-width: 900px;
+margin: auto;
+padding: 2rem;
+line-height: 1.6;
+color: #333;
+}
+h1 {
+text-align: center;
+font-size: 2em;
+margin-bottom: 0.5em;
+}
+.contact {
+display: flex;
+justify-content: space-between;
+flex-wrap: wrap;
+font-size: 0.95em;
+margin-bottom: 2rem;
+}
+section {
+margin-bottom: 2rem;
+}
+h2 {
+border-bottom: 1px solid #aaa;
+font-size: 1.3em;
+margin-bottom: 0.5em;
+}
+h3 {
+margin: 0.5em 0 0.2em;
+font-weight: bold;
+}
+.meta {
+font-size: 0.9em;
+color: #666;
+display: flex;
+justify-content: space-between;
+flex-wrap: wrap;
+}
+ul {
+margin-top: 0.3em;
+padding-left: 1.2em;
+}
+li {
+margin-bottom: 0.4em;
+}
 """
 TEMPLATE = """
-# {name}
-
+<h1>{name}</h1>
 <div class="contact">
-  <a href="{email}">{email}</a> &nbsp; | &nbsp;
-  {phone_number} &nbsp; | &nbsp;
-  <a href="{linkedin}">LinkedIn</a> &nbsp; | &nbsp;
-  <a href="{github}">{github}</a> &nbsp; | &nbsp;
-  <a href="{personal_website}">Personal Website</a>
+<div>
+<strong>Email:</strong>{email}
 </div>
-
----
-
-## Profile
-
-Results-driven software engineer with 7+ years of experience building scalable web platforms, leading cross-functional teams, and mentoring junior developers. Passionate about clean code, problem solving, and building impactful digital products.
-
----
-
-## Experience
-{experience}
-
----
-
-## Education
+<div>
+<strong>Phone:</strong>{phone_number}
+</div>
+<div>
+<strong><a href="{github}">GitHub</a></strong>
+</div>
+<div>
+<strong><a href="{linkedin}">LinkedIn</a></strong>
+</div>
+<div>
+<strong><a href="{personal_website}">Personal Website</a></strong>
+</div>
+</div>
+<section>
+<h2>Education</h2>
 {education}
-
----
-
-## Skills
+</section>
+<section>
+<h2>Experience</h2>
+{experience}
+</section>
+<section>
+<h2>Skills</h2>
 {skills}
-
----
-
-## Projects
-{projects}
-
----
-
-## Certifications
-{certificates}
-
----
-
-## Languages
 {languages}
-
+</section>
+<section>
+<h2>Projects</h2>
+{projects}
+</section>
 """
 DRIVERNAME = "postgresql+psycopg"
 
 
 def _get_info_for_cv(mode: str) -> dict[str, str]:
-    load_dotenv()  # TODO: Path to .env is "../.env"
+    load_dotenv()
     username = os.environ.get("POSTGRE_USERNAME")
     password = os.environ.get("POSTGRE_PASSWORD")
     host = os.environ.get("POSTGRE_HOST")
@@ -204,7 +182,7 @@ def _create_cv(
     # 1) Get and process LLM output to put it into the template
     # 2) Make LLM put adequate skills etc. into the template string
     # 3) Make LLM write the CV from the ground up DONE
-    # 4) Make algorthm for putting relevant skills into CV without use of LLM
+    # 4) Make algorithm for putting relevant skills into CV without use of LLM
     if mode == "llm-selection":
         info = _get_info_for_cv(mode)
         skills = info["skills"]
@@ -239,49 +217,18 @@ def _create_cv(
             languages=info.get("languages", "placeholder"),
         )
 
-    # html = markdown.markdown(template)
-    # pdfkit.from_string(css + html, "cv.pdf")
-
     # WARNING: When using pypandoc we have to save markdown to a file in order to use convert_file function, beacause
     # when using convert_string function, the behaviour and output are not that good as when using first method
 
     current_time = datetime.datetime.today().strftime("%Y-%m-%d %H:%M:%S")
-    cv_file_name = f"{current_time}_{posting_id}.pdf"
+    cv_path = Path().joinpath(CV_DIR_NAME).joinpath(f"{current_time}_{posting_id}.pdf")
 
     if not os.path.isdir(CV_DIR_NAME):
         os.mkdir(CV_DIR_NAME)
 
-    with tempfile.NamedTemporaryFile("w+", delete=False) as content_file:
-        # styling_file = tempfile.NamedTemporaryFile("w+")
-        content_file.write(cv)
-        content_file.seek(0)
-        print(
-            f"File name: {content_file.name}, content:\n{''.join(content_file.readlines())}"
-        )
-        content_file.seek(0)
-        pypandoc.convert_file(
-            content_file.name,
-            to="pdf",
-            format="html",
-            extra_args=[f"--pdf-engine={PDF_ENGINE}"],
-            outputfile=Path().joinpath(CV_DIR_NAME).joinpath(cv_file_name),
-        )
-        # pypandoc.convert_text(
-        #     template,
-        #     to="pdf",
-        #     format="md",
-        #     extra_args=[f"--pdf-engine={PDF_ENGINE}"],
-        #     outputfile=Path().joinpath(CV_DIR_NAME).joinpath(CV_FILE_NAME),
-        # )
+    HTML(string=cv).write_pdf(cv_path, stylesheets=[CSS(string=STYLING)])
 
-    return Path().joinpath(CV_DIR_NAME).joinpath(cv_file_name)
-
-    # TODO: Maybe use try and finally blocks with tmpfiles
-    # finally:
-    #     content_file.close()
-    #     os.unlink(content_file.name)
-
-    # os.remove(Path().joinpath(CV_DIR_NAME).joinpath(CV_FILE_NAME))
+    return cv_path
 
 
 if __name__ == "__main__":
