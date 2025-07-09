@@ -10,10 +10,10 @@ import os
 import re
 import json
 import logging
+from pathlib import Path
+
 
 logging.basicConfig(format="%(levelname)s: %(message)s", level=logging.INFO)
-
-
 USER_EMAIL = os.getenv("USER_EMAIL", "")
 PASSWORD = os.getenv("PASSWORD", "")
 
@@ -96,7 +96,16 @@ async def _process_job_entry(
 
     if is_valuable:
         logging.info("You should apply")
-        cv = _create_cv(posting_id, requirements, location, company_url)
+        # TODO: Add use_own_cv flag to options
+        use_own_cv = False
+        if not use_own_cv:
+            cv = _create_cv(posting_id, requirements, location, company_url)
+        else:
+            path = os.getenv("USER_CV", "")
+            if not path:
+                logging.error("USER_CV variable with path to user's cv is not set")
+                return
+            cv = Path(path)
         print("CV: ", cv)
         # _apply_for_job(page, cv)
     else:
