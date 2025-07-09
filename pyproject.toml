@@ -7,15 +7,13 @@ requires-python = ">=3.12"
 dependencies = [
     "dotenv>=0.9.9",
     "fastapi[standard]>=0.115.12",
-    "markdown>=3.8.2",
     "openai-agents>=0.0.13",
-    "pdfkit>=1.0.0",
     "playwright>=1.51.0",
     "psycopg>=3.2.6",
     "pydantic>=2.11.3",
-    "pypandoc>=1.15",
     "sqlmodel>=0.0.24",
     "tiktoken>=0.9.0",
+    "weasyprint>=65.1",
 ]
 
 [dependency-groups]
