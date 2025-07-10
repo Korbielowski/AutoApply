@@ -21,8 +21,10 @@ from models import (
 import os
 from pathlib import Path
 import datetime
+import logging
 
 
+logging.basicConfig(format="%(levelname)s: %(message)s", level=logging.INFO)
 PDF_ENGINE = "weasyprint"
 CV_DIR_NAME = "cv"
 
@@ -151,14 +153,15 @@ def _get_info_for_cv(mode: str) -> dict[str, str]:
         output = {
             "name": f"{firstname} {middlename} {surname}",
         }
-        if mode == "llm-selection":
+        if mode == "llm-selection" or mode == "llm-generation":
             links_arr = (link.link for link in links_query)
             output["links"] = ",".join(links_arr)
+            output["skills"] = ""
             for c in model_classes:
                 query = session.execute(select(c))
                 arr = (row for row in query)
                 output["skills"] += ",".join(arr)
-        else:
+        elif mode == "user-cv":
             output["links"] = {}
             for link in links_query:
                 output["links"][link.name] = link.link
@@ -170,7 +173,7 @@ def _get_info_for_cv(mode: str) -> dict[str, str]:
         return output
 
 
-def _create_cv(
+def create_cv(
     posting_id: str,
     requirements: str,
     location: str,
@@ -183,23 +186,25 @@ def _create_cv(
     # 2) Make LLM put adequate skills etc. into the template string
     # 3) Make LLM write the CV from the ground up DONE
     # 4) Make algorithm for putting relevant skills into CV without use of LLM
+    info = _get_info_for_cv(mode)
     if mode == "llm-selection":
-        info = _get_info_for_cv(mode)
-        skills = info["skills"]
-        profile = (
-            info["profile"]["firstname"]
-            + info["profile"]["secondname"]
-            + info["profile"]["surname"]
-        )
-        links = info["links"]
+        skills = info.get("skills", "")
+        name = info.get("name", "Jan Kolon Movano")
+        links = info.get("links", "")
         prompt = f"Select skills and other qualifications from information: {skills} that match those of job requirements: {requirements}"
         response = send_req_to_llm(prompt)
-        prompt = f"Create a cv in markdown, based upon these qualifications: {response}. Candidate information: {profile}. Links: {links}"
+        prompt = f"Put all the relevant information: {skills}, {name}, {links}. Into this template: {TEMPLATE}\nWhere each {{}} tells you where to put which category of information"
         cv = send_req_to_llm(prompt)
-        for k, v in info.items():
-            print(k, v)
-    else:
-        info = _get_info_for_cv(mode)
+    elif mode == "llm-generation":
+        skills = info.get("skills", "")
+        name = info.get("name", "Jan Kolon Movano")
+        links = info.get("links", "")
+        logging.info(f"name: {name}\nskills: {skills}\nlinks: {links}")
+        prompt = f"Select skills and other qualifications from information: {skills} that match those of job requirements: {requirements}"
+        response = send_req_to_llm(prompt)
+        prompt = f"Generate a complete personal CV page using only HTML and CSS with no additional comments or explanations, based upon these qualifications: {response}. Name: {name}. Social media links: {links}"
+        cv = send_req_to_llm(prompt).lstrip("```html").rstrip("```")
+    elif mode == "user-cv":
         cv = TEMPLATE.format(
             name=info.get("name", "Jan Kolon Movano"),
             email=info.get("email", "jakkolon123@gmail.com"),
@@ -217,10 +222,9 @@ def _create_cv(
             languages=info.get("languages", "placeholder"),
         )
 
-    # WARNING: When using pypandoc we have to save markdown to a file in order to use convert_file function, beacause
-    # when using convert_string function, the behaviour and output are not that good as when using first method
+    logging.info(f"CV:\n{cv}")
 
-    current_time = datetime.datetime.today().strftime("%Y-%m-%d %H:%M:%S")
+    current_time = datetime.datetime.today().strftime("%Y-%m-%d_%H:%M:%S")
     cv_path = Path().joinpath(CV_DIR_NAME).joinpath(f"{current_time}_{posting_id}.pdf")
 
     if not os.path.isdir(CV_DIR_NAME):
@@ -232,4 +236,4 @@ def _create_cv(
 
 
 if __name__ == "__main__":
-    _create_cv("123", "", "", "")
+    create_cv("123", "", "", "")
