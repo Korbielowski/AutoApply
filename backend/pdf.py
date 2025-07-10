@@ -178,13 +178,13 @@ def create_cv(
     requirements: str,
     location: str,
     company_url: str,
-    mode: str = "",
+    mode: str = "llm-selection",
 ) -> Path:
     # TODO: Here we will get data from the database
     # TODO: Make LLM compare and choose skills etc. that fit the description and then add them to the template:
     # 1) Get and process LLM output to put it into the template
     # 2) Make LLM put adequate skills etc. into the template string
-    # 3) Make LLM write the CV from the ground up DONE
+    # 3) Make LLM write the CV from the ground up
     # 4) Make algorithm for putting relevant skills into CV without use of LLM
     info = _get_info_for_cv(mode)
     if mode == "llm-selection":
