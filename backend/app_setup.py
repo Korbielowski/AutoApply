@@ -12,22 +12,22 @@ from dotenv import load_dotenv
 
 # TODO: Check if user can specify custom drivers, so that they would not break SQLAlchemy
 DRIVERNAME = "postgresql+psycopg"
-engine: Engine
-OPENAI_API_KEY: str | None
+engine: Engine = None
+API_KEY: str = ""
 
 
 # This will be used in the future for loading postgre and other stuff
 @asynccontextmanager
 async def setup(app: FastAPI) -> AsyncGenerator:
     global engine
-    load_dotenv("../.env")
+    load_dotenv()  # TODO: Path to .env is "../.env"
     username = os.environ.get("POSTGRE_USERNAME")
     password = os.environ.get("POSTGRE_PASSWORD")
     host = os.environ.get("POSTGRE_HOST")
     database = os.environ.get("POSTGRE_DATABASE")
-    OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
+    API_KEY = os.environ.get("API_KEY", "")
 
-    # TODO: This may be changed in the future or maybe stay the same?
+    # WARNING: This will probably be changed in the future
     if not username:
         raise Exception("POSTGRE_USERNAME environmental variable not specified")
     if not password:
@@ -36,8 +36,8 @@ async def setup(app: FastAPI) -> AsyncGenerator:
         raise Exception("POSTGRE_HOST environmental variable not specified")
     if not database:
         raise Exception("POSTGRE_PASSWORD environmental variable not specified")
-    if not OPENAI_API_KEY:
-        raise Exception("OPENAI_API_KEY environmental variable not specified")
+    if not API_KEY:
+        raise Exception("API_KEY environmental variable not specified")
 
     url_oject = URL.create(
         drivername=DRIVERNAME,

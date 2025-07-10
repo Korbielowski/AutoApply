@@ -11,9 +11,9 @@ dependencies = [
     "playwright>=1.51.0",
     "psycopg>=3.2.6",
     "pydantic>=2.11.3",
-    "pypdf>=5.7.0",
     "sqlmodel>=0.0.24",
     "tiktoken>=0.9.0",
+    "weasyprint>=65.1",
 ]
 
 [dependency-groups]

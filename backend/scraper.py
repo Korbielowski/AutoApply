@@ -1,9 +1,9 @@
 import asyncio
 from playwright.async_api import async_playwright, Playwright, Page, Locator
-from sqlmodel import Session, select
-from dotenv import load_dotenv
-from openai import OpenAI
 
+from llm import send_req_to_llm
+from pdf import create_cv
+from dotenv import load_dotenv
 # from app_setup import enigne
 # from models import JobEntry
 
@@ -11,14 +11,13 @@ import os
 import re
 import json
 import logging
+from pathlib import Path
+
 
 logging.basicConfig(format="%(levelname)s: %(message)s", level=logging.INFO)
-
-
 load_dotenv()
 USER_EMAIL = os.getenv("USER_EMAIL", "")
 PASSWORD = os.getenv("PASSWORD", "")
-LLM = OpenAI(base_url="https://openrouter.ai/api/v1", api_key=os.getenv("API_KEY", ""))
 
 
 async def _init_playwright_page(playwright: Playwright) -> Page:
@@ -31,6 +30,7 @@ async def _init_playwright_page(playwright: Playwright) -> Page:
 async def apply_for_job_entry(page: Page) -> None:
     pass
 
+
 # TODO: Add ability to log into many pages
 async def _login_to_page(page: Page, link: str) -> None:
     await page.goto(link)
@@ -39,31 +39,33 @@ async def _login_to_page(page: Page, link: str) -> None:
     await page.get_by_label("Password").fill(PASSWORD)
     await page.get_by_label("Sign in").last.click()
     await page.wait_for_load_state("load")
-    # TODO: Add functionality to check whether we got verification code on gmail
+    # TODO: Add functionality to check whether we got verification code on gmail or not
 
 
 async def _get_job_entries(page: Page) -> tuple[Locator, ...]:
     pass
 
-def _is_valuable_job(description: str) -> bool:
+
+def _evaluate_job(description: str) -> tuple[bool, str]:
     # TODO: Make LLM compare user's skills with skills in the description
     prompt = f"Get only skills, qualifications, place required for this role from the description and return only them in your response and nothing more. {str(description)}"
-    completion = LLM.chat.completions.create(model="deepseek/deepseek-r1-distill-llama-70b:free", messages=[{"role": "user", "content": prompt}])
-    # response = LLM.responses.create(model="deepseek/deepseek-r1-distill-llama-70b:free", instructions=prompt, input=str(description))
-    # logging.info(f"Response from LLM: {response}")
-    logging.info(f"Important information about the posiotion: {completion.choices[0].message.content}")
-    user_needs = "C, Rust, Poland, Python"
-    prompt = f"Compare my qualifications and needs: {user_needs}. With these from job offer: {completion.choices[0].message.content}. Return only one word, True if I should apply, and False if not and no other words/characters"
-    completion = LLM.chat.completions.create(model="deepseek/deepseek-r1-distill-llama-70b:free", messages=[{"role": "user", "content": prompt + str(description)}])
-    out = completion.choices[0].message.content
-    logging.info(f"LLM evalutaion: {out}")
-    if "True" in out:
-        return True
+    requirements = send_req_to_llm(prompt, temperature=0)
+    logging.info(f"Important information about the posiotion: {requirements}")
+    user_needs = (
+        "C, Rust, Poland, Python 5+ years, CI/CD, GIT, python testing, fluent polish"
+    )
+    prompt = f"Compare my qualifications and needs: {user_needs}. With these from job offer: {requirements}. Return only one word, True if I should apply, and False if not and no other words/characters"
+    response = send_req_to_llm(prompt + str(description), temperature=0)
+    logging.info(f"LLM evalutaion: {response}")
+    if "True" in response:
+        return (True, requirements)
     else:
-        return False
+        return (False, requirements)
 
 
-async def _process_job_entry(page: Page, locator: Locator = None, retry: int = 3) -> None:
+async def _process_job_entry(
+    page: Page, locator: Locator = None, retry: int = 3
+) -> None:
     data = None
 
     # TODO: Make this loop make more sense, by maybe doing something more
@@ -94,10 +96,24 @@ async def _process_job_entry(page: Page, locator: Locator = None, retry: int = 3
     company_url = job_data["data"]["applyMethod"]["companyApplyUrl"]
 
     # TODO: Evaluate job entry based on comparison between job's description and user's skills
-    if _is_valuable_job(description):
+    is_valuable, requirements = _evaluate_job(description)
+
+    if is_valuable:
         logging.info("You should apply")
-        cv = _create_cv(description, location, company_url)
-        _apply_for_job(page, cv)
+        # TODO: Add use_own_cv flag to options
+        use_own_cv = False
+        if not use_own_cv:
+            cv = create_cv(
+                posting_id, requirements, location, company_url, "llm-selection"
+            )
+        else:
+            path = os.getenv("USER_CV", "")
+            if not path:
+                logging.error("USER_CV variable with path to user's cv is not set")
+                return
+            cv = Path(path)
+        print("CV: ", cv)
+        # _apply_for_job(page, cv)
     else:
         logging.info("You should not apply")
 
@@ -124,7 +140,7 @@ async def _run_scraper() -> None:
         page = await _init_playwright_page(playwright)
         await find_job_entries(
             page,
-            "https://www.linkedin.com/jobs/collections/recommended/?currentJobId=3706084909",
+            "https://www.linkedin.com/jobs/collections/recommended/?currentJobId=4254862954",
         )
 
 
