@@ -1,6 +1,5 @@
 from sqlmodel import Field, SQLModel
-
-# from pydantic import Da
+# TODO: Add priority to each category of skills and qualifications, so that the system can decide what should go into cv
 
 
 class JobEntry(SQLModel, table=True):

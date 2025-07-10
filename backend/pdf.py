@@ -28,7 +28,7 @@ logging.basicConfig(format="%(levelname)s: %(message)s", level=logging.INFO)
 PDF_ENGINE = "weasyprint"
 CV_DIR_NAME = "cv"
 
-# TODO: Use HTML and CSS instead of markdown, try maybe latex
+# TODO: Use HTML and CSS instead of markdown. Maybe try latex in the future
 STYLING = """
 body {
 font-family: Arial, sans-serif;
