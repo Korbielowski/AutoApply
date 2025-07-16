@@ -1,4 +1,4 @@
-from .app_setup import app, templates, engine
+from .app_setup import app, templates
 from .models import ProfileInfoModel
 from fastapi import Request, status
 from fastapi.responses import RedirectResponse
@@ -29,7 +29,7 @@ async def create_user(
     #     session.commit()
     #     session.refresh()
     return RedirectResponse(
-        url=request.url_for("test"), status_code=status.HTTP_303_SEE_OTHER
+        url=request.url_for("panel"), status_code=status.HTTP_303_SEE_OTHER
     )
 
 
