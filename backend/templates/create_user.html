@@ -14,19 +14,23 @@
             padding: 0;
         }
 
-        body {
-            padding: 10px;
-        }
-
         html {
             overflow-x: hidden;
+        }
+
+        form {
+            padding: 20px;
+            border-radius: 10px;
+            border-width: 2px;
+            border-color: black;
+            border-style: solid;
         }
     </style>
     <!-- TODO: In the future it may have to be changed -->
 </head>
 
 <body>
-    <form class="row g-3" onsubmit="sendFromData()">
+    <form class="row g-3" onsubmit="addUserInformation()">
         <input name="firstname" class="form-control" type="text" placeholder="First Name"
             aria-label="default input example">
         <input name="middlename" class="form-control" type="text" placeholder="Second name"
@@ -57,7 +61,43 @@
         <div class="col-12">
             <button type="button" class="btn btn-primary" onclick="postFormData()">Sign in</button>
         </div>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" value="" id="cos">
+          <label class="form-check-label" for="cos">
+            Default checkbox
+          </label>
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" value="" id="xd">
+          <label class="form-check-label" for="xd">
+            Ello checkbox
+          </label>
+        </div>
     </form>
+
+    <form onsubmit="addProgrammingLanguage()" id="programming-language-form">
+        <input class="form-control" type="text" placeholder="Programming language name" name="language">
+        <select class="form-control form-control-lg" name="level">
+          <option>Beginner</option>
+          <option>Intermediate</option>
+          <option>Expert</option>
+          <option>Master</option>
+        </select>
+        <input type="submit">
+    </form>
+
+    <form onsubmit="addLanguage()" id="language-form">
+        <input class="form-control" type="text" placeholder="Language name" name="language">
+        <select class="form-control form-control-lg" name="level">
+          <option>Beginner</option>
+          <option>Intermediate</option>
+          <option>Expert</option>
+          <option>Master</option>
+        </select>
+        <input type="submit">
+    </form>
+
+    <button onclick="postFormData()">Create user</button>
 </body>
 
 <script>
@@ -67,6 +107,39 @@
     //             "city": form.get("city"),
     //                 "zipcode": form.get("zipcode"),
     //         },
+    progammmingLanguages = []
+    languages = []
+    certificates = []
+    experiences = []
+    educations = []
+    charities = []
+    socialPlatfroms = []
+    tools = []
+    projects = []
+
+    function addLanguage(){
+        event.preventDefault();
+        const formData = new FormData(document.getElementById('language-form'));
+
+        language = formData.get("language");
+        level = formData.get("level");
+
+        console.log(level);
+        console.log(language);
+        languages.push({"language": language, "level": level});
+    }
+
+    function addProgrammingLanguage(){
+        event.preventDefault();
+        const formData = new FormData(document.getElementById('programming-language-form'));
+
+        language = formData.get("language");
+        level = formData.get("level");
+
+        console.log(level);
+        console.log(language);
+        progammmingLanguages.push({"language": language, "level": level});
+    }
 
     function getLocations(){
         const locations = ["Berlin", "Wroclaw"]
