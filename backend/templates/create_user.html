@@ -34,7 +34,7 @@
 <body>
     <div class="container">
         <h3>Candidate Information</h3>
-        <form class="row g-3" onsubmit="addUserInformation()">
+        <form class="row g-3" onsubmit="addUserInformation()" id="user-info">
             <input name="firstname" class="form-control" type="text" placeholder="First Name"
                 aria-label="default input example">
             <input name="middlename" class="form-control" type="text" placeholder="Middle name"
@@ -186,7 +186,7 @@
 
 <script>
     locations = []
-    progammmingLanguages = []
+    programmingLanguages = []
     languages = []
     certificates = []
     experiences = []
@@ -230,7 +230,7 @@
         level = formData.get("level");
         elem = {"language": language, "level": level};
 
-        progammmingLanguages.push(elem);
+        programmingLanguages.push(elem);
         document.getElementById("programming-languages-list").innerHTML += "<li>" + JSON.stringify(elem) + "</li>";
     }
 
@@ -330,7 +330,7 @@
     }
 
     async function postFormData() {
-        const formData = new FormData(document.querySelector("form"));
+        const formData = new FormData(document.getElementById("user-info"));
 
         let dataJson = {
             "profile": {
@@ -340,7 +340,7 @@
                 "age": formData.get("age"),
             },
             "locations": locations,
-            "programming_languages": programming_languages,
+            "programming_languages": programmingLanguages,
             "languages": languages,
             "tools": tools,
             "certificates": certificates,
