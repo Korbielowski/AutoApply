@@ -9,7 +9,7 @@ class JobEntry(SQLModel, table=True):
 
 class Profile(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    fristname: str
+    firstname: str
     middlename: str
     surname: str
     age: int
