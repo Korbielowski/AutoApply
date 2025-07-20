@@ -34,7 +34,7 @@
 <body>
     <div class="container">
         <h3>Candidate Information</h3>
-        <form class="row g-3" onsubmit="addUserInformation()" id="user-info">
+        <form class="row g-3" id="user-info">
             <input name="firstname" class="form-control" type="text" placeholder="First Name"
                 aria-label="default input example">
             <input name="middlename" class="form-control" type="text" placeholder="Middle name"
@@ -44,6 +44,7 @@
                 <label for="customRange1" class="form-label">Enter your age</label>
                 <input name="age" type="range" class="form-range" id="customRange1">
             </div>
+            <input name="email" class="form-control" type="email" placeholder="Email">
         </form>
     </div>
 
@@ -150,7 +151,7 @@
         <ul id="experience-list"></ul>
         <form class="row g-3" onsubmit="addExperince()" id="experience-form">
             <input class="form-control" type="text" placeholder="Company name" name="company">
-            <input class="form-control" type="text" placeholder="position name" name="position">
+            <input class="form-control" type="text" placeholder="Position name" name="position">
             <input class="form-control" type="text" placeholder="Description" name="description">
             <label for="languageName" class="form-label">Start date</label>
             <input class="form-control" type="date" name="start-date">
@@ -196,6 +197,7 @@
     tools = []
     projects = []
 
+    // TODO: Check if user input is not empty, if so return modal with message
     function addLocation(){
         event.preventDefault();
         const formData = new FormData(document.getElementById("location-form"));
@@ -205,6 +207,7 @@
         city = formData.get("city");
         zipCode = formData.get("zip-code");
         elem = {"country": country, "state": state, "city": city, "zipcode": zipCode};
+        console.log(JSON.stringify(elem));
 
         locations.push(elem);
         document.getElementById("locations-list").innerHTML += "<li>" + JSON.stringify(elem) + "</li>";
@@ -300,7 +303,7 @@
         endDate = formData.get("end-date");
         elem = {"company": company, "position": position, "description": description, "start_date": startDate, "end_date": endDate};
 
-        educations.push(elem);
+        experiences.push(elem);
         document.getElementById("experience-list").innerHTML += "<li>" + JSON.stringify(elem) + "</li>";
     }
 
