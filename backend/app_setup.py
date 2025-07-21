@@ -6,13 +6,13 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from sqlalchemy import URL, Engine
+from sqlalchemy import URL
 from sqlmodel import SQLModel, create_engine
 from dotenv import load_dotenv
 
 # TODO: Check if user can specify custom drivers, so that they would not break SQLAlchemy
 DRIVERNAME = "postgresql+psycopg"
-engine: Engine = None
+# engine: Engine = None
 API_KEY: str = ""
 
 
@@ -39,21 +39,22 @@ async def setup(app: FastAPI) -> AsyncGenerator:
     if not API_KEY:
         raise Exception("API_KEY environmental variable not specified")
 
-    url_oject = URL.create(
+    url_object = URL.create(
         drivername=DRIVERNAME,
         username=username,
         password=password,
         host=host,
         database=database,
     )
-    engine = create_engine(url_oject)  # TODO: Remove 'echo' parameter when releasing
+    engine = create_engine(url_object)  # TODO: Remove 'echo' parameter when releasing
     SQLModel.metadata.create_all(engine)
     yield
 
     # TODO: In the future release all resources
 
 
-app = FastAPI(debug=True, lifespan=setup)  # TODO: FastAPI(debug=True, lifespan=setup)
+# app = FastAPI(debug=True, lifespan=setup)  # TODO: FastAPI(debug=True, lifespan=setup)
+app = FastAPI(debug=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 templates = Jinja2Templates(directory="templates")
