@@ -1,7 +1,48 @@
+# from .app_setup import engine, app, templates
 from .app_setup import app, templates
-from .models import ProfileInfoModel
+from .models import (
+    ProfileInfoModel,
+    Profile,
+    Location,
+    ProgrammingLanguage,
+    Language,
+    Tool,
+    Certificate,
+    Charity,
+    Education,
+    Experience,
+    Project,
+    SocialPlatform,
+)
+
 from fastapi import Request, status
 from fastapi.responses import RedirectResponse
+from sqlmodel import Session
+
+from sqlalchemy import URL
+from sqlmodel import SQLModel, create_engine, select
+from dotenv import load_dotenv
+
+import os
+
+
+DRIVERNAME = "postgresql+psycopg"
+load_dotenv()
+username = os.environ.get("POSTGRE_USERNAME")
+password = os.environ.get("POSTGRE_PASSWORD")
+host = os.environ.get("POSTGRE_HOST")
+database = os.environ.get("POSTGRE_DATABASE")
+
+
+url_object = URL.create(
+    drivername=DRIVERNAME,
+    username=username,
+    password=password,
+    host=host,
+    database=database,
+)
+engine = create_engine(url_object)  # TODO: Remove 'echo' parameter when releasing
+SQLModel.metadata.create_all(engine)
 
 
 @app.get("/")
@@ -19,15 +60,42 @@ async def load_user_form(request: Request):
 @app.post("/create_user")
 async def create_user(
     request: Request, form_data: ProfileInfoModel
-):  # form: Annotated[TestInfo, Form()]
-    print(form_data)
-    # with Session(app_setup.engine) as session:
-    #     info_validated = (
-    #         i.__class__.model_validate(i) for i in profile_information.model_dump()
-    #     )
-    #     session.add_all(info_validated)
-    #     session.commit()
-    #     session.refresh()
+) -> RedirectResponse:  # form: Annotated[TestInfo, Form()]
+    d = {
+        "locations": Location,
+        "programming_languages": ProgrammingLanguage,
+        "languages": Language,
+        "tools": Tool,
+        "certificates": Certificate,
+        "charities": Charity,
+        "educations": Education,
+        "exprience": Experience,
+        "projects": Project,
+        "social_platforms": SocialPlatform,
+    }
+    form_dump = form_data.model_dump()
+    form_profile = Profile.model_validate(form_dump.get("profile"))
+
+    models = []
+    for key, val in d.items():
+        tmp = form_dump.get(key, [])
+        for t in tmp:
+            models.append(val.model_validate(t))
+
+    with Session(engine) as session:
+        session.add(form_profile)
+        session.commit()
+        # TODO:Just for now, in the future we will use email to recognise users
+        profile = session.exec(
+            select(Profile)
+            .where(Profile.firstname == form_profile.firstname)
+            .where(Profile.middlename == form_profile.middlename)
+            .where(Profile.surname == form_profile.surname)
+        ).first()
+        for model in models:
+            model.profile_id = profile.id
+            session.add(model)
+        session.commit()
     return RedirectResponse(
         url=request.url_for("panel"), status_code=status.HTTP_303_SEE_OTHER
     )
