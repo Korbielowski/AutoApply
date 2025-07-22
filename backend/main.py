@@ -85,12 +85,8 @@ async def create_user(
     with Session(engine) as session:
         session.add(form_profile)
         session.commit()
-        # TODO:Just for now, in the future we will use email to recognise users
         profile = session.exec(
-            select(Profile)
-            .where(Profile.firstname == form_profile.firstname)
-            .where(Profile.middlename == form_profile.middlename)
-            .where(Profile.surname == form_profile.surname)
+            select(Profile).where(Profile.email == form_profile.email)
         ).first()
         for model in models:
             model.profile_id = profile.id
