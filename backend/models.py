@@ -1,4 +1,6 @@
 from sqlmodel import Field, SQLModel
+from pydantic import EmailStr
+
 from datetime import datetime
 # TODO: Add priority to each category of skills and qualifications, so that the system can decide what should go into cv
 
@@ -10,6 +12,7 @@ class JobEntry(SQLModel, table=True):
 
 class Profile(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
+    email: EmailStr = Field(unique=True, max_length=255)
     firstname: str
     middlename: str
     surname: str
