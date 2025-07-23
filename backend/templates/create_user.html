@@ -332,15 +332,24 @@
         document.getElementById("social-platforms-list").innerHTML += "<li>" + JSON.stringify(elem) + "</li>";
     }
 
-    async function postFormData() {
+    async function postFormData(){
         const formData = new FormData(document.getElementById("user-info"));
+
+        firstname = formData.get("firstname");
+        surname = formData.get("surname");
+        email = formData.get("email");
+        if(firstname === "" || surname === "" || email === ""){
+            alert("Firstname, surname and email fields must be filled");
+            return;
+        }
 
         let dataJson = {
             "profile": {
-                "firstname": formData.get("firstname"),
+                "firstname": firstname,
                 "middlename": formData.get("middlename"),
-                "surname": formData.get("surname"),
+                "surname": surname,
                 "age": formData.get("age"),
+                "email": email,
             },
             "locations": locations,
             "programming_languages": programmingLanguages,
@@ -354,8 +363,6 @@
             "social_platforms": socialPlatfroms,
         };
 
-        console.log(JSON.stringify(dataJson, null , 2))
-
         const response = await fetch("{{ url_for('create_user') }}", {
             method: "POST",
             headers: {
@@ -365,8 +372,6 @@
             body: JSON.stringify(dataJson),
         });
 
-        console.log("status: ", response.status);
-        console.log("body: ", response.body);
         window.location.href = response.url;
     }
 </script>
