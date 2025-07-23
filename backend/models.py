@@ -1,4 +1,7 @@
 from sqlmodel import Field, SQLModel
+from pydantic import EmailStr
+
+from datetime import datetime
 # TODO: Add priority to each category of skills and qualifications, so that the system can decide what should go into cv
 
 
@@ -9,10 +12,11 @@ class JobEntry(SQLModel, table=True):
 
 class Profile(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    fristname: str
+    email: EmailStr = Field(unique=True, max_length=255)
+    firstname: str
     middlename: str
     surname: str
-    age: int
+    age: str
 
 
 class ProfileModel(SQLModel):
@@ -116,8 +120,8 @@ class CharityModel(SQLModel):
     name: str
     description: str
     organisation: str
-    # start_date: DateTime
-    # end_date: DateTime
+    start_date: datetime
+    end_date: datetime
 
 
 class Education(SQLModel, table=True):
@@ -126,6 +130,8 @@ class Education(SQLModel, table=True):
     school: str
     major: str
     description: str
+    start_date: datetime
+    end_date: datetime
     # start_date: DateTime = Field(
     #     sa_column=Column(
     #         TIMESTAMP(timezone=True),
@@ -148,6 +154,8 @@ class EducationModel(SQLModel):
     school: str
     major: str
     description: str
+    start_date: datetime
+    end_date: datetime
     # start_date: DateTime = Field(
     #     sa_column=Column(
     #         TIMESTAMP(timezone=True),
@@ -172,6 +180,8 @@ class Experience(SQLModel, table=True):
     company: str
     position: str
     description: str
+    start_date: datetime
+    end_date: datetime
     # start_date: DateTime = Field(
     #     sa_column=Column(
     #         TIMESTAMP(timezone=True),
@@ -194,6 +204,8 @@ class ExperienceModel(SQLModel):
     company: str
     position: str
     description: str
+    start_date: datetime
+    end_date: datetime
     # start_date: DateTime = Field(
     #     sa_column=Column(
     #         TIMESTAMP(timezone=True),
@@ -239,16 +251,17 @@ class SocialPlatformModel(SQLModel):
 
 
 class ProfileInfoModel(SQLModel):
-    profile: ProfileModel
-    programming_languages: list[ProgrammingLanguageModel] | None
-    languages: list[LanguageModel] | None
-    tools: list[ToolModel] | None
-    certificates: list[CertificateModel] | None
-    charities: list[CharityModel] | None
-    educations: list[EducationModel] | None
-    experiences: list[ExperienceModel] | None
-    projects: list[ProjectModel] | None
-    social_platforms: list[SocialPlatformModel] | None
+    profile: Profile
+    locations: list[Location] | None
+    programming_languages: list[ProgrammingLanguage] | None
+    languages: list[Language] | None
+    tools: list[Tool] | None
+    certificates: list[Certificate] | None
+    charities: list[Charity] | None
+    educations: list[Education] | None
+    experiences: list[Experience] | None
+    projects: list[Project] | None
+    social_platforms: list[SocialPlatform] | None
 
 
 # locations: list[LocationModel] | None  # TODO: In the future make this priority list

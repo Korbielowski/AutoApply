@@ -14,190 +14,364 @@
             padding: 0;
         }
 
-        body {
-            padding: 10px;
-        }
-
         html {
             overflow-x: hidden;
         }
+
+        .container {
+            margin: 20px auto;
+            padding: 20px;
+            border-radius: 10px;
+            border-width: 2px;
+            border-color: black;
+            border-style: solid;
+        }
+
     </style>
     <!-- TODO: In the future it may have to be changed -->
 </head>
 
 <body>
-    <form class="row g-3" onsubmit="sendFromData()">
-        <input name="firstname" class="form-control" type="text" placeholder="First Name"
-            aria-label="default input example">
-        <input name="middlename" class="form-control" type="text" placeholder="Second name"
-            aria-label="default input example">
-        <input name="surname" class="form-control" type="text" placeholder="Surname" aria-label="default input example">
-        <div class="col-md-3">
-            <label for="customRange1" class="form-label">Enter your age</label>
-            <input name="age" type="range" class="form-range" id="customRange1">
-        </div>
-        <!-- <label for="inputCountry" class="form-label">Country</label> -->
-        <!-- <input name="country" type="text" class="form-control" id="inputCountry"> -->
-        <!-- <div class="col-md-3"> -->
-        <!--     <label for="inputState" class="form-label">State</label> -->
-        <!--     <input name="state" type="text" class="form-control" id="inputSate"> -->
-        <!-- </div> -->
-        <!-- <div class="col-md-3"> -->
-        <!--     <label for="inputCity" class="form-label">City</label> -->
-        <!--     <input name="city" type="text" class="form-control" id="inputCity"> -->
-        <!-- </div> -->
-        <!-- <div class="col-md-2"> -->
-        <!--     <label for="level" class="form-label">Zip</label> -->
-        <!--     <input name="zipcode" type="text" class="form-control" id="level"> -->
-        <!-- </div> -->
-        <!-- <div class="col-md-2"> -->
-        <!--     <label for="languageName" class="form-label">Language</label> -->
-        <!--     <input name="language" type="text" class="form-control" id="languageName"> -->
-        <!-- </div> -->
-        <div class="col-12">
-            <button type="button" class="btn btn-primary" onclick="postFormData()">Sign in</button>
-        </div>
-    </form>
+    <div class="container">
+        <h3>Candidate Information</h3>
+        <form class="row g-3" id="user-info">
+            <input name="firstname" class="form-control" type="text" placeholder="First Name"
+                aria-label="default input example">
+            <input name="middlename" class="form-control" type="text" placeholder="Middle name"
+                aria-label="default input example">
+            <input name="surname" class="form-control" type="text" placeholder="Surname" aria-label="default input example">
+            <div class="col-md-3">
+                <label for="customRange1" class="form-label">Enter your age</label>
+                <input name="age" type="range" class="form-range" id="customRange1">
+            </div>
+            <input name="email" class="form-control" type="email" placeholder="Email">
+        </form>
+    </div>
+
+    <div class="container">
+        <h3>Locations</h3>
+        <ul id="locations-list"></ul>
+        <form class="row g-3" onsubmit="addLocation()" id="location-form">
+            <input name="country" class="form-control" type="text" placeholder="Country">
+            <input name="state" class="form-control" type="text" placeholder="State">
+            <input name="city" class="form-control" type="text" placeholder="City">
+            <input name="zip-code" class="form-control" type="text" placeholder="Zip code">
+            <input type="submit" class="btn btn-dark" value="Add">
+        </form>
+    </div>
+
+    <div class="container">
+        <h3>Programming Languages</h3>
+        <ul id="programming-languages-list"></ul>
+        <form class="row g-3" onsubmit="addProgrammingLanguage()" id="programming-language-form">
+            <input class="form-control" type="text" placeholder="Programming language name" name="language">
+            <select class="form-control form-control-lg" name="level">
+            <option>Beginner</option>
+            <option>Intermediate</option>
+            <option>Expert</option>
+            <option>Master</option>
+            </select>
+            <input type="submit" class="btn btn-dark" value="Add">
+        </form>
+    </div>
+
+    <div class="container">
+        <h3>Languages</h3>
+        <ul id="languages-list"></ul>
+        <form class="row g-3" onsubmit="addLanguage()" id="language-form">
+            <input class="form-control" type="text" placeholder="Language name" name="language">
+            <select class="form-control form-control-lg" name="level">
+            <option>Beginner</option>
+            <option>Intermediate</option>
+            <option>Expert</option>
+            <option>Master</option>
+            </select>
+            <input type="submit" class="btn btn-dark" value="Add">
+        </form>
+    </div>
+
+    <div class="container">
+        <h3>Tools</h3>
+        <ul id="tools-list"></ul>
+        <form class="row g-3" onsubmit="addTool()" id="tool-form">
+            <input class="form-control" type="text" placeholder="Tool name" name="tool">
+            <select class="form-control form-control-lg" name="level">
+            <option>Beginner</option>
+            <option>Intermediate</option>
+            <option>Expert</option>
+            <option>Master</option>
+            </select>
+            <input type="submit" class="btn btn-dark" value="Add">
+        </form>
+    </div>
+
+    <div class="container">
+        <h3>Certificates</h3>
+        <ul id="certificates-list"></ul>
+        <form class="row g-3" onsubmit="addCertificate()" id="certificate-form">
+            <input class="form-control" type="text" placeholder="Certificate name" name="certificate">
+            <input class="form-control" type="text" placeholder="Organisation name" name="organisation">
+            <input class="form-control" type="text" placeholder="Certificate description" name="description">
+            <input type="submit" class="btn btn-dark" value="Add">
+        </form>
+    </div>
+
+    <div class="container">
+        <h3>Charities</h3>
+        <ul id="charities-list"></ul>
+        <form class="row g-3" onsubmit="addCharity()" id="charity-form">
+            <input class="form-control" type="text" placeholder="Charity name" name="charity">
+            <input class="form-control" type="text" placeholder="Organisation name" name="organisation">
+            <input class="form-control" type="text" placeholder="Charity description" name="description">
+            <label for="languageName" class="form-label">Start date</label>
+            <input class="form-control" type="date" name="start-date">
+            <label for="languageName" class="form-label">End date</label>
+            <input class="form-control" type="date" name="end-date">
+            <input type="submit" class="btn btn-dark" value="Add">
+        </form>
+    </div>
+
+    <div class="container">
+        <h3>Educations</h3>
+        <ul id="educations-list"></ul>
+        <form class="row g-3" onsubmit="addEducation()" id="education-form">
+            <input class="form-control" type="text" placeholder="School name" name="school">
+            <input class="form-control" type="text" placeholder="Major name" name="major">
+            <input class="form-control" type="text" placeholder="School description" name="description">
+            <label for="languageName" class="form-label">Start date</label>
+            <input class="form-control" type="date" name="start-date">
+            <label for="languageName" class="form-label">End date</label>
+            <input class="form-control" type="date" name="end-date">
+            <input type="submit" class="btn btn-dark" value="Add">
+        </form>
+    </div>
+
+    <div class="container">
+        <h3>Experience</h3>
+        <ul id="experience-list"></ul>
+        <form class="row g-3" onsubmit="addExperince()" id="experience-form">
+            <input class="form-control" type="text" placeholder="Company name" name="company">
+            <input class="form-control" type="text" placeholder="Position name" name="position">
+            <input class="form-control" type="text" placeholder="Description" name="description">
+            <label for="languageName" class="form-label">Start date</label>
+            <input class="form-control" type="date" name="start-date">
+            <label for="languageName" class="form-label">End date</label>
+            <input class="form-control" type="date" name="end-date">
+            <input type="submit" class="btn btn-dark" value="Add">
+        </form>
+    </div>
+
+    <div class="container">
+        <h3>Projects</h3>
+        <ul id="projects-list"></ul>
+        <form class="row g-3" onsubmit="addProject()" id="project-form">
+            <input class="form-control" type="text" placeholder="Project name" name="project">
+            <input class="form-control" type="text" placeholder="Description" name="description">
+            <input class="form-control" type="text" placeholder="Link to project" name="link">
+            <input type="submit" class="btn btn-dark" value="Add">
+        </form>
+    </div>
+
+    <div class="container">
+        <h3>Social Platforms</h3>
+        <ul id="social-platforms-list"></ul>
+        <form class="row g-3" onsubmit="addSocialPlatform()" id="social-platform-form">
+            <input class="form-control" type="text" placeholder="Social platform name" name="social-platform">
+            <input class="form-control" type="text" placeholder="Link to social platform" name="link">
+            <input type="submit" class="btn btn-dark" value="Add">
+        </form>
+    </div>
+
+    <button onclick="postFormData()" class="btn btn-dark form-control">Create user</button>
 </body>
 
 <script>
-    // {
-    //     "country": form.get("country"),
-    //         "state": form.get("state"),
-    //             "city": form.get("city"),
-    //                 "zipcode": form.get("zipcode"),
-    //         },
+    locations = []
+    programmingLanguages = []
+    languages = []
+    certificates = []
+    experiences = []
+    educations = []
+    charities = []
+    socialPlatfroms = []
+    tools = []
+    projects = []
 
-    function getLocations(){
-        const locations = ["Berlin", "Wroclaw"]
-        const levels = ["2", "9"]
-        const tmp = languages.map(function (e, i) {
-            return {"language": e, "level": levels[i]}
-        });
-        return tmp
+    // TODO: Check if user input is not empty, if so return modal with message
+    function addLocation(){
+        event.preventDefault();
+        const formData = new FormData(document.getElementById("location-form"));
+
+        country = formData.get("country");
+        state = formData.get("state");
+        city = formData.get("city");
+        zipCode = formData.get("zip-code");
+        elem = {"country": country, "state": state, "city": city, "zipcode": zipCode};
+        console.log(JSON.stringify(elem));
+
+        locations.push(elem);
+        document.getElementById("locations-list").innerHTML += "<li>" + JSON.stringify(elem) + "</li>";
     }
 
-    function getProgrammingLanguages() {
-        const languages = ["go", "cpp"]//form.getAll("language");
-        const levels = ["2", "10"] //form.getAll("language-level");
-        const tmp = languages.map(function (e, i) {
-            return { "language": e, "level": levels[i], }
-        });
-        return tmp;
+    function addLanguage(){
+        event.preventDefault();
+        const formData = new FormData(document.getElementById("language-form"));
+
+        language = formData.get("language");
+        level = formData.get("level");
+        elem = {"language": language, "level": level};
+
+        languages.push(elem);
+        document.getElementById("languages-list").innerHTML += "<li>" + JSON.stringify(elem) + "</li>";
     }
 
-    function getLanguages() {
-        const languages = ["english", "polish"]
-        const levels = ["2", "9"]
-        const tmp = languages.map(function (e, i) {
-            return { "language": e, "level": levels[i], }
-        });
-        return tmp;
+    function addProgrammingLanguage(){
+        event.preventDefault();
+        const formData = new FormData(document.getElementById("programming-language-form"));
+
+        language = formData.get("language");
+        level = formData.get("level");
+        elem = {"language": language, "level": level};
+
+        programmingLanguages.push(elem);
+        document.getElementById("programming-languages-list").innerHTML += "<li>" + JSON.stringify(elem) + "</li>";
     }
 
-    function getTools(){
-        const names = ["Jira", "Github"]
-        const levels = ["2", "9"]
-        const tmp = names.map(function (e, i) {
-            return { "name": e, "level": levels[i], }
-        });
-        return tmp;
+    function addTool(){
+        event.preventDefault();
+        const formData = new FormData(document.getElementById("tool-form"));
+
+        name = formData.get("tool");
+        level = formData.get("level");
+        elem = {"name": name, "level": level};
+
+        tools.push(elem);
+        document.getElementById("tools-list").innerHTML += "<li>" + JSON.stringify(elem) + "</li>";
     }
 
-    function getCertificates(){
-        const names = ["DevOps cerificate", "Pythonista"]
-        const descriptions = ["Very important certificate", "Very good certificate"]
-        const organisations = ["Nokia", "Google"]
-        const tmp = names.map(function (e, i) {
-            return { "name": e, "description": descriptions[i], "organisation": organisations[i]}
-        });
-        return tmp;
+    function addCertificate(){
+        event.preventDefault();
+        const formData = new FormData(document.getElementById("certificate-form"));
+
+        name = formData.get("certificate");
+        organisation = formData.get("organisation");
+        description = formData.get("description");
+        elem = {"name": name, "description": description, "organisation": organisation};
+
+        certificates.push(elem);
+        document.getElementById("certificates-list").innerHTML += "<li>" + JSON.stringify(elem) + "</li>";
     }
 
-    function getCharities(){
-        const names = ["Charity 1", "Charity 2"]
-        const descriptions = ["Good charity", "Super duper charity"]
-        const organisations = ["Microsoft", "Meta"]
-        const tmp = names.map(function (e, i) {
-            return { "name": e, "description": descriptions[i], "organisation": organisations[i]}
-        });
-        return tmp;
+    function addCharity(){
+        event.preventDefault();
+        const formData = new FormData(document.getElementById("charity-form"));
+
+        name = formData.get("charity");
+        organisation = formData.get("organisation");
+        description = formData.get("description");
+        startDate = formData.get("start-date");
+        endDate = formData.get("end-date");
+        elem = {"name": name, "description": description, "organisation": organisation, "start_date": startDate, "end_date": endDate};
+
+        charities.push(elem);
+        document.getElementById("charities-list").innerHTML += "<li>" + JSON.stringify(elem) + "</li>";
     }
 
-    function getEducations(){
-        const schools = ["uwr", "pwr"]
-        const majors = ["CS", "Math"]
-        const descriptions = ["Very good university", "Good university"]
-        const tmp = schools.map(function (e, i) {
-            return { "school": e, "major": majors[i], "description": descriptions[i]}
-        });
-        return tmp;
+    function addEducation(){
+        event.preventDefault();
+        const formData = new FormData(document.getElementById("education-form"));
+
+        school = formData.get("school");
+        major = formData.get("major");
+        description = formData.get("description");
+        startDate = formData.get("start-date");
+        endDate = formData.get("end-date");
+        elem = {"school": school, "major": major, "description": description, "start_date": startDate, "end_date": endDate};
+
+        educations.push(elem);
+        document.getElementById("educations-list").innerHTML += "<li>" + JSON.stringify(elem) + "</li>";
     }
 
-    function getExperiences(){
-        const companies = ["Google", "OpenAI"]
-        const positions = ["Line manager", "Developer"]
-        const descriptions = ["Did lots stuff", "Did little stuff"]
-        const tmp = companies.map(function (e, i) {
-            return { "company": e, "position": positions[i], "description": descriptions[i]}
-        });
-        return tmp;
+    function addExperince(){
+        event.preventDefault();
+        const formData = new FormData(document.getElementById("experience-form"));
+
+        company = formData.get("company");
+        position = formData.get("position");
+        description = formData.get("description");
+        startDate = formData.get("start-date");
+        endDate = formData.get("end-date");
+        elem = {"company": company, "position": position, "description": description, "start_date": startDate, "end_date": endDate};
+
+        experiences.push(elem);
+        document.getElementById("experience-list").innerHTML += "<li>" + JSON.stringify(elem) + "</li>";
     }
 
-    function getProjects(){
-        const names = ["GBD", "BDG"]
-        const descriptions = ["super duper project", "cos cos"]
-        const links = ["https", "http"]
-        const tmp = names.map(function (e, i) {
-            return { "name": e, "description": descriptions[i], "link": links[i]}
-        });
-        return tmp;
+    function addProject(){
+        event.preventDefault();
+        const formData = new FormData(document.getElementById("project-form"));
+
+        name = formData.get("project");
+        description = formData.get("description");
+        link = formData.get("link");
+        elem = {"name": name, "description": description, "link": link};
+
+        projects.push(elem);
+        document.getElementById("projects-list").innerHTML += "<li>" + JSON.stringify(elem) + "</li>";
     }
 
-    function getSocialPlatforms(){
-        const names = ["fb", "linkedin"]
-        const links = ["http", "https"]
-        const tmp = names.map(function (e, i) {
-            return { "name": e, "link": links[i], }
-        });
-        return tmp;
+    function addSocialPlatform(){
+        event.preventDefault();
+        const formData = new FormData(document.getElementById("social-platform-form"));
+
+        name = formData.get("social-platform");
+        link = formData.get("link");
+        elem = {"name": name, "link": link};
+
+        socialPlatfroms.push(elem);
+        document.getElementById("social-platforms-list").innerHTML += "<li>" + JSON.stringify(elem) + "</li>";
     }
 
-    async function postFormData() {
-        const formData = new FormData(document.querySelector('form'));
+    async function postFormData(){
+        const formData = new FormData(document.getElementById("user-info"));
+
+        firstname = formData.get("firstname");
+        surname = formData.get("surname");
+        email = formData.get("email");
+        if(firstname === "" || surname === "" || email === ""){
+            alert("Firstname, surname and email fields must be filled");
+            return;
+        }
 
         let dataJson = {
             "profile": {
-                "firstname": formData.get("firstname"),
+                "firstname": firstname,
                 "middlename": formData.get("middlename"),
-                "surname": formData.get("surname"),
+                "surname": surname,
                 "age": formData.get("age"),
+                "email": email,
             },
-            // "locations": getLocations(),
-            "programming_languages": getProgrammingLanguages(),
-            "languages": getLanguages(),
-            "tools": getTools(),
-            "certificates": getCertificates(),
-            "charities": getCharities(),
-            "educations": getEducations(),
-            "experiences": getExperiences(),
-            "projects": getProjects(),
-            "social_platforms": getSocialPlatforms(),
+            "locations": locations,
+            "programming_languages": programmingLanguages,
+            "languages": languages,
+            "tools": tools,
+            "certificates": certificates,
+            "charities": charities,
+            "educations": educations,
+            "experiences": experiences,
+            "projects": projects,
+            "social_platforms": socialPlatfroms,
         };
-
-        console.log(JSON.stringify(dataJson, null , 2))
 
         const response = await fetch("{{ url_for('create_user') }}", {
             method: "POST",
             headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
+                "Accept": "application/json",
+                "Content-Type": "application/json"
             },
             body: JSON.stringify(dataJson),
         });
 
-        console.log("status: ", response.status);
-        console.log("body: ", response.body);
         window.location.href = response.url;
     }
 </script>
