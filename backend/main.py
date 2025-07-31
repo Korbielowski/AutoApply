@@ -1,5 +1,6 @@
 # from .app_setup import engine, app, templates
 from .app_setup import app, templates
+from .scraper import find_job_entries
 from .models import (
     ProfileInfoModel,
     Profile,
@@ -16,7 +17,7 @@ from .models import (
 )
 
 from fastapi import Request, status
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, StreamingResponse
 from sqlmodel import Session
 
 from sqlalchemy import URL
@@ -43,11 +44,12 @@ url_object = URL.create(
 )
 engine = create_engine(url_object)  # TODO: Remove 'echo' parameter when releasing
 SQLModel.metadata.create_all(engine)
+profile = None
 
 
 @app.get("/")
 # @authenticate_user
-async def root(request: Request):
+async def root(request: Request) -> RedirectResponse:
     return RedirectResponse(url=request.url_for("load_user_form"))
     # return templates.TemplateResponse(request=request, name="index.html")
 
@@ -85,6 +87,7 @@ async def create_user(
     with Session(engine) as session:
         session.add(form_profile)
         session.commit()
+        global profile
         profile = session.exec(
             select(Profile).where(Profile.email == form_profile.email)
         ).first()
@@ -100,3 +103,15 @@ async def create_user(
 @app.get("/panel")
 async def panel(request: Request):
     return templates.TemplateResponse(request=request, name="panel.html")
+
+
+@app.get("/scrape_jobs")
+async def scrape_jobs(request: Request):
+    # await run_scraper(profile)
+    return StreamingResponse(
+        find_job_entries(
+            profile,
+            "https://www.linkedin.com/jobs/collections/recommended/?currentJobId=4254862954",
+        ),
+        media_type="text/event-stream",
+    )
