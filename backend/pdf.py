@@ -185,7 +185,7 @@ def create_cv(
     # 2) Make LLM put adequate skills etc. into the template string
     # 3) Make LLM write the CV from the ground up
     # 4) Make algorithm for putting relevant skills into CV without use of LLM
-    info = _get_info_for_cv(mode)
+    info = _get_info_for_cv(profile, mode)
     if mode == "llm-selection":
         skills = info.get("skills", "")
         name = info.get("name", "Jan Kolon Movano")
