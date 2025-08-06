@@ -13,6 +13,21 @@
       crossorigin="anonymous"
     ></script>
     <link rel="icon" type="image/x-icon" href="/static/favicon.ico" />
+    <style>
+      ul {
+        list-style-type: none;
+        margin: 0;
+        padding: 0;
+      }
+
+      li {
+        border-width: 2px;
+        border-radius: 5px;
+        border-style: solid;
+        background-color: bisque;
+        padding: 10px;
+      }
+    </style>
   </head>
 
   <body>
@@ -26,16 +41,29 @@
 
 <script>
   let eventSrc = null;
+  function draw_job(data) {
+    jobContainer = document.getElementById("job-entries-container");
+    let li = document.createElement("li");
+
+    li.textContent = `id: ${data.posting_id},desc: ${data.description}, location: ${data.location}. url: ${data.company_url}`;
+    li.innerHTML = `
+    <p>Job id: ${data.posting_id}</p>
+    <details>
+    <summary>Job description</summary>
+    <p>${data.description}</p>
+    </details>
+    <p>Location: ${data.location}</p>
+    <a href="${data.company_url}">Company url: ${data.company_url}</a>
+    `;
+    jobContainer.appendChild(li);
+  }
 
   function scrape_jobs() {
     let button = document.getElementById("scrape-btn");
     if (button.innerText == "Start job search") {
       eventSrc = new EventSource("{{ url_for('scrape_jobs') }}");
       eventSrc.onmessage = function (event) {
-        jobContainer = document.getElementById("job-entries-container");
-        let elem = document.createElement("li");
-        elem.textContent = event.data;
-        jobContainer.appendChild(elem);
+        draw_job(JSON.parse(event.data));
       };
       button.innerText = "Stop job search";
     } else {
