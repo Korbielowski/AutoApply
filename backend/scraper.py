@@ -21,7 +21,7 @@ USER_EMAIL = os.getenv("USER_EMAIL", "")
 PASSWORD = os.getenv("PASSWORD", "")
 
 
-async def init_playwright_page(playwright: Playwright) -> Page:
+async def _init_playwright_page(playwright: Playwright) -> Page:
     browser = await playwright.chromium.launch(headless=False)
     page = await browser.new_page(locale="en-US")
 
@@ -66,7 +66,7 @@ def _evaluate_job(description: str) -> tuple[bool, str]:
 
 async def _process_job_entry(
     profile: ProfileModel, page: Page, locator: Locator = None, retry: int = 3
-) -> None:
+) -> str:
     data = None
 
     # TODO: Make this loop make more sense, by maybe doing something more
@@ -80,7 +80,7 @@ async def _process_job_entry(
 
     if data is None:
         logging.error("Did not get information about the job entry")
-        return
+        return ""
 
     job_data = json.loads(data.group())
     posting_id = int(job_data["data"]["jobPostingId"])
@@ -89,10 +89,10 @@ async def _process_job_entry(
     # with Session(engine) as session:
     #     stmt = select(JobEntry).where(JobEntry.posting_id == posting_id)
     #     result = session.exec(stmt)
-    #     if not result:
+    #     if result:
     #         logger.error("Job posting is already in database")
 
-    description = job_data["data"]["description"]
+    description = job_data["data"]["description"]["text"]
     location = job_data["data"]["formattedLocation"]
     company_url = job_data["data"]["applyMethod"]["companyApplyUrl"]
 
@@ -122,24 +122,39 @@ async def _process_job_entry(
         # _apply_for_job(page, cv)
     else:
         logging.info("You should not apply")
+    return json.dumps(
+        {
+            "posting_id": posting_id,
+            "description": description,
+            "location": location,
+            "company_url": company_url,
+        }
+    )
 
 
 async def _go_to_next_page(page: Page) -> bool:
     pass
 
 
+async def _go_to_next_job(page: Page) -> bool:
+    # if :
+    #     if not _go_to_next_page(page):
+    #         return False
+    pass
+
+
 async def find_job_entries(profile: ProfileModel, link: str) -> None:
     async with async_playwright() as playwright:
-        page = await init_playwright_page(playwright)
+        page = await _init_playwright_page(playwright)
         await _login_to_page(page, link)
-        await _process_job_entry(profile, page)
+        # await _go_to_job_list(page)
 
-    # running = True
-    # while running:
-    #     for job_locator in await _get_job_entries(page):
-    #         await _parse_job_entry(page, job_locator)
-    #
-    #     running = await _go_to_next_page()
+        running = True
+        while running:
+            # for job_locator in await _get_job_entries(page):
+            data = await _process_job_entry(profile, page)
+            running = await _go_to_next_job()
+            yield f"data:{data}\n\n"
 
 
 # TODO: Add link: str parameter to this function
@@ -147,11 +162,11 @@ async def run_scraper(
     profile: ProfileModel, link: str = "https://www.linkedin.com/jobs/"
 ) -> None:
     async with async_playwright() as playwright:
-        page = await init_playwright_page(playwright)
+        page = await _init_playwright_page(playwright)
         find_job_entries(
             profile,
             page,
-            "https://www.linkedin.com/jobs/collections/recommended/?currentJobId=4254862954",
+            "https://www.linkedin.com/jobs/collections/recommended/?currentJobId=4261395371",
         )
 
 
