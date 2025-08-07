@@ -25,6 +25,7 @@ from sqlmodel import SQLModel, create_engine, select
 from dotenv import load_dotenv
 
 import os
+from typing import Union
 
 
 DRIVERNAME = "postgresql+psycopg"
@@ -49,9 +50,12 @@ profile = None
 
 @app.get("/")
 # @authenticate_user
-async def root(request: Request) -> RedirectResponse:
-    return RedirectResponse(url=request.url_for("load_user_form"))
-    # return templates.TemplateResponse(request=request, name="index.html")
+async def index(
+    request: Request, response_model=Union[RedirectResponse, templates.TemplateResponse]
+):
+    if profile is None:
+        return RedirectResponse(url=request.url_for("load_user_form"))
+    return templates.TemplateResponse(request=request, name="index.html")
 
 
 @app.get("/create_user")
@@ -96,13 +100,8 @@ async def create_user(
             session.add(model)
         session.commit()
     return RedirectResponse(
-        url=request.url_for("panel"), status_code=status.HTTP_303_SEE_OTHER
+        url=request.url_for("index"), status_code=status.HTTP_303_SEE_OTHER
     )
-
-
-@app.get("/panel")
-async def panel(request: Request):
-    return templates.TemplateResponse(request=request, name="panel.html")
 
 
 @app.get("/scrape_jobs")
