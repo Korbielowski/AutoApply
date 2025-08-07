@@ -4,9 +4,9 @@ from dotenv import load_dotenv
 from weasyprint import HTML, CSS
 
 # from app_setup import engine
-from llm import send_req_to_llm
-from models import (
-    Profile,
+from .llm import send_req_to_llm
+from .models import (
+    ProfileModel,
     ProgrammingLanguage,
     Language,
     Tool,
@@ -117,7 +117,7 @@ TEMPLATE = """
 DRIVERNAME = "postgresql+psycopg"
 
 
-def _get_info_for_cv(mode: str) -> dict[str, str]:
+def _get_info_for_cv(profile: ProfileModel, mode: str) -> dict[str, str]:
     load_dotenv()
     username = os.environ.get("POSTGRE_USERNAME")
     password = os.environ.get("POSTGRE_PASSWORD")
@@ -143,22 +143,20 @@ def _get_info_for_cv(mode: str) -> dict[str, str]:
         Project,
     )
     with Session(engine) as session:
-        profile_query = session.execute(
-            select(Profile)
-        ).first()  # TODO: Add checks for currently logged user
-        links_query = session.execute(select(SocialPlatform))
-        firstname = profile_query.firstname if profile_query else ""
-        middlename = profile_query.middle_name if profile_query else ""
-        surname = profile_query.surname if profile_query else ""
+        links_query = session.execute(
+            select(SocialPlatform).where(SocialPlatform.profile_id == profile.id)
+        )
         output = {
-            "name": f"{firstname} {middlename} {surname}",
+            "name": f"{profile.firstname} {profile.middlename} {profile.surname}",
+            "email": profile.email,
+            # "phone_number": profile.phone_number,
         }
         if mode == "llm-selection" or mode == "llm-generation":
             links_arr = (link.link for link in links_query)
             output["links"] = ",".join(links_arr)
             output["skills"] = ""
             for c in model_classes:
-                query = session.execute(select(c))
+                query = session.execute(select(c).where(c.profile_id == profile.id))
                 arr = (row for row in query)
                 output["skills"] += ",".join(arr)
         elif mode == "user-cv":
@@ -167,13 +165,14 @@ def _get_info_for_cv(mode: str) -> dict[str, str]:
                 output["links"][link.name] = link.link
             output["skills"] = ""
             for c in model_classes:
-                query = session.execute(select(c))
+                query = session.execute(select(c).where(c.profile_id == profile.id))
                 arr = (row for row in query)
                 output[c.__name__] = ",".join(arr)
         return output
 
 
 def create_cv(
+    profile: ProfileModel,
     posting_id: str,
     requirements: str,
     location: str,
@@ -186,7 +185,7 @@ def create_cv(
     # 2) Make LLM put adequate skills etc. into the template string
     # 3) Make LLM write the CV from the ground up
     # 4) Make algorithm for putting relevant skills into CV without use of LLM
-    info = _get_info_for_cv(mode)
+    info = _get_info_for_cv(profile, mode)
     if mode == "llm-selection":
         skills = info.get("skills", "")
         name = info.get("name", "Jan Kolon Movano")

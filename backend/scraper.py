@@ -1,12 +1,13 @@
-import asyncio
 from playwright.async_api import async_playwright, Playwright, Page, Locator
-
-from llm import send_req_to_llm
-from pdf import create_cv
 from dotenv import load_dotenv
+
+from .llm import send_req_to_llm
+from .pdf import create_cv
+from .models import ProfileModel
 # from app_setup import enigne
 # from models import JobEntry
 
+import asyncio
 import os
 import re
 import json
@@ -22,7 +23,7 @@ PASSWORD = os.getenv("PASSWORD", "")
 
 async def _init_playwright_page(playwright: Playwright) -> Page:
     browser = await playwright.chromium.launch(headless=False)
-    page = await browser.new_page()
+    page = await browser.new_page(locale="en-US")
 
     return page
 
@@ -64,8 +65,8 @@ def _evaluate_job(description: str) -> tuple[bool, str]:
 
 
 async def _process_job_entry(
-    page: Page, locator: Locator = None, retry: int = 3
-) -> None:
+    profile: ProfileModel, page: Page, locator: Locator = None, retry: int = 3
+) -> str:
     data = None
 
     # TODO: Make this loop make more sense, by maybe doing something more
@@ -79,7 +80,7 @@ async def _process_job_entry(
 
     if data is None:
         logging.error("Did not get information about the job entry")
-        return
+        return ""
 
     job_data = json.loads(data.group())
     posting_id = int(job_data["data"]["jobPostingId"])
@@ -88,10 +89,10 @@ async def _process_job_entry(
     # with Session(engine) as session:
     #     stmt = select(JobEntry).where(JobEntry.posting_id == posting_id)
     #     result = session.exec(stmt)
-    #     if not result:
+    #     if result:
     #         logger.error("Job posting is already in database")
 
-    description = job_data["data"]["description"]
+    description = job_data["data"]["description"]["text"]
     location = job_data["data"]["formattedLocation"]
     company_url = job_data["data"]["applyMethod"]["companyApplyUrl"]
 
@@ -104,7 +105,12 @@ async def _process_job_entry(
         use_own_cv = False
         if not use_own_cv:
             cv = create_cv(
-                posting_id, requirements, location, company_url, "llm-selection"
+                profile,
+                posting_id,
+                requirements,
+                location,
+                company_url,
+                "llm-selection",
             )
         else:
             path = os.getenv("USER_CV", "")
@@ -116,33 +122,53 @@ async def _process_job_entry(
         # _apply_for_job(page, cv)
     else:
         logging.info("You should not apply")
+    return json.dumps(
+        {
+            "posting_id": posting_id,
+            "description": description,
+            "location": location,
+            "company_url": company_url,
+        }
+    )
 
 
 async def _go_to_next_page(page: Page) -> bool:
     pass
 
 
-async def find_job_entries(page: Page, link: str) -> None:
-    await _login_to_page(page, link)
+async def _go_to_next_job(page: Page) -> bool:
+    # if :
+    #     if not _go_to_next_page(page):
+    #         return False
+    pass
 
-    await _process_job_entry(page)
-    # running = True
-    # while running:
-    #     for job_locator in await _get_job_entries(page):
-    #         await _parse_job_entry(page, job_locator)
-    #
-    #     running = await _go_to_next_page()
+
+async def find_job_entries(profile: ProfileModel, link: str) -> None:
+    async with async_playwright() as playwright:
+        page = await _init_playwright_page(playwright)
+        await _login_to_page(page, link)
+        # await _go_to_job_list(page)
+
+        running = True
+        while running:
+            # for job_locator in await _get_job_entries(page):
+            data = await _process_job_entry(profile, page)
+            running = await _go_to_next_job()
+            yield f"data:{data}\n\n"
 
 
 # TODO: Add link: str parameter to this function
-async def _run_scraper() -> None:
+async def run_scraper(
+    profile: ProfileModel, link: str = "https://www.linkedin.com/jobs/"
+) -> None:
     async with async_playwright() as playwright:
         page = await _init_playwright_page(playwright)
-        await find_job_entries(
+        find_job_entries(
+            profile,
             page,
-            "https://www.linkedin.com/jobs/collections/recommended/?currentJobId=4254862954",
+            "https://www.linkedin.com/jobs/collections/recommended/?currentJobId=4261395371",
         )
 
 
 if __name__ == "__main__":
-    asyncio.run(_run_scraper())
+    asyncio.run(run_scraper())
