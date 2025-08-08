@@ -15,5 +15,24 @@
     <link rel="icon" type="image/x-icon" href="/static/favicon.ico" />
   </head>
 
-  <body></body>
+  <body>
+    <h2>Profiles</h2>
+    <form action="{{ url_for('login')}}" method="POST">
+      {% for profile in profiles %}
+      <div class="form-check">
+        <input
+          class="form-check-input"
+          type="radio"
+          name="email"
+          value="{{ profile.email }}"
+          id="{{ profile.email }}"
+        />
+        <label class="form-check-label" for="{{ profile.email }}"
+          >{{ profile.email }}</label
+        >
+      </div>
+      {% endfor %}
+      <input type="submit" value="Login" />
+    </form>
+  </body>
 </html>
