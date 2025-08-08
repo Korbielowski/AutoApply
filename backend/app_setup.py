@@ -53,6 +53,7 @@ async def setup(app: FastAPI) -> AsyncGenerator:
     engine = create_engine(url_object)  # TODO: Remove 'echo' parameter when releasing
     SQLModel.metadata.create_all(engine)
 
+    # TODO: Fix login with one account
     with Session(engine) as session:
         profile_count = session.scalar(func.count(Profile.id))
         if profile_count == 1:
