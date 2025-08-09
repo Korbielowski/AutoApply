@@ -12,7 +12,7 @@ LLM = OpenAI(base_url="https://api.llm7.io/v1", api_key="unused")
 MODEL = "deepseek-r1-0528"
 
 
-def send_req_to_llm(prompt: str, temperature=1) -> str:
+def send_req_to_llm(prompt: str, temperature: float = 1) -> str:
     # response = LLM.responses.create(model="deepseek/deepseek-r1-distill-llama-70b:free", instructions=prompt, input=str(description))
     try:
         completion = LLM.chat.completions.create(
