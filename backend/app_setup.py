@@ -6,14 +6,18 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from sqlalchemy import URL
-from sqlmodel import SQLModel, create_engine
+from sqlalchemy import URL, func
+from sqlmodel import SQLModel, Session, create_engine, select
 from dotenv import load_dotenv
+
+
+from .models import Profile
 
 # TODO: Check if user can specify custom drivers, so that they would not break SQLAlchemy
 DRIVERNAME = "postgresql+psycopg"
 # engine: Engine = None
 API_KEY: str = ""
+profile = None
 
 
 # This will be used in the future for loading postgre and other stuff
@@ -48,6 +52,14 @@ async def setup(app: FastAPI) -> AsyncGenerator:
     )
     engine = create_engine(url_object)  # TODO: Remove 'echo' parameter when releasing
     SQLModel.metadata.create_all(engine)
+
+    # TODO: Fix login with one account
+    with Session(engine) as session:
+        profile_count = session.scalar(func.count(Profile.id))
+        if profile_count == 1:
+            global profile
+            profile = session.exec(select(Profile)).first()
+
     yield
 
     # TODO: In the future release all resources

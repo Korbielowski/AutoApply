@@ -1,5 +1,5 @@
 # from .app_setup import engine, app, templates
-from .app_setup import app, templates
+from .app_setup import profile, app, templates
 from .scraper import find_job_entries
 from .models import (
     ProfileInfoModel,
@@ -16,16 +16,16 @@ from .models import (
     SocialPlatform,
 )
 
-from fastapi import Request, status
+from fastapi import Request, Form, status
 from fastapi.responses import RedirectResponse, StreamingResponse
 from sqlmodel import Session
 
-from sqlalchemy import URL
+from sqlalchemy import URL, func
 from sqlmodel import SQLModel, create_engine, select
 from dotenv import load_dotenv
 
 import os
-from typing import Union
+# from typing import Union
 
 
 DRIVERNAME = "postgresql+psycopg"
@@ -45,26 +45,53 @@ url_object = URL.create(
 )
 engine = create_engine(url_object)  # TODO: Remove 'echo' parameter when releasing
 SQLModel.metadata.create_all(engine)
-profile = None
 
 
-@app.get("/")
 # @authenticate_user
-async def index(
-    request: Request, response_model=Union[RedirectResponse, templates.TemplateResponse]
-):
+# @app.get("/", response_model=Union[RedirectResponse, Jinja2Templates])
+@app.get("/")
+async def index(request: Request):
     if profile is None:
-        return RedirectResponse(url=request.url_for("load_user_form"))
+        with Session(engine) as session:
+            profile_count = session.scalar(func.count(Profile.id))
+            if profile_count > 0:
+                return RedirectResponse(
+                    url=request.url_for("load_login_page"),
+                    status_code=status.HTTP_303_SEE_OTHER,
+                )
+        return RedirectResponse(
+            url=request.url_for("load_register_page"),
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
     return templates.TemplateResponse(request=request, name="index.html")
 
 
-@app.get("/create_user")
-async def load_user_form(request: Request):
-    return templates.TemplateResponse(request=request, name="create_user.html")
+@app.get("/login")
+async def load_login_page(request: Request):
+    with Session(engine) as session:
+        profiles = session.exec(select(Profile))
+        return templates.TemplateResponse(
+            request=request, name="login.html", context={"profiles": profiles}
+        )
 
 
-@app.post("/create_user")
-async def create_user(
+@app.post("/login")
+async def login(request: Request, email: str = Form(...)):
+    with Session(engine) as session:
+        global profile
+        profile = session.exec(select(Profile).where(Profile.email == email)).first()
+    return RedirectResponse(
+        url=request.url_for("index"), status_code=status.HTTP_303_SEE_OTHER
+    )
+
+
+@app.get("/register")
+async def load_register_page(request: Request):
+    return templates.TemplateResponse(request=request, name="register.html")
+
+
+@app.post("/register")
+async def register(
     request: Request, form_data: ProfileInfoModel
 ) -> RedirectResponse:  # form: Annotated[TestInfo, Form()]
     d = {

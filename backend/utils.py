@@ -4,6 +4,7 @@ from typing import Callable
 
 # from fastapi import Request
 from fastapi.responses import RedirectResponse
+from .app_setup import profile
 
 DB_NAME = ""
 
@@ -11,7 +12,8 @@ DB_NAME = ""
 def authenticate_user(func: Callable) -> Callable:
     # @wraps(func)
     def wrapper(func):
-        return RedirectResponse(url="/prison")
+        if not profile:
+            return RedirectResponse(url="/login")
         # return func
 
     return wrapper

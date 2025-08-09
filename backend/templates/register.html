@@ -556,7 +556,7 @@
         social_platforms: socialPlatfroms,
       };
 
-      const response = await fetch("{{ url_for('create_user') }}", {
+      const response = await fetch("{{ url_for('register') }}", {
         method: "POST",
         headers: {
           Accept: "application/json",
