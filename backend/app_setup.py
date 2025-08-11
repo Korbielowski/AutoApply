@@ -60,6 +60,7 @@ async def setup(app: FastAPI) -> AsyncGenerator:
             global profile
             profile = session.exec(select(Profile)).first()
 
+    print(f"From setup profile: {profile}")
     yield
 
     # TODO: In the future release all resources
