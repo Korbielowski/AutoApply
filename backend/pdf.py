@@ -232,7 +232,3 @@ def create_cv(
     HTML(string=cv).write_pdf(cv_path, stylesheets=[CSS(string=STYLING)])
 
     return cv_path
-
-
-if __name__ == "__main__":
-    create_cv("123", "", "", "")
