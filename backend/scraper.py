@@ -32,15 +32,18 @@ async def apply_for_job_entry(page: Page) -> None:
     pass
 
 
-# TODO: Add ability to log into many pages
 async def _login_to_page(page: Page, link: str) -> None:
-    await page.goto(link)
-    await page.wait_for_load_state("load")
-    await page.get_by_label("Email or phone").fill(USER_EMAIL)
-    await page.get_by_label("Password").fill(PASSWORD)
-    await page.get_by_label("Sign in").last.click()
-    await page.wait_for_load_state("load")
-    # TODO: Add functionality to check whether we got verification code on gmail or not
+    # TODO: Add functionality to check whether we got verification code on email or not
+    if "linkedin.com" in link:
+        await page.goto(link)
+        await page.wait_for_load_state("load")
+        await page.get_by_label("Email or phone").fill(USER_EMAIL)
+        await page.get_by_label("Password").fill(PASSWORD)
+        await page.get_by_label("Sign in").last.click()
+        await page.wait_for_load_state("load")
+    else:
+        pass
+        # TODO: Add ability to log into many pages using LLM
 
 
 async def _get_job_entries(page: Page) -> tuple[Locator, ...]:
@@ -87,14 +90,17 @@ async def _process_job_entry(
     logging.info(f"job posting id: {posting_id}")
     # TODO: Check if job id is already in database, if so, go to next job entry
     # with Session(engine) as session:
-    #     stmt = select(JobEntry).where(JobEntry.posting_id == posting_id)
+    #     hashed_id = hash(posting_id)
+    #     stmt = select(JobEntry).where(JobEntry.posting_id == hashed_id)
     #     result = session.exec(stmt)
     #     if result:
     #         logger.error("Job posting is already in database")
 
-    description = job_data["data"]["description"]["text"]
-    location = job_data["data"]["formattedLocation"]
-    company_url = job_data["data"]["applyMethod"]["companyApplyUrl"]
+    description = job_data.get("data", {}).get("description", {}).get("text", "")
+    location = job_data.get("data", {}).get("formattedLocation", "")
+    company_url = (
+        job_data.get("data", {}).get("applyMethod", {}).get("companyApplyUrl", "")
+    )
 
     # TODO: Evaluate job entry based on comparison between job's description and user's skills
     is_valuable, requirements = _evaluate_job(description)
