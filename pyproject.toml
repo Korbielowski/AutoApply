@@ -9,6 +9,7 @@ dependencies = [
     "fastapi[standard]>=0.115.12",
     "openai-agents>=0.0.13",
     "playwright>=1.51.0",
+    "playwright-stealth>=2.0.0",
     "psycopg>=3.2.6",
     "pydantic>=2.11.3",
     "sqlmodel>=0.0.24",
