@@ -1,13 +1,16 @@
 from playwright.async_api import async_playwright, Playwright, Page, Locator
+from playwright_stealth import Stealth
 from dotenv import load_dotenv
 
 from .llm import send_req_to_llm
 from .pdf import create_cv
 from .models import ProfileModel
+from .scrapers import PracujPl, LinkedIn
 # from app_setup import enigne
 # from models import JobEntry
 
 import asyncio
+import math
 import os
 import re
 import json
@@ -20,8 +23,11 @@ load_dotenv()
 USER_EMAIL = os.getenv("USER_EMAIL", "")
 PASSWORD = os.getenv("PASSWORD", "")
 
+SCRAPERS = {"pracuj.pl": PracujPl(), "linkedin.com": LinkedIn()}
+
 
 async def _init_playwright_page(playwright: Playwright) -> Page:
+    playwright.selectors.set_test_id_attribute("data-control-id")
     browser = await playwright.chromium.launch(headless=False)
     page = await browser.new_page(locale="en-US")
 
@@ -47,7 +53,42 @@ async def _login_to_page(page: Page, link: str) -> None:
 
 
 async def _get_job_entries(page: Page) -> tuple[Locator, ...]:
-    pass
+    pattern = re.compile(r".*")
+    ld: dict = {}  # TODO: Check if set would be faster than dict
+    wheel_move = 200
+    max_height = int(await page.evaluate("document.documentElement.scrollHeight"))
+    new_cur_pos_x = (
+        int(
+            await page.evaluate(
+                "Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0)"
+            )
+        )
+        / 3
+    )
+    new_cur_pos_y = int(
+        await page.evaluate(
+            "Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0)"
+        )
+        / 2
+    )
+
+    await page.mouse.move(new_cur_pos_x, new_cur_pos_y)
+    print(f"{max_height=}\n\n")
+
+    for _ in range(math.ceil(max_height / wheel_move)):
+        locator = page.get_by_test_id(pattern)
+        for i in range(await locator.count()):
+            a_tag = locator.nth(i)
+            href = await a_tag.get_attribute("href")
+            cl = await a_tag.get_attribute("class")
+            if href not in ld:
+                ld[href] = a_tag
+                print(cl, sep="\n\n")
+        await page.mouse.wheel(0, wheel_move)
+        await page.wait_for_timeout(500)
+
+    print(f"{ld}\n\nSize: {len(ld)}")
+    return tuple(ld.values())
 
 
 def _evaluate_job(description: str) -> tuple[bool, str]:
@@ -150,29 +191,34 @@ async def _go_to_next_job(page: Page) -> bool:
 
 
 async def find_job_entries(profile: ProfileModel, link: str) -> None:
-    async with async_playwright() as playwright:
+    # scraper = SCRAPERS.get(link, LLMScraper())
+    # scraper = SCRAPERS.get
+    async with Stealth().use_async(async_playwright()) as playwright:
         page = await _init_playwright_page(playwright)
+        # await scraper.login_to_page()
         await _login_to_page(page, link)
         # await _go_to_job_list(page)
+        await _get_job_entries(page)
+        # while True:
+        #     await asyncio.sleep(1)
+        yield "data:1\n\n"
 
-        running = True
-        while running:
-            # for job_locator in await _get_job_entries(page):
-            data = await _process_job_entry(profile, page)
-            running = await _go_to_next_job()
-            yield f"data:{data}\n\n"
+        # running = True
+        # while running:
+        #     # for job_locator in await _get_job_entries(page):
+        #     data = await _process_job_entry(profile, page)
+        #     running = await _go_to_next_job()
+        #     yield f"data:{data}\n\n"
 
 
 # TODO: Add link: str parameter to this function
-async def run_scraper(
-    profile: ProfileModel, link: str = "https://www.linkedin.com/jobs/"
-) -> None:
+async def run_scraper(profile: ProfileModel, link: str = "") -> None:
     async with async_playwright() as playwright:
         page = await _init_playwright_page(playwright)
         find_job_entries(
             profile,
             page,
-            "https://www.linkedin.com/jobs/collections/recommended/?currentJobId=4261395371",
+            "",
         )
 
 
