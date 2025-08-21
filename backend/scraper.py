@@ -79,13 +79,10 @@ async def _get_job_entries(page: Page) -> tuple[Locator, ...]:
         for i in range(await locator.count()):
             a_tag = locator.nth(i)
             href = await a_tag.get_attribute("href")
-            cl = await a_tag.get_attribute("class")
             if href not in ld:
                 ld[href] = a_tag
-                print(cl, sep="\n\n")
         await page.mouse.wheel(0, wheel_move)
         await page.wait_for_timeout(500)
-    print(f"{ld}\n\nSize: {len(ld)}")
     return tuple(ld.values())
 
 
@@ -163,7 +160,7 @@ async def _process_job_entry(
                 logging.error("USER_CV variable with path to user's cv is not set")
                 return
             cv = Path(path)
-        print("CV: ", cv)
+            logging.info(cv)
         # _apply_for_job(page, cv)
     else:
         logging.info("You should not apply")
