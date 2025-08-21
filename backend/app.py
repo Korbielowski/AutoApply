@@ -1,6 +1,6 @@
 # from .app_setup import engine, app, templates
 from .app_setup import profile, app, templates
-from .scraper import find_job_entries
+from .scrapers import find_job_entries
 from .models import (
     ProfileInfoModel,
     Profile,
