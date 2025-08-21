@@ -137,7 +137,9 @@ async def scrape_jobs(request: Request):
     return StreamingResponse(
         find_job_entries(
             profile,
-            "https://www.linkedin.com/jobs/collections/recommended/?currentJobId=3706084909",
+            [
+                "https://www.linkedin.com/jobs/collections/recommended/?currentJobId=3706084909"
+            ],
         ),
         media_type="text/event-stream",
     )
