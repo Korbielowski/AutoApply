@@ -10,7 +10,6 @@ from .scrapers import PracujPl, LinkedIn
 # from models import JobEntry
 
 import asyncio
-import math
 import os
 import re
 import json
@@ -55,9 +54,9 @@ async def _login_to_page(page: Page, link: str) -> None:
 async def _get_job_entries(page: Page) -> tuple[Locator, ...]:
     pattern = re.compile(r".*")
     ld: dict = {}  # TODO: Check if set would be faster than dict
+    max_scrolls = 20
     wheel_move = 200
-    max_height = int(await page.evaluate("document.documentElement.scrollHeight"))
-    new_cur_pos_x = (
+    start_pos_x = (
         int(
             await page.evaluate(
                 "Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0)"
@@ -65,17 +64,17 @@ async def _get_job_entries(page: Page) -> tuple[Locator, ...]:
         )
         / 3
     )
-    new_cur_pos_y = int(
+    start_pos_y = int(
         await page.evaluate(
             "Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0)"
         )
         / 2
     )
 
-    await page.mouse.move(new_cur_pos_x, new_cur_pos_y)
-    print(f"{max_height=}\n\n")
+    await page.mouse.move(start_pos_x, start_pos_y)
 
-    for _ in range(math.ceil(max_height / wheel_move)):
+    # TODO: Find a better way for scrolling through the whole page (https://scrapfly.io/blog/answers/how-to-scroll-to-the-bottom-with-playwright)
+    for _ in range(max_scrolls):
         locator = page.get_by_test_id(pattern)
         for i in range(await locator.count()):
             a_tag = locator.nth(i)
@@ -86,7 +85,6 @@ async def _get_job_entries(page: Page) -> tuple[Locator, ...]:
                 print(cl, sep="\n\n")
         await page.mouse.wheel(0, wheel_move)
         await page.wait_for_timeout(500)
-
     print(f"{ld}\n\nSize: {len(ld)}")
     return tuple(ld.values())
 
