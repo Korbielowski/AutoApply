@@ -1,6 +1,7 @@
 from playwright.async_api import async_playwright, Playwright, Page, Locator
 from playwright_stealth import Stealth
 from dotenv import load_dotenv
+from loguru import logger
 
 from .llm import send_req_to_llm
 from .pdf import create_cv
@@ -10,14 +11,13 @@ from .scrapers import PracujPl, LinkedIn
 # from models import JobEntry
 
 import asyncio
+import sys
 import os
 import re
 import json
-import logging
 from pathlib import Path
 
-
-logging.basicConfig(format="%(levelname)s: %(message)s", level=logging.INFO)
+logger.add(sys.stdout, colorize=True)
 load_dotenv()
 USER_EMAIL = os.getenv("USER_EMAIL", "")
 PASSWORD = os.getenv("PASSWORD", "")
@@ -90,13 +90,13 @@ def _evaluate_job(description: str) -> tuple[bool, str]:
     # TODO: Make LLM compare user's skills with skills in the description
     prompt = f"Get only skills, qualifications, place required for this role from the description and return only them in your response and nothing more. {str(description)}"
     requirements = send_req_to_llm(prompt, temperature=0)
-    logging.info(f"Important information about the posiotion: {requirements}")
+    logger.info(f"Important information about the posiotion: {requirements}")
     user_needs = (
         "C, Rust, Poland, Python 5+ years, CI/CD, GIT, python testing, fluent polish"
     )
     prompt = f"Compare my qualifications and needs: {user_needs}. With these from job offer: {requirements}. Return only one word, True if I should apply, and False if not and no other words/characters"
     response = send_req_to_llm(prompt + str(description), temperature=0)
-    logging.info(f"LLM evalutaion: {response}")
+    logger.info(f"LLM evalutaion: {response}")
     if "True" in response:
         return (True, requirements)
     else:
@@ -111,19 +111,19 @@ async def _process_job_entry(
     # TODO: Make this loop make more sense, by maybe doing something more
     while data is None:
         if retry <= 0:
-            logging.error("Cannot get information about job entry")
+            logger.error("Cannot get information about job entry")
             break
         page_content = await page.content()
         data = re.search(r"{\"data\":{\"dashEntityUrn\":.*}", page_content)
         retry -= 1
 
     if data is None:
-        logging.error("Did not get information about the job entry")
+        logger.error("Did not get information about the job entry")
         return ""
 
     job_data = json.loads(data.group())
     posting_id = int(job_data["data"]["jobPostingId"])
-    logging.info(f"job posting id: {posting_id}")
+    logger.info(f"job posting id: {posting_id}")
     # TODO: Check if job id is already in database, if so, go to next job entry
     # with Session(engine) as session:
     #     hashed_id = hash(posting_id)
@@ -142,7 +142,7 @@ async def _process_job_entry(
     is_valuable, requirements = _evaluate_job(description)
 
     if is_valuable:
-        logging.info("You should apply")
+        logger.info("You should apply")
         # TODO: Add use_own_cv flag to options
         use_own_cv = False
         if not use_own_cv:
@@ -157,13 +157,13 @@ async def _process_job_entry(
         else:
             path = os.getenv("USER_CV", "")
             if not path:
-                logging.error("USER_CV variable with path to user's cv is not set")
+                logger.error("USER_CV variable with path to user's cv is not set")
                 return
             cv = Path(path)
-            logging.info(cv)
+            logger.info(cv)
         # _apply_for_job(page, cv)
     else:
-        logging.info("You should not apply")
+        logger.info("You should not apply")
     return json.dumps(
         {
             "posting_id": posting_id,
