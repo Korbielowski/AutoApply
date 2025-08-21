@@ -2,9 +2,6 @@ from .base_scraper import BaseScraper
 
 
 class LLMScraper(BaseScraper):
-    def __init__(self):
-        pass
-
     def login_to_page(self) -> None:
         pass
 
