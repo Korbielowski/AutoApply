@@ -55,8 +55,13 @@ class LinkedIn(BaseScraper):
             await self.page.wait_for_timeout(500)
         return tuple(ld.values())
 
-    async def _go_to_next_page(self) -> bool:
-        pass
+    async def go_to_next_page(self) -> bool:
+        try:
+            await self.page.get_by_label("View next page").last.click()
+        except TimeoutError:
+            logger.error("Timeout :(")
+            return False
+        return True
 
     async def _go_to_next_job(self) -> bool:
         # if :
@@ -67,7 +72,7 @@ class LinkedIn(BaseScraper):
     async def _apply_for_job(self):
         pass
 
-    async def _get_job_information(self, retry: int = 3) -> JobEntry:
+    async def _get_job_information(self, retry: int = 3) -> None | JobEntry:
         data = None
 
         # TODO: Make this loop make more sense, by maybe doing something more
@@ -81,7 +86,7 @@ class LinkedIn(BaseScraper):
 
         if data is None:
             logger.error("Did not get information about the job entry")
-            return ""
+            return None
 
         job_data = json.loads(data.group())
         posting_id = int(job_data["data"]["jobPostingId"])
