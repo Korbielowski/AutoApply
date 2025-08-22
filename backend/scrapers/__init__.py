@@ -55,6 +55,7 @@ async def find_job_entries(
                 for job in await scraper.get_job_entires():
                     job_data = await scraper.process_job(job)
                     yield f"data:{job_data}\n\n"
+                running = await scraper.go_to_next_page()
 
 
 __all__ = ["find_job_entries"]
