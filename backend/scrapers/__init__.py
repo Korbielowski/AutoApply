@@ -10,6 +10,7 @@ from loguru import logger
 
 from ..models import ProfileModel
 
+from types import AsyncGeneratorType
 import sys
 import os
 
@@ -26,7 +27,7 @@ async def find_job_entries(
     auto_apply: bool = False,
     generate_cv: bool = False,
     use_llm: bool = False,
-) -> str:
+) -> AsyncGeneratorType:
     async with Stealth().use_async(async_playwright()) as playwright:
         playwright.selectors.set_test_id_attribute("data-control-id")
         browser = await playwright.chromium.launch(headless=False)
