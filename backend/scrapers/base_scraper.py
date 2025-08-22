@@ -51,7 +51,7 @@ class BaseScraper(abc.ABC):
         pass
 
     @abc.abstractmethod
-    async def _go_to_next_page(self) -> bool:
+    async def go_to_next_page(self) -> bool:
         pass
 
     @abc.abstractmethod
@@ -63,11 +63,14 @@ class BaseScraper(abc.ABC):
         pass
 
     @abc.abstractmethod
-    async def _get_job_information(self, retry: int = 3) -> JobEntry:
+    async def _get_job_information(self, retry: int = 3) -> None | JobEntry:
         pass
 
-    async def process_job(self, locator: Locator = None) -> str:
-        job_entry = self._get_job_information(locator)
+    async def process_job(self, locator: Locator) -> str:
+        await locator.first.click()
+        job_entry = self._get_job_information()
+        if not job_entry:
+            return ""
 
         # TODO: Evaluate job entry based on comparison between job's description and user's skills
         is_valuable, requirements = self._evaluate_job(job_entry.description)
@@ -89,7 +92,8 @@ class BaseScraper(abc.ABC):
                 path = os.getenv("USER_CV", "")
                 if not path:
                     logger.error("USER_CV variable with path to user's cv is not set")
-                    return
+                    # TODO: Do not return information if job is not valuable
+                    return ""
                 cv = Path(path)
                 logger.info(cv)
             # _apply_for_job(page, cv)
