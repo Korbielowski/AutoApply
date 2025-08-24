@@ -5,10 +5,8 @@ from dotenv import load_dotenv
 from loguru import logger
 
 import os
-import sys
 
 # TODO: Uncomment this in the future: from app_setup import API_KEY
-logger.add(sys.stdout, colorize=True)
 load_dotenv()
 API_KEY = os.getenv("API_KEY", "")
 LLM = OpenAI(base_url="https://api.llm7.io/v1", api_key="unused")
