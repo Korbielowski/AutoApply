@@ -6,19 +6,21 @@ from .base_scraper import BaseScraper
 from playwright_stealth import Stealth
 from playwright.async_api import async_playwright
 from dotenv import load_dotenv
-from loguru import logger
+# from loguru import logger
 
 from ..models import ProfileModel
 
 from types import AsyncGeneratorType
-import sys
+from typing import Type
 import os
 
-logger.add(sys.stdout, colorize=True)
 load_dotenv()
 USER_EMAIL = os.getenv("USER_EMAIL", "")
 PASSWORD = os.getenv("PASSWORD", "")
-SCRAPERS = {"pracuj.pl": PracujPl, "linkedin.com": LinkedIn}
+SCRAPERS: dict[str, Type[BaseScraper]] = {
+    "pracuj.pl": PracujPl,
+    "linkedin.com": LinkedIn,
+}
 
 
 async def find_job_entries(
@@ -34,12 +36,11 @@ async def find_job_entries(
         page = await browser.new_page(locale="en-US")
 
         for link in links:
-            if use_llm:
-                scraper: BaseScraper = LLMScraper
-            else:
-                # scraper: BaseScraper = SCRAPERS.get(link, LLMScraper)
-                scraper: BaseScraper = SCRAPERS.get("linkedin.com")
-            scraper = scraper(
+            sc: Type[BaseScraper] = (
+                LLMScraper if use_llm else SCRAPERS.get("linkedin.com", LLMScraper)
+            )
+            # TODO: Replace with this --> SCRAPERS.get(link, LLMScraper)
+            scraper = sc(
                 link=link,
                 profile=profile,
                 email=USER_EMAIL,
