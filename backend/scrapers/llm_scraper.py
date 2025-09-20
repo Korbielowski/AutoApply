@@ -90,7 +90,7 @@ class LLMScraper(BaseScraper):
 
     # TODO: Change this method name to "_navigate_to_job_list"
     async def _go_to_job_list(self) -> None:
-        btn = self.find_html_element("Find button that opens job list")
+        btn = await self.find_html_element("Find button that opens job list")
         if not btn:
             logger.error("Could not find job list button")
             return
@@ -99,13 +99,13 @@ class LLMScraper(BaseScraper):
         await self.page.wait_for_load_state("load")
 
     async def get_job_entires(self) -> tuple[Locator, ...]:
-        scroll = self.find_html_element(
-            "Find scrollbar element that is responsible for displaying more job entries"
+        element = await self.find_html_element(
+            "Find an element that is at the bottom of the page, so once in view port it loads all of the page content"
         )
-        if not scroll:
+        if not element:
             logger.error("Could not find job list button")
             return tuple()
-        return tuple()
+        await element.scroll_into_view_if_needed()
 
     async def go_to_next_page(self) -> bool:
         pass
@@ -120,40 +120,8 @@ class LLMScraper(BaseScraper):
         pass
 
     async def find_html_element(self, prompt: str) -> None | Locator:
-        pre_prompt = "I will give you an HTML snippet."
-        post_prompt = "Return only its identifying attributes in JSON format with the following keys: id, name, type, aria-label, placeholder, role, text, classList. If an attribute does not exist, return null for it. Do not explain, only return JSON"
-        page_content = await self._get_page_content()
-        prompt = f"{pre_prompt}{prompt}{post_prompt}\n{page_content}"
-
-        try:
-            response = send_req_to_llm(
-                prompt,
-                use_openai=True,
-            )
-        except RateLimitError as e:
-            time = (
-                e.response.headers.get("x-ratelimit-reset-tokens", "")
-                .replace("m", "m ")
-                .replace("s", "")
-                .split(" ")
-            )
-            delay = 0
-
-            if "m" in time[0]:
-                delay += int(time.replace("m", "")) * 60
-            delay += int(time[-1])
-
-            await asyncio.sleep(delay)
-            response = send_req_to_llm(
-                prompt,
-                use_openai=True,
-            )
-
-        try:
-            attributes = json.loads(response)
-            logger.info(f"List of attributes:\n{json.dumps(attributes, indent=2)}")
-        except json.JSONDecodeError as e:
-            logger.exception(e)
+        attributes = await self.find_html_element_attributes(prompt)
+        if not attributes:
             return None
 
         # TODO: Make sure that we are selecting only one element, especially true for "type" and "classList"
@@ -194,6 +162,45 @@ class LLMScraper(BaseScraper):
         # locator = self.page.get_by_role()
 
         return None
+
+    async def find_html_element_attributes(self, prompt: str) -> None | dict:
+        pre_prompt = "I will give you an HTML snippet."
+        post_prompt = "Return only its identifying attributes in JSON format with the following keys: id, name, type, aria-label, placeholder, role, text, classList. If an attribute does not exist, return null for it. Do not explain, only return JSON"
+        page_content = await self._get_page_content()
+        prompt = f"{pre_prompt}{prompt}{post_prompt}\n{page_content}"
+
+        try:
+            response = send_req_to_llm(
+                prompt,
+                use_openai=True,
+            )
+        except RateLimitError as e:
+            time = (
+                e.response.headers.get("x-ratelimit-reset-tokens", "")
+                .replace("m", "m ")
+                .replace("s", "")
+                .split(" ")
+            )
+            delay = 0
+
+            if "m" in time[0]:
+                delay += int(time.replace("m", "")) * 60
+            delay += int(time[-1])
+
+            await asyncio.sleep(delay)
+            response = send_req_to_llm(
+                prompt,
+                use_openai=True,
+            )
+
+        try:
+            attributes = json.loads(response)
+            logger.info(f"List of attributes:\n{json.dumps(attributes, indent=2)}")
+        except json.JSONDecodeError as e:
+            logger.exception(e)
+            return None
+
+        return attributes
 
     # TODO: Move this method to BaseScraper class as it can be also used in other derived classes
     async def _get_page_content(self) -> str:
