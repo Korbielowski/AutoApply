@@ -4,7 +4,7 @@ from typing import Callable
 
 # from fastapi import Request
 from fastapi.responses import RedirectResponse
-from .app_setup import profile
+from backend.app_setup import profile
 
 DB_NAME = ""
 
