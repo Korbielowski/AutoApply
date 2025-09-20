@@ -2,18 +2,15 @@ from playwright.async_api import Page, Locator
 from pydantic import BaseModel
 from loguru import logger
 
-from pathlib import Path
-import json
 import abc
-import os
 
-from ..llm import send_req_to_llm
-from ..models import ProfileModel
-from ..pdf import create_cv
+from backend.llm import send_req_to_llm
+from backend.models import ProfileModel
 
 
 class JobEntry(BaseModel):
     posting_id: int
+    url: str
     description: str
     location: str
     company_url: str
@@ -67,46 +64,43 @@ class BaseScraper(abc.ABC):
         pass
 
     async def process_job(self, locator: Locator) -> str:
+        await locator.highlight()
         await locator.first.click()
-        job_entry = self._get_job_information()
+        await self.page.wait_for_selector(".jobs-description__content")
+        # logger.info(f"{self.page.url}\n{await locator.inner_text()}\n\n")
+        job_entry = await self._get_job_information()
         if not job_entry:
             return ""
 
+        logger.info(job_entry.json())
         # TODO: Evaluate job entry based on comparison between job's description and user's skills
-        is_valuable, requirements = self._evaluate_job(job_entry.description)
+        # is_valuable, requirements = self._evaluate_job(job_entry.description)
 
-        if is_valuable:
-            logger.info("You should apply")
-            # TODO: Add use_own_cv flag to options
-            use_own_cv = False
-            if not use_own_cv:
-                cv = create_cv(
-                    self.profile,
-                    job_entry.posting_id,
-                    requirements,
-                    job_entry.location,
-                    job_entry.company_url,
-                    "llm-selection",
-                )
-            else:
-                path = os.getenv("USER_CV", "")
-                if not path:
-                    logger.error("USER_CV variable with path to user's cv is not set")
-                    # TODO: Do not return information if job is not valuable
-                    return ""
-                cv = Path(path)
-                logger.info(cv)
-            # _apply_for_job(page, cv)
-        else:
-            logger.info("You should not apply")
-        return json.dumps(
-            {
-                "posting_id": job_entry.posting_id,
-                "description": job_entry.description,
-                "location": job_entry.location,
-                "company_url": job_entry.company_url,
-            }
-        )
+        # if is_valuable:
+        #     logger.info("You should apply")
+        #     # TODO: Add use_own_cv flag to options
+        #     use_own_cv = False
+        #     if not use_own_cv:
+        #         cv = create_cv(
+        #             self.profile,
+        #             job_entry.posting_id,
+        #             requirements,
+        #             job_entry.location,
+        #             job_entry.company_url,
+        #             "llm-selection",
+        #         )
+        #     else:
+        #         path = os.getenv("USER_CV", "")
+        #         if not path:
+        #             logger.error("USER_CV variable with path to user's cv is not set")
+        #             # TODO: Do not return information if job is not valuable
+        #             return ""
+        #         cv = Path(path)
+        #         logger.info(cv)
+        #     # _apply_for_job(page, cv)
+        # else:
+        #     logger.info("You should not apply")
+        return job_entry.json()
 
     async def _evaluate_job(self, description: str) -> tuple[bool, str]:
         # TODO: Make LLM compare user's skills with skills in the description
