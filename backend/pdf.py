@@ -4,8 +4,8 @@ from dotenv import load_dotenv
 from weasyprint import HTML, CSS
 
 # from app_setup import engine
-from .llm import send_req_to_llm
-from .models import (
+from backend.llm import send_req_to_llm
+from backend.models import (
     ProfileModel,
     ProgrammingLanguage,
     Language,
