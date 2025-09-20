@@ -33,6 +33,8 @@ async def find_job_entries(
     async with Stealth().use_async(async_playwright()) as playwright:
         playwright.selectors.set_test_id_attribute("data-control-id")
         browser = await playwright.chromium.launch(headless=False)
+        # TODO: Maybe try using context: context = await browser.new_context()
+        # context.add_cookies()
         page = await browser.new_page(locale="en-US")
 
         for link in links:
