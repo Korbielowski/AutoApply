@@ -1,7 +1,7 @@
 # from .app_setup import engine, app, templates
-from .app_setup import profile, app, templates
-from .scrapers import find_job_entries
-from .models import (
+from backend.app_setup import profile, app, templates
+from backend.scrapers import find_job_entries
+from backend.models import (
     ProfileInfoModel,
     Profile,
     Location,
