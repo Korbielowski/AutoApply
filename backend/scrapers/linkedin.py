@@ -1,10 +1,9 @@
 from playwright.async_api import Locator
 from loguru import logger
 
-import json
 import re
 
-from .base_scraper import BaseScraper, JobEntry
+from backend.scrapers.base_scraper import BaseScraper, JobEntry
 
 
 class LinkedIn(BaseScraper):
@@ -23,7 +22,7 @@ class LinkedIn(BaseScraper):
 
     async def get_job_entires(self) -> tuple[Locator, ...]:
         pattern = re.compile(r".*")
-        ld: dict = {}  # TODO: Check if set would be faster than dict
+        ld: dict[str, Locator] = {}  # TODO: Check if set would be faster than dict
         max_scrolls = 20
         wheel_move = 200
         start_pos_x = (
@@ -73,40 +72,49 @@ class LinkedIn(BaseScraper):
         pass
 
     async def _get_job_information(self, retry: int = 3) -> None | JobEntry:
-        data = None
+        # INFO: Note that those selectors may change in the future, try find a better way for obtaining job information
+        loc: Locator = self.page.locator(
+            ".job-details-jobs-unified-top-card__container--two-pane"
+        ).first
+        logger.info(await loc.inner_text())
+        loc = self.page.locator(".mt4").last
+        logger.info(await loc.inner_text())
+        return None
+        # data = None
 
-        # TODO: Make this loop make more sense, by maybe doing something more
-        while data is None:
-            if retry <= 0:
-                logger.error("Cannot get information about job entry")
-                break
-            page_content = await self.page.content()
-            data = re.search(r"{\"data\":{\"dashEntityUrn\":.*}", page_content)
-            retry -= 1
+        # # TODO: Make this loop make more sense, by maybe doing something more
+        # while data is None:
+        #     if retry <= 0:
+        #         logger.error("Cannot get information about job entry")
+        #         break
+        #     page_content = await self.page.content()
+        #     data = re.search(r"{\"data\":{\"dashEntityUrn\":.*}", page_content)
+        #     retry -= 1
 
-        if data is None:
-            logger.error("Did not get information about the job entry")
-            return None
+        # if data is None:
+        #     logger.error("Did not get information about the job entry")
+        #     return None
 
-        job_data = json.loads(data.group())
-        posting_id = int(job_data["data"]["jobPostingId"])
-        logger.info(f"job posting id: {posting_id}")
-        # TODO: Check if job id is already in database, if so, go to next job entry
-        # with Session(engine) as session:
-        #     hashed_id = hash(posting_id)
-        #     stmt = select(JobEntry).where(JobEntry.posting_id == hashed_id)
-        #     result = session.exec(stmt)
-        #     if result:
-        #         logger.error("Job posting is already in database")
+        # job_data = json.loads(data.group())
+        # posting_id = int(job_data["data"]["jobPostingId"])
+        # # logger.info(f"job posting id: {posting_id}")
+        # # TODO: Check if job id is already in database, if so, go to next job entry
+        # # with Session(engine) as session:
+        # #     hashed_id = hash(posting_id)
+        # #     stmt = select(JobEntry).where(JobEntry.posting_id == hashed_id)
+        # #     result = session.exec(stmt)
+        # #     if result:
+        # #         logger.error("Job posting is already in database")
 
-        description = job_data.get("data", {}).get("description", {}).get("text", "")
-        location = job_data.get("data", {}).get("formattedLocation", "")
-        company_url = (
-            job_data.get("data", {}).get("applyMethod", {}).get("companyApplyUrl", "")
-        )
-        return JobEntry(
-            posting_id=posting_id,
-            description=description,
-            location=location,
-            company_url=company_url,
-        )
+        # description = job_data.get("data", {}).get("description", {}).get("text", "")
+        # location = job_data.get("data", {}).get("formattedLocation", "")
+        # company_url = (
+        #     job_data.get("data", {}).get("applyMethod", {}).get("companyApplyUrl", "")
+        # )
+        # return JobEntry(
+        #     posting_id=posting_id,
+        #     url=self.page.url,
+        #     description=description,
+        #     location=location,
+        #     company_url=company_url,
+        # )
