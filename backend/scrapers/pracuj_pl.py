@@ -1,4 +1,4 @@
-from .base_scraper import BaseScraper
+from backend.scrapers.base_scraper import BaseScraper
 
 
 class PracujPl(BaseScraper):
