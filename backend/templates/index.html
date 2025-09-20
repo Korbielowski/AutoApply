@@ -45,9 +45,11 @@
     jobContainer = document.getElementById("job-entries-container");
     let li = document.createElement("li");
 
-    li.textContent = `id: ${data.posting_id},desc: ${data.description}, location: ${data.location}. url: ${data.company_url}`;
+    // li.textContent = `url: ${data.url}, id: ${data.posting_id}, desc: ${data.description}, location: ${data.location}, url: ${data.company_url}`;
     li.innerHTML = `
     <p>Job id: ${data.posting_id}</p>
+    </br>
+    <p>url: ${data.url}</p>
     <details>
     <summary>Job description</summary>
     <p>${data.description}</p>
