@@ -11,7 +11,7 @@ from sqlmodel import SQLModel, Session, create_engine, select
 from dotenv import load_dotenv
 
 
-from .models import Profile
+from backend.models import Profile
 
 # TODO: Check if user can specify custom drivers, so that they would not break SQLAlchemy
 DRIVERNAME = "postgresql+psycopg"
