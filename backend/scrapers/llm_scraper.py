@@ -107,6 +107,23 @@ class LLMScraper(BaseScraper):
             return tuple()
         await element.scroll_into_view_if_needed()
 
+        attributes = await self.find_html_element_attributes(
+            "Find an element that is responsible for holding job entry information and link to job offer"
+        )
+        if not attributes:
+            logger.error(
+                "Cannot find attributes that would enable scraper to find job entries"
+            )
+            return tuple()
+
+        class_list = attributes.get("classList", "").split(" ")
+        for class_l in class_list:
+            locator = self.page.locator(f".{class_l}")
+            if await locator.count() == 0:
+                continue
+            return tuple(await locator.all())
+        return tuple()
+
     async def go_to_next_page(self) -> bool:
         pass
 
