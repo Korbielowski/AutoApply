@@ -1,5 +1,4 @@
 from playwright.async_api import Locator
-from openai import RateLimitError
 from bs4 import BeautifulSoup
 from loguru import logger
 import tiktoken
@@ -8,7 +7,6 @@ from backend.scrapers.base_scraper import BaseScraper, JobEntry
 from backend.llm import send_req_to_llm
 
 import json
-import asyncio
 
 TIK = tiktoken.encoding_for_model("gpt-5-")
 
@@ -59,7 +57,7 @@ class LLMScraper(BaseScraper):
         if "login" in url or "signin" in url or "sign-in" in url or "sign_in" in url:
             return True
 
-        if "True" in send_req_to_llm(
+        if "True" in await send_req_to_llm(
             f"Determine if this site is a login page, return only True or False: {await self._get_page_content()}",
             use_openai=True,
         ):
@@ -103,12 +101,12 @@ class LLMScraper(BaseScraper):
             "Find an element that is at the bottom of the page, so once in view port it loads all of the page content"
         )
         if not element:
-            logger.error("Could not find job list button")
+            logger.error("Could not find an element that is at the bottom of the page")
             return tuple()
         await element.scroll_into_view_if_needed()
 
         attributes = await self.find_html_element_attributes(
-            "Find an element that is responsible for holding job entry information and link to job offer"
+            "Find an element that is responsible for holding job entry information and link to job offer. CSS class that are to be selected, must only select job entries and no other elements"
         )
         if not attributes:
             logger.error(
@@ -116,12 +114,22 @@ class LLMScraper(BaseScraper):
             )
             return tuple()
 
-        class_list = attributes.get("classList", "").split(" ")
+        logger.info(f"{attributes=}")
+        class_list = attributes.get("classList", [])
         for class_l in class_list:
             locator = self.page.locator(f".{class_l}")
-            if await locator.count() == 0:
-                continue
-            return tuple(await locator.all())
+            response = await send_req_to_llm(
+                f"Does this CSS class '{class_l}' select only job offers and no other elements. Return 'True' if only jobs are selected and 'False' if '{class_l}' class selects also other elements. {'\n'.join(await locator.all_inner_texts())}",
+                use_openai=True,
+            )
+            if "True" in response:
+                logger.info(
+                    f"Choosen {class_l} as it only selects job entries on the page"
+                )
+                logger.info(
+                    f"Amount of elements selected by {class_l} CSS class: {len(await locator.all())}"
+                )
+                return tuple(await locator.all())
         return tuple()
 
     async def go_to_next_page(self) -> bool:
@@ -167,13 +175,16 @@ class LLMScraper(BaseScraper):
         if await locator.count() != 0:
             return locator.last
 
+        class_list = attributes.get("classList", [])
+        for class_l in class_list:
+            locator = self.page.locator(f".{class_l}")
+            if 0 < await locator.count() <= 1:
+                return locator.last
+
         # placeholder = attributes.get("placeholder", "")
         # locator = self.page.get_by_placeholder(placeholder)
         # if await locator.count() != 0:
         #     return locator
-
-        # class_list = attributes.get("classList", "")
-        # locator = self.page.get_by()
 
         # role = attributes.get("role", "")
         # locator = self.page.get_by_role()
@@ -186,29 +197,10 @@ class LLMScraper(BaseScraper):
         page_content = await self._get_page_content()
         prompt = f"{pre_prompt}{prompt}{post_prompt}\n{page_content}"
 
-        try:
-            response = send_req_to_llm(
-                prompt,
-                use_openai=True,
-            )
-        except RateLimitError as e:
-            time = (
-                e.response.headers.get("x-ratelimit-reset-tokens", "")
-                .replace("m", "m ")
-                .replace("s", "")
-                .split(" ")
-            )
-            delay = 0
-
-            if "m" in time[0]:
-                delay += int(time.replace("m", "")) * 60
-            delay += int(time[-1])
-
-            await asyncio.sleep(delay)
-            response = send_req_to_llm(
-                prompt,
-                use_openai=True,
-            )
+        response = await send_req_to_llm(
+            prompt,
+            use_openai=True,
+        )
 
         try:
             attributes = json.loads(response)
@@ -224,6 +216,9 @@ class LLMScraper(BaseScraper):
         # TODO: Make page content smaller by e.g. excluding head or code tags and only by including body
         # TODO: Check in the future, whether regex would not be faster and overall better solution
         page_content = await self.page.content()
+        logger.info(
+            f"Amount of tokens before cleaning: {len(TIK.encode(page_content))}"
+        )
         soup = BeautifulSoup(page_content, "html.parser")
         for tag in soup(
             [
@@ -251,5 +246,7 @@ class LLMScraper(BaseScraper):
         ):
             tag.decompose()
             cleaned_page_content = str(soup)
-            logger.info(f"Amount of tokens: {len(TIK.encode(cleaned_page_content))}")
+        logger.info(
+            f"Amount of tokens after cleaning: {len(TIK.encode(cleaned_page_content))}"
+        )
         return cleaned_page_content
