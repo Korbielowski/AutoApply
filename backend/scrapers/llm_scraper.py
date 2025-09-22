@@ -1,4 +1,4 @@
-from playwright.async_api import Locator
+from playwright.async_api import Locator, TimeoutError as PlaywrightTimeoutError
 from bs4 import BeautifulSoup
 from loguru import logger
 import tiktoken
@@ -133,7 +133,18 @@ class LLMScraper(BaseScraper):
         return tuple()
 
     async def go_to_next_page(self) -> bool:
-        pass
+        btn = await self.find_html_element(
+            "Find button that is responsible for moving to next job listing page"
+        )
+        if not btn:
+            logger.error("Could not find next page button")
+            return False
+        try:
+            await btn.click()
+        except PlaywrightTimeoutError:
+            return False
+        await self.page.wait_for_load_state("load")
+        return True
 
     async def _go_to_next_job(self) -> bool:
         pass
