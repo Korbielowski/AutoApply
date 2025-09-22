@@ -8,12 +8,23 @@ from backend.llm import send_req_to_llm
 from backend.models import ProfileModel
 
 
+# TODO: How to recognise duplicate job offers on a different sites and on the same site at different time
 class JobEntry(BaseModel):
     posting_id: int
-    url: str
-    description: str
+    job_url: str
+    requirements: str
+    duties: str
+    about_project: str
+    offer_benefits: str
     location: str
-    company_url: str
+    company_name: str
+    contract_type: str
+    employment_type: str
+    work_arrangement: str
+    additional_information: None | str
+    company_url: (
+        None | str
+    )  # TODO: Here LLM will need to find information on the internet
 
 
 class BaseScraper(abc.ABC):
