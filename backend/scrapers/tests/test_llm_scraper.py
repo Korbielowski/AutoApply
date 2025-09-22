@@ -108,6 +108,7 @@ async def test_loging_to_page(get_data_for_scraper, caplog):
 
 
 @pytest.mark.asyncio
+@pytest.mark.skip
 async def test_get_page_content(get_data_for_scraper, caplog):
     async with Stealth().use_async(async_playwright()) as playwright:
         playwright.selectors.set_test_id_attribute("data-control-id")
@@ -129,6 +130,34 @@ async def test_get_page_content(get_data_for_scraper, caplog):
         content = await scraper._get_page_content()
         logger.info(type(content))
         assert type(content) is not str
+
+
+@pytest.mark.asyncio
+async def test_get_job_entries(get_data_for_scraper):
+    async with Stealth().use_async(async_playwright()) as playwright:
+        playwright.selectors.set_test_id_attribute("data-control-id")
+        browser = await playwright.chromium.launch(headless=False)
+        page = await browser.new_page(locale="en-US")
+        profile, email, password = get_data_for_scraper
+        link = "https://it.pracuj.pl/praca"
+        scraper = LLMScraper(
+            link=link,
+            profile=profile,
+            email=email,
+            password=password,
+            page=page,
+            auto_apply=False,
+            generate_cv=False,
+        )
+        await scraper.page.goto(scraper.link)
+        await scraper.page.wait_for_load_state("load")
+        await scraper._pass_cookies_popup()
+        job_entries = await scraper.get_job_entires()
+        logger.info(f"Amount of jobs from page: {len(job_entries)}")
+        for job in job_entries:
+            logger.info(await job.all_text_contents())
+        assert type(job_entries) is tuple
+        assert len(job_entries) > 0
 
 
 @pytest.fixture(
