@@ -39,7 +39,7 @@ class LLMScraper(BaseScraper):
             or not password_field_locator
             or not sign_in_btn_locator
         ):
-            logger.error(
+            logger.exception(
                 f"Could not log into the site {self.link}, {email_field_locator=}, {password_field_locator=}, {sign_in_btn_locator=}"
             )
             return
@@ -69,7 +69,7 @@ class LLMScraper(BaseScraper):
     async def _navigate_to_login_page(self) -> None:
         btn = await self.find_html_element("Find a button that opens login page")
         if not btn:
-            logger.error("Could not find button to login page")
+            logger.exception("Could not find button to login page")
             return
         logger.info(f"Found login button: {btn}\n{await btn.all_inner_texts()}")
         await btn.click()
@@ -81,7 +81,7 @@ class LLMScraper(BaseScraper):
             "Find button responsible for accepting website cookies"
         )
         if not btn:
-            logger.error("Could not find cookies button")
+            logger.exception("Could not find cookies button")
             return
         logger.info(f"Found cookies button: {btn}\n{await btn.all_inner_texts()}")
         await btn.click()
@@ -91,7 +91,7 @@ class LLMScraper(BaseScraper):
     async def _go_to_job_list(self) -> None:
         btn = await self.find_html_element("Find button that opens job list")
         if not btn:
-            logger.error("Could not find job list button")
+            logger.exception("Could not find job list button")
             return
         logger.info(f"Found job list button: {btn}\n{await btn.all_inner_texts()}")
         await btn.click()
@@ -102,7 +102,9 @@ class LLMScraper(BaseScraper):
             "Find an element that is at the bottom of the page, so once in view port it loads all of the page content"
         )
         if not element:
-            logger.error("Could not find an element that is at the bottom of the page")
+            logger.exception(
+                "Could not find an element that is at the bottom of the page"
+            )
             return tuple()
         await element.scroll_into_view_if_needed()
 
@@ -110,7 +112,7 @@ class LLMScraper(BaseScraper):
             "Find an element that is responsible for holding job entry information and link to job offer. CSS class that are to be selected, must only select job entries and no other elements"
         )
         if not attributes:
-            logger.error(
+            logger.exception(
                 "Cannot find attributes that would enable scraper to find job entries"
             )
             return tuple()
@@ -138,11 +140,12 @@ class LLMScraper(BaseScraper):
             "Find button that is responsible for moving to next job listing page"
         )
         if not btn:
-            logger.error("Could not find next page button")
+            logger.exception("Could not find next page button")
             return False
         try:
             await btn.click()
         except TimeoutError:
+            logger.exception(f"Could not go to next job listing page, {btn=}")
             return False
         await self.page.wait_for_load_state("load")
         return True
