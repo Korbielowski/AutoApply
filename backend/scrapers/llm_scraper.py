@@ -11,6 +11,7 @@ import json
 TIK = tiktoken.encoding_for_model("gpt-5-")
 
 
+# TODO: Add try except blocks to all operations that can timeout
 # TODO: Save all important information about the pages in database (e.g. links, buttons, fields, scrollbars)
 # for later use, so that we don't make so many requests to LLM if we already know certain page.
 # If saved information does not work at any stage of the process, switch back to LLM scraper and update adequate steps in database
