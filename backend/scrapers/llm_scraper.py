@@ -157,6 +157,7 @@ class LLMScraper(BaseScraper):
         pass
 
     async def _get_job_information(self, retry: int = 3) -> None | JobEntry:
+        # TODO: Open a new page with job entry and get all the required information
         pass
 
     async def find_html_element(self, prompt: str) -> None | Locator:
