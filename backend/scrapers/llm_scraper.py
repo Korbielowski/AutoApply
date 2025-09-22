@@ -1,4 +1,4 @@
-from playwright.async_api import Locator, TimeoutError as PlaywrightTimeoutError
+from playwright.async_api import Locator, TimeoutError
 from bs4 import BeautifulSoup
 from loguru import logger
 import tiktoken
@@ -142,7 +142,7 @@ class LLMScraper(BaseScraper):
             return False
         try:
             await btn.click()
-        except PlaywrightTimeoutError:
+        except TimeoutError:
             return False
         await self.page.wait_for_load_state("load")
         return True
