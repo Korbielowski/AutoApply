@@ -1,14 +1,16 @@
-from playwright.async_api import Locator, TimeoutError
-from bs4 import BeautifulSoup
+from playwright.async_api import Locator, Page
 from loguru import logger
-import tiktoken
 
 from backend.scrapers.base_scraper import BaseScraper, JobEntry
+from backend.scrapers.utils import (
+    goto,
+    click,
+    fill,
+    get_page_content,
+    find_html_element,
+    find_html_element_attributes,
+)
 from backend.llm import send_req_to_llm
-
-import json
-
-TIK = tiktoken.encoding_for_model("gpt-5-")
 
 
 # TODO: Add try except blocks to all operations that can timeout
@@ -17,41 +19,25 @@ TIK = tiktoken.encoding_for_model("gpt-5-")
 # If saved information does not work at any stage of the process, switch back to LLM scraper and update adequate steps in database
 class LLMScraper(BaseScraper):
     async def login_to_page(self) -> None:
-        await self.page.goto(self.link)
-        await self.page.wait_for_load_state("load")
+        await goto(self.page, self.link)
         # TODO: Make a loop out of this code
         await self._pass_cookies_popup()
         if not await self._is_on_login_page():
             await self._navigate_to_login_page()
 
-        email_field_locator = await self.find_html_element(
-            "Find the login input field for username/email."
+        email_field_locator = await find_html_element(
+            self.page, "Find the login input field for username/email."
         )
-        password_field_locator = await self.find_html_element(
-            "Find the login input field for password."
+        password_field_locator = await find_html_element(
+            self.page, "Find the login input field for password."
         )
-        sign_in_btn_locator = await self.find_html_element(
-            "Find the sign in/login button."
+        sign_in_btn_locator = await find_html_element(
+            self.page, "Find the sign in/login button."
         )
 
-        if (
-            not email_field_locator
-            or not password_field_locator
-            or not sign_in_btn_locator
-        ):
-            logger.exception(
-                f"Could not log into the site {self.link}, {email_field_locator=}, {password_field_locator=}, {sign_in_btn_locator=}"
-            )
-            return
-
-        logger.info(
-            f"{self.link}, {email_field_locator=}, {password_field_locator=}, {sign_in_btn_locator=}"
-        )
-        await email_field_locator.fill(self.email)
-        await password_field_locator.fill(self.password)
-        await sign_in_btn_locator.click()
-        await self.page.wait_for_load_state("load")
-        # await asyncio.sleep(10)
+        await fill(email_field_locator, self.email)
+        await fill(password_field_locator, self.password)
+        await click(sign_in_btn_locator, self.page)
 
     async def _is_on_login_page(self) -> bool:
         url = self.page.url
@@ -67,39 +53,25 @@ class LLMScraper(BaseScraper):
         return False
 
     async def _navigate_to_login_page(self) -> None:
-        btn = await self.find_html_element("Find a button that opens login page")
-        if not btn:
-            logger.exception("Could not find button to login page")
-            return
-        logger.info(f"Found login button: {btn}\n{await btn.all_inner_texts()}")
-        await btn.click()
-        await self.page.wait_for_load_state("load")
+        btn = await find_html_element(self.page, "Find a button that opens login page")
+        await click(btn, self.page)
 
     async def _pass_cookies_popup(self) -> None:
         # TODO: Try using cookies to avoid popups
-        btn = await self.find_html_element(
-            "Find button responsible for accepting website cookies"
+        btn = await find_html_element(
+            self.page, "Find button responsible for accepting website cookies"
         )
-        if not btn:
-            logger.exception("Could not find cookies button")
-            return
-        logger.info(f"Found cookies button: {btn}\n{await btn.all_inner_texts()}")
-        await btn.click()
-        await self.page.wait_for_load_state("load")
+        await click(btn, self.page)
 
     # TODO: Change this method name to "_navigate_to_job_list"
     async def _go_to_job_list(self) -> None:
-        btn = await self.find_html_element("Find button that opens job list")
-        if not btn:
-            logger.exception("Could not find job list button")
-            return
-        logger.info(f"Found job list button: {btn}\n{await btn.all_inner_texts()}")
-        await btn.click()
-        await self.page.wait_for_load_state("load")
+        btn = await find_html_element(self.page, "Find button that opens job list")
+        await click(btn, self.page)
 
     async def get_job_entires(self) -> tuple[Locator, ...]:
-        element = await self.find_html_element(
-            "Find an element that is at the bottom of the page, so once in view port it loads all of the page content"
+        element = await find_html_element(
+            self.page,
+            "Find an element that is at the bottom of the page, so once in view port it loads all of the page content",
         )
         if not element:
             logger.exception(
@@ -108,8 +80,9 @@ class LLMScraper(BaseScraper):
             return tuple()
         await element.scroll_into_view_if_needed()
 
-        attributes = await self.find_html_element_attributes(
-            "Find an element that is responsible for holding job entry information and link to job offer. CSS class that are to be selected, must only select job entries and no other elements"
+        attributes = await find_html_element_attributes(
+            self.page,
+            "Find an element that is responsible for holding job entry information and link to job offer. CSS class that are to be selected, must only select job entries and no other elements",
         )
         if not attributes:
             logger.exception(
@@ -136,18 +109,14 @@ class LLMScraper(BaseScraper):
         return tuple()
 
     async def go_to_next_page(self) -> bool:
-        btn = await self.find_html_element(
-            "Find button that is responsible for moving to next job listing page"
+        btn = await find_html_element(
+            self.page,
+            "Find button that is responsible for moving to next job listing page",
         )
         if not btn:
-            logger.exception("Could not find next page button")
+            logger.info("Could not find next page button")
             return False
-        try:
-            await btn.click()
-        except TimeoutError:
-            logger.exception(f"Could not go to next job listing page, {btn=}")
-            return False
-        await self.page.wait_for_load_state("load")
+        click(btn, self.page)
         return True
 
     async def _go_to_next_job(self) -> bool:
@@ -156,113 +125,14 @@ class LLMScraper(BaseScraper):
     async def _apply_for_job(self):
         pass
 
-    async def _get_job_information(self, retry: int = 3) -> None | JobEntry:
-        # TODO: Open a new page with job entry and get all the required information
-        pass
-
-    async def find_html_element(self, prompt: str) -> None | Locator:
-        attributes = await self.find_html_element_attributes(prompt)
-        if not attributes:
-            return None
-
-        # TODO: Make sure that we are selecting only one element, especially true for "type" and "classList"
-        id = attributes.get("id", "")
-        locator = self.page.locator(f"#{id}")
-        if await locator.count() != 0:
-            return locator.last
-
-        text = attributes.get("text", "")
-        locator = self.page.get_by_text(text)
-        if await locator.count() != 0:
-            return locator.last
-
-        aria_label = attributes.get("aria-label", "")
-        locator = self.page.get_by_label(aria_label)
-        if await locator.count() != 0:
-            return locator.last
-
-        name = attributes.get("name", "")
-        locator = self.page.locator(f'[name="{name}"]')
-        if await locator.count() != 0:
-            return locator.last
-
-        type = attributes.get("type", "")
-        locator = self.page.locator(f'[type="{type}"]')
-        if await locator.count() != 0:
-            return locator.last
-
-        class_list = attributes.get("classList", [])
-        for class_l in class_list:
-            locator = self.page.locator(f".{class_l}")
-            if 0 < await locator.count() <= 1:
-                return locator.last
-
-        # placeholder = attributes.get("placeholder", "")
-        # locator = self.page.get_by_placeholder(placeholder)
-        # if await locator.count() != 0:
-        #     return locator
-
-        # role = attributes.get("role", "")
-        # locator = self.page.get_by_role()
-
-        return None
-
-    async def find_html_element_attributes(self, prompt: str) -> None | dict:
-        pre_prompt = "I will give you an HTML snippet."
-        post_prompt = "Return only its identifying attributes in JSON format with the following keys: id, name, type, aria-label, placeholder, role, text, classList. If an attribute does not exist, return null for it. Do not explain, only return JSON"
-        page_content = await self._get_page_content()
-        prompt = f"{pre_prompt}{prompt}{post_prompt}\n{page_content}"
+    async def _get_job_information(self, link: str) -> None | JobEntry:
+        job_page: Page = await self.browser.new_page(locale="en-US")
+        goto(job_page, link)
 
         response = await send_req_to_llm(
-            prompt,
-            use_openai=True,
+            f"{await get_page_content(job_page)}", use_openai=True
         )
 
-        try:
-            attributes = json.loads(response)
-            logger.info(f"List of attributes:\n{json.dumps(attributes, indent=2)}")
-        except json.JSONDecodeError as e:
-            logger.exception(e)
-            return None
-
-        return attributes
-
-    # TODO: Move this method to BaseScraper class as it can be also used in other derived classes
-    async def _get_page_content(self) -> str:
-        # TODO: Make page content smaller by e.g. excluding head or code tags and only by including body
-        # TODO: Check in the future, whether regex would not be faster and overall better solution
-        page_content = await self.page.content()
-        logger.info(
-            f"Amount of tokens before cleaning: {len(TIK.encode(page_content))}"
-        )
-        soup = BeautifulSoup(page_content, "html.parser")
-        for tag in soup(
-            [
-                "head",
-                "meta",
-                "style",
-                "script",
-                "noscript",
-                "template",
-                "iframe",
-                "video",
-                "audio",
-                "map",
-                "area",
-                "embed",
-                "object",
-                "applet",
-                "track",
-                "canvas",
-                "svg",
-                "img",
-                "picture",
-                "source",
-            ]
-        ):
-            tag.decompose()
-            cleaned_page_content = str(soup)
-        logger.info(
-            f"Amount of tokens after cleaning: {len(TIK.encode(cleaned_page_content))}"
-        )
-        return cleaned_page_content
+        return JobEntry.model_validate_json(response)
+        # TODO: Open a new page with job entry and get all the required information
+        await job_page.close()
