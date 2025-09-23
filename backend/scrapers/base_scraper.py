@@ -3,21 +3,25 @@ from pydantic import BaseModel
 from loguru import logger
 
 import abc
+from datetime import date
 
 from backend.llm import send_req_to_llm
 from backend.models import ProfileModel
 
 
 # TODO: How to recognise duplicate job offers on a different sites and on the same site at different time
+# Maybe try using normalization of several job information e.g. title, company name and part of description and fuzzy matching
+# https://github.com/rapidfuzz/RapidFuzz
 class JobEntry(BaseModel):
-    posting_id: int
+    title: str
+    company_name: str
+    discovery_date: date
     job_url: str
     requirements: str
     duties: str
     about_project: str
     offer_benefits: str
     location: str
-    company_name: str
     contract_type: str
     employment_type: str
     work_arrangement: str
@@ -116,11 +120,13 @@ class BaseScraper(abc.ABC):
     async def _evaluate_job(self, description: str) -> tuple[bool, str]:
         # TODO: Make LLM compare user's skills with skills in the description
         prompt = f"Get only skills, qualifications, place required for this role from the description and return only them in your response and nothing more. {str(description)}"
-        requirements = send_req_to_llm(prompt, temperature=0)
+        requirements = await send_req_to_llm(prompt, temperature=0, use_openai=True)
         logger.info(f"Important information about the posiotion: {requirements}")
         user_needs = "C, Rust, Poland, Python 5+ years, CI/CD, GIT, python testing, fluent polish"
         prompt = f"Compare my qualifications and needs: {user_needs}. With these from job offer: {requirements}. Return only one word, True if I should apply, and False if not and no other words/characters"
-        response = send_req_to_llm(prompt + str(description), temperature=0)
+        response = await send_req_to_llm(
+            prompt + str(description), temperature=0, use_openai=True
+        )
         logger.info(f"LLM evalutaion: {response}")
         if "True" in response:
             return (True, requirements)
