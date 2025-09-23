@@ -31,6 +31,7 @@ async def find_job_entries(
     use_llm: bool = False,
 ) -> AsyncGeneratorType:
     async with Stealth().use_async(async_playwright()) as playwright:
+        # TODO: Add ability for users to choose their preferred browser, recommend and default to chromium
         playwright.selectors.set_test_id_attribute("data-control-id")
         browser = await playwright.chromium.launch(headless=False)
         # TODO: Maybe try using context: context = await browser.new_context()
