@@ -47,6 +47,7 @@ async def find_job_entries(
                 profile=profile,
                 email=USER_EMAIL,
                 password=PASSWORD,
+                browser=browser,
                 page=page,
                 auto_apply=auto_apply,
                 generate_cv=generate_cv,

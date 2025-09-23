@@ -1,4 +1,4 @@
-from playwright.async_api import Page, Locator
+from playwright.async_api import Browser, Page, Locator
 from pydantic import BaseModel
 from loguru import logger
 
@@ -38,6 +38,7 @@ class BaseScraper(abc.ABC):
         profile: ProfileModel,
         email: str,
         password: str,
+        browser: Browser,
         page: Page,
         auto_apply: bool = False,
         generate_cv: bool = False,
@@ -46,6 +47,7 @@ class BaseScraper(abc.ABC):
         self.profile = ProfileModel
         self.email = email
         self.password = password
+        self.browser = browser
         self.page = page
         self.auto_apply = auto_apply
         self.generate_cv = generate_cv
