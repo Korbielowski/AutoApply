@@ -1,4 +1,5 @@
 from playwright.async_api import Locator, Page
+from pydantic import ValidationError
 from loguru import logger
 
 from backend.scrapers.base_scraper import BaseScraper, JobEntry
@@ -45,7 +46,7 @@ class LLMScraper(BaseScraper):
             return True
 
         if "True" in await send_req_to_llm(
-            f"Determine if this site is a login page, return only True or False: {await self._get_page_content()}",
+            f"Determine if this site is a login page, return only True or False: {await get_page_content(self.page)}",
             use_openai=True,
         ):
             return True
@@ -68,7 +69,7 @@ class LLMScraper(BaseScraper):
         btn = await find_html_element(self.page, "Find button that opens job list")
         await click(btn, self.page)
 
-    async def get_job_entires(self) -> tuple[Locator, ...]:
+    async def get_job_entries(self) -> tuple[Locator, ...]:
         element = await find_html_element(
             self.page,
             "Find an element that is at the bottom of the page, so once in view port it loads all of the page content",
@@ -100,7 +101,7 @@ class LLMScraper(BaseScraper):
             )
             if "True" in response:
                 logger.info(
-                    f"Choosen {class_l} as it only selects job entries on the page"
+                    f"Chosen {class_l} as it only selects job entries on the page"
                 )
                 logger.info(
                     f"Amount of elements selected by {class_l} CSS class: {len(await locator.all())}"
@@ -116,7 +117,7 @@ class LLMScraper(BaseScraper):
         if not btn:
             logger.info("Could not find next page button")
             return False
-        click(btn, self.page)
+        await click(btn, self.page)
         return True
 
     async def _go_to_next_job(self) -> bool:
@@ -127,12 +128,16 @@ class LLMScraper(BaseScraper):
 
     async def _get_job_information(self, link: str) -> None | JobEntry:
         job_page: Page = await self.browser.new_page(locale="en-US")
-        goto(job_page, link)
+        await goto(job_page, link)
 
         response = await send_req_to_llm(
-            f"{await get_page_content(job_page)}", use_openai=True
+            f"Get job information like title, company_name, requirements, duties, about_project, offer_benefits, location, contract_type, employment_type, work_arrangement, additional_information. Do not explain, only return JSON\n{await get_page_content(job_page)}",
+            use_openai=True,
         )
-
-        return JobEntry.model_validate_json(response)
-        # TODO: Open a new page with job entry and get all the required information
         await job_page.close()
+
+        try:
+            return JobEntry.model_validate_json(response)
+        except ValidationError as e:
+            logger.exception(e)
+        return None
