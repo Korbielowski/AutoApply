@@ -10,8 +10,7 @@ from dotenv import load_dotenv
 
 from ..models import ProfileModel
 
-from types import AsyncGeneratorType
-from typing import Type
+from typing import Type, Any, AsyncGenerator
 import os
 
 load_dotenv()
@@ -29,7 +28,7 @@ async def find_job_entries(
     auto_apply: bool = False,
     generate_cv: bool = False,
     use_llm: bool = False,
-) -> AsyncGeneratorType:
+) -> AsyncGenerator[str, Any]:
     async with Stealth().use_async(async_playwright()) as playwright:
         # TODO: Add ability for users to choose their preferred browser, recommend and default to chromium
         playwright.selectors.set_test_id_attribute("data-control-id")
@@ -57,7 +56,7 @@ async def find_job_entries(
 
             running = True
             while running:
-                for job in await scraper.get_job_entires():
+                for job in await scraper.get_job_entries():
                     job_data = await scraper.process_job(job)
                     yield f"data:{job_data}\n\n"
                 running = await scraper.go_to_next_page()
