@@ -1,17 +1,17 @@
+from loguru import logger
 from playwright.async_api import Locator, Page
 from pydantic import ValidationError
-from loguru import logger
 
+from backend.llm import send_req_to_llm
 from backend.scrapers.base_scraper import BaseScraper, JobEntry
 from backend.scrapers.utils import (
-    goto,
     click,
     fill,
-    get_page_content,
     find_html_element,
     find_html_element_attributes,
+    get_page_content,
+    goto,
 )
-from backend.llm import send_req_to_llm
 
 
 # TODO: Add try except blocks to all operations that can timeout
