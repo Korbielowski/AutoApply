@@ -67,6 +67,7 @@ async def get_page_content(page: Page) -> str:
     page_content = await page.content()
     logger.info(f"Amount of tokens before cleaning: {len(TIK.encode(page_content))}")
     soup = BeautifulSoup(page_content, "html.parser")
+    cleaned_page_content = ""
     for tag in soup(
         [
             "head",
@@ -126,8 +127,8 @@ async def find_html_element(page: Page, prompt: str) -> None | Locator:
         return None
 
     # TODO: Make sure that we are selecting only one element, especially true for "type" and "classList"
-    id = attributes.get("id", "")
-    locator = page.locator(f"#{id}")
+    element_id = attributes.get("id", "")
+    locator = page.locator(f"#{element_id}")
     if await locator.count() != 0:
         return locator.last
 
@@ -146,8 +147,8 @@ async def find_html_element(page: Page, prompt: str) -> None | Locator:
     if await locator.count() != 0:
         return locator.last
 
-    type = attributes.get("type", "")
-    locator = page.locator(f'[type="{type}"]')
+    element_type = attributes.get("type", "")
+    locator = page.locator(f'[type="{element_type}"]')
     if await locator.count() != 0:
         return locator.last
 
