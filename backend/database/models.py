@@ -48,11 +48,17 @@ class JobEntry(SQLModel):
 
 class WebsiteModel(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
+    cookies: str
+    user_email: EmailStr
+    user_password: str
     url: str
     automation_steps: Json
 
 
 class Website(SQLModel):
+    cookies: str
+    user_email: EmailStr
+    user_password: str
     url: str
     automation_steps: Json
 
