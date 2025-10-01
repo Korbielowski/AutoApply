@@ -40,8 +40,6 @@ class BaseScraper(abc.ABC):
         password: str,
         browser: Browser,
         page: Page,
-        auto_apply: bool = False,
-        generate_cv: bool = False,
     ) -> None:
         self.link = link
         self.profile = profile
@@ -49,8 +47,6 @@ class BaseScraper(abc.ABC):
         self.password = password
         self.browser = browser
         self.page = page
-        self.auto_apply = auto_apply
-        self.generate_cv = generate_cv
 
     @abc.abstractmethod
     async def login_to_page(self) -> None:
