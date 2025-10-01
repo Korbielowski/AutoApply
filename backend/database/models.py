@@ -1,6 +1,6 @@
 import datetime
 
-from pydantic import EmailStr
+from pydantic import EmailStr, Json
 from sqlmodel import Field, SQLModel
 
 # TODO: Add priority to each category of skills and qualifications, so that the system can decide what should go into cv
@@ -44,6 +44,17 @@ class JobEntry(SQLModel):
     work_arrangement: str
     additional_information: None | str
     company_url: None | str
+
+
+class WebsiteModel(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    url: str
+    automation_steps: Json
+
+
+class Website(SQLModel):
+    url: str
+    automation_steps: Json
 
 
 class ProfileModel(SQLModel, table=True):
