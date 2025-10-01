@@ -1,17 +1,18 @@
-from .pracuj_pl import PracujPl
-from .linkedin import LinkedIn
-from .llm_scraper import LLMScraper
-from .base_scraper import BaseScraper
+import os
+from pathlib import Path
+from typing import Any, AsyncGenerator, Type
 
-from playwright_stealth import Stealth
-from playwright.async_api import async_playwright
 from dotenv import load_dotenv
-# from loguru import logger
+from loguru import logger
+from playwright.async_api import async_playwright
+from playwright_stealth import Stealth
 
 from ..models import ProfileModel
-
-from typing import Type, Any, AsyncGenerator
-import os
+from ..pdf import create_cv
+from .base_scraper import BaseScraper
+from .linkedin import LinkedIn
+from .llm_scraper import LLMScraper
+from .pracuj_pl import PracujPl
 
 load_dotenv()
 USER_EMAIL = os.getenv("USER_EMAIL", "")
@@ -28,6 +29,7 @@ async def find_job_entries(
     auto_apply: bool = False,
     generate_cv: bool = False,
     use_llm: bool = False,
+    use_user_cv: bool = False,
 ) -> AsyncGenerator[str, Any]:
     async with Stealth().use_async(async_playwright()) as playwright:
         # TODO: Add ability for users to choose their preferred browser, recommend and default to chromium
@@ -57,7 +59,25 @@ async def find_job_entries(
             running = True
             while running:
                 for job in await scraper.get_job_entries():
-                    job_data = await scraper.process_job(job)
+                    job_data = await scraper.process_and_evaluate_job(job)
+                    if job_data:
+                        # TODO: Add use_own_cv flag to options
+                        if not use_user_cv:
+                            cv = create_cv(
+                                profile,
+                                job_data,
+                                "llm-selection",
+                            )
+                        else:
+                            path = os.getenv("USER_CV", "")
+                            if not path:
+                                logger.error(
+                                    "USER_CV variable with path to user's cv is not set"
+                                )
+                                # TODO: Do not return information if job is not valuable
+                            cv = Path(path)
+                        logger.info(cv)
+                        # TODO: Create CV in here and then apply ;)
                     yield f"data:{job_data}\n\n"
                 running = await scraper.go_to_next_page()
 

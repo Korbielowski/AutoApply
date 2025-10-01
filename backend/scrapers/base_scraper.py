@@ -1,9 +1,9 @@
-from playwright.async_api import Browser, Page, Locator
-from pydantic import BaseModel
-from loguru import logger
-
 import abc
 from datetime import date
+
+from loguru import logger
+from playwright.async_api import Browser, Locator, Page
+from pydantic import BaseModel
 
 from backend.llm import send_req_to_llm
 from backend.models import ProfileModel
@@ -44,7 +44,7 @@ class BaseScraper(abc.ABC):
         generate_cv: bool = False,
     ) -> None:
         self.link = link
-        self.profile = ProfileModel
+        self.profile = profile
         self.email = email
         self.password = password
         self.browser = browser
@@ -61,7 +61,7 @@ class BaseScraper(abc.ABC):
         pass
 
     @abc.abstractmethod
-    async def get_job_entires(self) -> tuple[Locator, ...]:
+    async def get_job_entries(self) -> tuple[Locator, ...]:
         pass
 
     @abc.abstractmethod
@@ -77,60 +77,27 @@ class BaseScraper(abc.ABC):
         pass
 
     @abc.abstractmethod
-    async def _get_job_information(self, retry: int = 3) -> None | JobEntry:
+    async def _get_job_information(self, link: str) -> None | JobEntry:
         pass
 
-    async def process_job(self, locator: Locator) -> str:
-        await locator.highlight()
-        await locator.first.click()
-        await self.page.wait_for_selector(".jobs-description__content")
-        # logger.info(f"{self.page.url}\n{await locator.inner_text()}\n\n")
-        job_entry = await self._get_job_information()
+    async def process_and_evaluate_job(self, locator: Locator) -> str:
+        link = await locator.get_attribute(
+            "href"
+        )  # FIXME: This does not return link as this locator is more general and is a parent for other elements, also for a tag with url to job offer
+        job_entry = await self._get_job_information(link)
+
         if not job_entry:
             return ""
 
-        logger.info(job_entry.json())
-        # TODO: Evaluate job entry based on comparison between job's description and user's skills
-        # is_valuable, requirements = self._evaluate_job(job_entry.description)
+        logger.info(job_entry.model_dump_json())
 
-        # if is_valuable:
-        #     logger.info("You should apply")
-        #     # TODO: Add use_own_cv flag to options
-        #     use_own_cv = False
-        #     if not use_own_cv:
-        #         cv = create_cv(
-        #             self.profile,
-        #             job_entry.posting_id,
-        #             requirements,
-        #             job_entry.location,
-        #             job_entry.company_url,
-        #             "llm-selection",
-        #         )
-        #     else:
-        #         path = os.getenv("USER_CV", "")
-        #         if not path:
-        #             logger.error("USER_CV variable with path to user's cv is not set")
-        #             # TODO: Do not return information if job is not valuable
-        #             return ""
-        #         cv = Path(path)
-        #         logger.info(cv)
-        #     # _apply_for_job(page, cv)
-        # else:
-        #     logger.info("You should not apply")
-        return job_entry.json()
+        # TODO: Get user needs
+        user_needs = ""
+        prompt = f"Compare user qualifications and needs: {user_needs}. With these from job offer: {job_entry.model_dump_json()}. Return only one word, True if I should apply, and False if not and no other words/characters"
+        response = await send_req_to_llm(prompt, temperature=0, use_openai=True)
+        logger.info(f"LLM evaluation: {response}")
 
-    async def _evaluate_job(self, description: str) -> tuple[bool, str]:
-        # TODO: Make LLM compare user's skills with skills in the description
-        prompt = f"Get only skills, qualifications, place required for this role from the description and return only them in your response and nothing more. {str(description)}"
-        requirements = await send_req_to_llm(prompt, temperature=0, use_openai=True)
-        logger.info(f"Important information about the posiotion: {requirements}")
-        user_needs = "C, Rust, Poland, Python 5+ years, CI/CD, GIT, python testing, fluent polish"
-        prompt = f"Compare my qualifications and needs: {user_needs}. With these from job offer: {requirements}. Return only one word, True if I should apply, and False if not and no other words/characters"
-        response = await send_req_to_llm(
-            prompt + str(description), temperature=0, use_openai=True
-        )
-        logger.info(f"LLM evalutaion: {response}")
         if "True" in response:
-            return (True, requirements)
+            return job_entry.model_dump_json()
         else:
-            return (False, requirements)
+            return ""
