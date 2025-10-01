@@ -1,34 +1,10 @@
 import abc
-from datetime import date
 
 from loguru import logger
 from playwright.async_api import Browser, Locator, Page
-from pydantic import BaseModel
 
+from backend.database.models import JobEntry, ProfileModel
 from backend.llm import send_req_to_llm
-from backend.models import ProfileModel
-
-
-# TODO: How to recognise duplicate job offers on a different sites and on the same site at different time
-# Maybe try using normalization of several job information e.g. title, company name and part of description and fuzzy matching
-# https://github.com/rapidfuzz/RapidFuzz
-class JobEntry(BaseModel):
-    title: str
-    company_name: str
-    discovery_date: date
-    job_url: str
-    requirements: str
-    duties: str
-    about_project: str
-    offer_benefits: str
-    location: str
-    contract_type: str
-    employment_type: str
-    work_arrangement: str
-    additional_information: None | str
-    company_url: (
-        None | str
-    )  # TODO: Here LLM will need to find information on the internet
 
 
 class BaseScraper(abc.ABC):
