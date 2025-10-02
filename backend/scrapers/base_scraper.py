@@ -3,7 +3,7 @@ import abc
 from loguru import logger
 from playwright.async_api import Browser, Locator, Page
 
-from backend.database.models import JobEntry, ProfileModel
+from backend.database.models import JobEntry, User
 from backend.llm import send_req_to_llm
 
 
@@ -11,7 +11,7 @@ class BaseScraper(abc.ABC):
     def __init__(
         self,
         link: str,
-        profile: ProfileModel,
+        profile: User,
         email: str,
         password: str,
         browser: Browser,

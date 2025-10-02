@@ -9,11 +9,11 @@ from sqlmodel import Session, select
 from backend.config import settings
 from backend.database.db import engine, init_db
 from backend.database.models import (
-    ProfileModel,
+    UserModel,
 )
 from backend.routes.main import api_router
 
-profile = None
+profile: UserModel
 
 
 @asynccontextmanager
@@ -22,10 +22,10 @@ async def setup(inner_app: FastAPI) -> AsyncGenerator:
 
     # FIXME: Fix login with one account
     with Session(engine) as session:
-        profile_count = session.scalar(func.count(ProfileModel.id))
+        profile_count = session.scalar(func.count(UserModel.id))
         if profile_count == 1:
             global profile
-            profile = session.exec(select(ProfileModel)).first()
+            profile = session.exec(select(UserModel)).first()
 
     inner_app.mount("/static", StaticFiles(directory="static"), name="static")
 
