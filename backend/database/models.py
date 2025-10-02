@@ -1,7 +1,9 @@
 import datetime
 
-from pydantic import EmailStr, Json
-from sqlmodel import Field, SQLModel
+from pydantic import EmailStr
+from sqlmodel import JSON, Column, Field, SQLModel
+
+# TODO: Add model for storing all of the users preferences regarding scraping, cv creation and applying
 
 # TODO: Add priority to each category of skills and qualifications, so that the system can decide what should go into cv
 
@@ -11,6 +13,7 @@ from sqlmodel import Field, SQLModel
 # https://github.com/rapidfuzz/RapidFuzz
 class JobEntryModel(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
+    profile_id: int | None = Field(default=None, foreign_key="profilemodel.id")
     title: str
     company_name: str
     discovery_date: datetime.date = Field(default_factory=datetime.date.today)
@@ -52,7 +55,7 @@ class WebsiteModel(SQLModel, table=True):
     user_email: EmailStr
     user_password: str
     url: str
-    automation_steps: Json
+    automation_steps: dict = Field(sa_column=Column(JSON), default_factory=dict)
 
 
 class Website(SQLModel):
@@ -60,7 +63,7 @@ class Website(SQLModel):
     user_email: EmailStr
     user_password: str
     url: str
-    automation_steps: Json
+    automation_steps: dict = Field(sa_column=Column(JSON), default_factory=dict)
 
 
 class ProfileModel(SQLModel, table=True):
@@ -82,7 +85,7 @@ class Profile(SQLModel):
 
 class LocationModel(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    profile_id: int | None = Field(default=None, foreign_key="profile.id")
+    profile_id: int | None = Field(default=None, foreign_key="profilemodel.id")
     country: str
     state: str
     city: str
@@ -98,7 +101,7 @@ class Location(SQLModel):
 
 class ProgrammingLanguageModel(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    profile_id: int | None = Field(default=None, foreign_key="profile.id")
+    profile_id: int | None = Field(default=None, foreign_key="profilemodel.id")
     language: str
     level: str  # Maybe in the future change to int
 
@@ -110,7 +113,7 @@ class ProgrammingLanguage(SQLModel):
 
 class LanguageModel(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    profile_id: int | None = Field(default=None, foreign_key="profile.id")
+    profile_id: int | None = Field(default=None, foreign_key="profilemodel.id")
     language: str
     level: str  # Maybe in the future change to int
 
@@ -122,7 +125,7 @@ class Language(SQLModel):
 
 class ToolModel(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    profile_id: int | None = Field(default=None, foreign_key="profile.id")
+    profile_id: int | None = Field(default=None, foreign_key="profilemodel.id")
     name: str
     level: str  # Maybe in the future change to int
 
@@ -134,7 +137,7 @@ class Tool(SQLModel):
 
 class CertificateModel(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    profile_id: int | None = Field(default=None, foreign_key="profile.id")
+    profile_id: int | None = Field(default=None, foreign_key="profilemodel.id")
     name: str
     description: str
     organisation: str
@@ -148,7 +151,7 @@ class Certificate(SQLModel):
 
 class CharityModel(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    profile_id: int | None = Field(default=None, foreign_key="profile.id")
+    profile_id: int | None = Field(default=None, foreign_key="profilemodel.id")
     name: str
     description: str
     organisation: str
@@ -166,7 +169,7 @@ class Charity(SQLModel):
 
 class EducationModel(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    profile_id: int | None = Field(default=None, foreign_key="profile.id")
+    profile_id: int | None = Field(default=None, foreign_key="profilemodel.id")
     school: str
     major: str
     description: str
@@ -184,7 +187,7 @@ class Education(SQLModel):
 
 class ExperienceModel(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    profile_id: int | None = Field(default=None, foreign_key="profile.id")
+    profile_id: int | None = Field(default=None, foreign_key="profilemodel.id")
     company: str
     position: str
     description: str
@@ -202,7 +205,7 @@ class Experience(SQLModel):
 
 class ProjectModel(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    profile_id: int | None = Field(default=None, foreign_key="profile.id")
+    profile_id: int | None = Field(default=None, foreign_key="profilemodel.id")
     name: str
     description: str
     url: str
@@ -216,7 +219,7 @@ class Project(SQLModel):
 
 class SocialPlatformModel(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    profile_id: int | None = Field(default=None, foreign_key="profile.id")
+    profile_id: int | None = Field(default=None, foreign_key="profilemodel.id")
     name: str
     url: str
 
