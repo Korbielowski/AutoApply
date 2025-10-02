@@ -1,92 +1,90 @@
 from fastapi import APIRouter, Form, Request, status
-from fastapi.responses import RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from loguru import logger
-from sqlmodel import select
+from sqlmodel import func, select
 
+from backend.database.crud import create_user
 from backend.database.models import (
-    Certificate,
-    Charity,
-    Education,
-    Experience,
-    Language,
-    Location,
+    CertificateModel,
+    CharityModel,
+    EducationModel,
+    ExperienceModel,
+    LanguageModel,
+    LocationModel,
     ProfileInfo,
-    ProfileModel,
-    ProgrammingLanguage,
-    Project,
-    SocialPlatform,
-    Tool,
+    ProgrammingLanguageModel,
+    ProjectModel,
+    SocialPlatformModel,
+    ToolModel,
+    User,
+    UserModel,
 )
-from backend.routes.deps import SessionDep
+from backend.routes.deps import SessionDep, set_current_user
 
 router = APIRouter(tags=["users"])
 templates = Jinja2Templates(directory="templates")
 
 
 @router.get("/login")
-async def load_login_page(session: SessionDep, request: Request):
-    profiles = session.exec(select(ProfileModel))
+async def load_login_page(session: SessionDep, request: Request) -> HTMLResponse:
+    profiles = session.exec(select(UserModel))
     return templates.TemplateResponse(
         request=request, name="login.html", context={"profiles": profiles}
     )
 
 
 @router.post("/login")
-async def login(session: SessionDep, request: Request, email: str = Form(...)):
+async def login(
+    session: SessionDep, request: Request, email: str = Form(...)
+) -> RedirectResponse:
     # TODO: Get current profile in other/better way ;)
-    global profile
-    profile = session.exec(
-        select(ProfileModel).where(ProfileModel.email == email)
-    ).first()
+    set_current_user(session, email)
     return RedirectResponse(
         url=request.url_for("index"), status_code=status.HTTP_303_SEE_OTHER
     )
 
 
 @router.get("/register")
-async def load_register_page(request: Request):
-    return templates.TemplateResponse(request=request, name="register.html")
+async def load_register_page(session: SessionDep, request: Request) -> RedirectResponse:
+    if session.scalar(func.count(UserModel.id)) >= 1:
+        return RedirectResponse(
+            url=request.url_for("login"), status_code=status.HTTP_303_SEE_OTHER
+        )
+    return templates.TemplateResponse(request=request, name="register.html")  # type: ignore
 
 
 @router.post("/register")
 async def register(
     session: SessionDep, request: Request, form_data: ProfileInfo
 ) -> RedirectResponse:  # form: Annotated[TestInfo, Form()]
-    logger.info("cos dziala")
     d = {
-        "locations": Location,
-        "programming_languages": ProgrammingLanguage,
-        "languages": Language,
-        "tools": Tool,
-        "certificates": Certificate,
-        "charities": Charity,
-        "educations": Education,
-        "experience": Experience,
-        "projects": Project,
-        "social_platforms": SocialPlatform,
+        "locations": LocationModel,
+        "programming_languages": ProgrammingLanguageModel,
+        "languages": LanguageModel,
+        "tools": ToolModel,
+        "certificates": CertificateModel,
+        "charities": CharityModel,
+        "educations": EducationModel,
+        "experience": ExperienceModel,
+        "projects": ProjectModel,
+        "social_platforms": SocialPlatformModel,
     }
-    logger.info("Nadal dziala")
     form_dump = form_data.model_dump()
-    form_profile = ProfileModel.model_validate(form_dump.get("profile"))
+    user = User.model_validate(form_dump.get("profile"))
 
-    logger.info("Juz nie dziala")
     models = []
     for key, val in d.items():
         tmp = form_dump.get(key, [])
         for t in tmp:
             models.append(val.model_validate(t))
 
-    session.add(form_profile)
-    session.commit()
-    global profile
-    profile = session.exec(
-        select(ProfileModel).where(ProfileModel.email == form_profile.email)
-    ).first()
+    user = create_user(session, user)
+
     for model in models:
-        model.profile_id = profile.id
+        model.user_id = user.id
         session.add(model)
     session.commit()
+
     return RedirectResponse(
         url=request.url_for("index"), status_code=status.HTTP_303_SEE_OTHER
     )
