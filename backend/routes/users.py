@@ -1,3 +1,5 @@
+from typing import Union
+
 from fastapi import APIRouter, Form, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
@@ -16,7 +18,6 @@ from backend.database.models import (
     ProjectModel,
     SocialPlatformModel,
     ToolModel,
-    User,
     UserModel,
 )
 from backend.routes.deps import SessionDep, set_current_user
@@ -25,18 +26,16 @@ router = APIRouter(tags=["users"])
 templates = Jinja2Templates(directory="templates")
 
 
-@router.get("/login")
-async def load_login_page(session: SessionDep, request: Request) -> HTMLResponse:
+@router.get("/login", response_class=HTMLResponse)
+async def load_login_page(session: SessionDep, request: Request):
     profiles = session.exec(select(UserModel))
     return templates.TemplateResponse(
         request=request, name="login.html", context={"profiles": profiles}
     )
 
 
-@router.post("/login")
-async def login(
-    session: SessionDep, request: Request, email: str = Form(...)
-) -> RedirectResponse:
+@router.post("/login", response_class=RedirectResponse)
+async def login(session: SessionDep, request: Request, email: str = Form(...)):
     # TODO: Get current profile in other/better way ;)
     set_current_user(session, email)
     return RedirectResponse(
@@ -44,8 +43,8 @@ async def login(
     )
 
 
-@router.get("/register")
-async def load_register_page(session: SessionDep, request: Request) -> RedirectResponse:
+@router.get("/register", response_class=Union[RedirectResponse, HTMLResponse])
+async def load_register_page(session: SessionDep, request: Request):
     if session.scalar(func.count(UserModel.id)) >= 1:
         return RedirectResponse(
             url=request.url_for("login"), status_code=status.HTTP_303_SEE_OTHER
@@ -53,10 +52,12 @@ async def load_register_page(session: SessionDep, request: Request) -> RedirectR
     return templates.TemplateResponse(request=request, name="register.html")  # type: ignore
 
 
-@router.post("/register")
+@router.post("/register", response_class=RedirectResponse)
 async def register(
-    session: SessionDep, request: Request, form_data: ProfileInfo
-) -> RedirectResponse:  # form: Annotated[TestInfo, Form()]
+    session: SessionDep,
+    request: Request,
+    form_data: ProfileInfo,  # form: Annotated[TestInfo, Form()]
+):
     d = {
         "locations": LocationModel,
         "programming_languages": ProgrammingLanguageModel,
@@ -70,7 +71,7 @@ async def register(
         "social_platforms": SocialPlatformModel,
     }
     form_dump = form_data.model_dump()
-    user = User.model_validate(form_dump.get("profile"))
+    user = UserModel.model_validate(form_dump.get("profile"))
 
     models = []
     for key, val in d.items():
