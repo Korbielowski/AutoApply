@@ -80,7 +80,7 @@ class User(SQLModel):
     first_name: str
     middle_name: str
     surname: str
-    age: str
+    age: str | None
 
 
 class LocationModel(SQLModel, table=True):
