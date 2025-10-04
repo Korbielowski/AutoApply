@@ -1,4 +1,4 @@
-from sqlmodel import Session, select
+from sqlmodel import Session
 
 from backend.database.models import UserModel
 
@@ -6,4 +6,5 @@ from backend.database.models import UserModel
 def create_user(session: Session, user: UserModel) -> UserModel:
     session.add(user)
     session.commit()
-    return session.exec(select(UserModel).where(UserModel.email == user.email)).first()
+    session.refresh(user)
+    return user
