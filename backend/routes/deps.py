@@ -20,7 +20,7 @@ def current_user() -> UserModel | None:
 
     with Session(engine) as session:
         profile_count = session.scalar(func.count(UserModel.id))
-        if profile_count > 1:
+        if profile_count > 1 or profile_count < 1:
             return None
         return session.exec(select(UserModel)).first()
 
@@ -31,4 +31,4 @@ def set_current_user(session: Session, email: str) -> None:
 
 
 SessionDep = Annotated[Session, Depends(get_session)]
-CurrentUser = Annotated[UserModel, Depends(current_user)]
+CurrentUser = Annotated[UserModel | None, Depends(current_user)]
