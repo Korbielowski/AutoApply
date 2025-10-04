@@ -1,9 +1,11 @@
+from typing import Union
+
 from fastapi import APIRouter, Request, status
-from fastapi.responses import RedirectResponse, StreamingResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 
 from backend.database.models import User
-from backend.routes.deps import CurrentUser, SessionDep
+from backend.routes.deps import CurrentUser
 from backend.scrapers import find_job_entries
 
 router = APIRouter(tags=["pages"])
@@ -12,8 +14,8 @@ templates = Jinja2Templates("templates")
 profile: None | User = None
 
 
-@router.get("/")
-async def index(current_user: CurrentUser, session: SessionDep, request: Request):
+@router.get("/", response_class=Union[RedirectResponse, HTMLResponse])
+async def index(current_user: CurrentUser, request: Request):
     if not current_user:
         return RedirectResponse(
             url=request.url_for("load_register_page"),
@@ -22,7 +24,7 @@ async def index(current_user: CurrentUser, session: SessionDep, request: Request
     return templates.TemplateResponse(request=request, name="index.html")
 
 
-@router.get("/scrape_jobs")
+@router.get("/scrape_jobs", response_class=StreamingResponse)
 async def scrape_jobs():
     return StreamingResponse(
         find_job_entries(
