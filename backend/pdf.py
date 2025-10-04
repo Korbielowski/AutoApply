@@ -1,28 +1,27 @@
-from sqlalchemy import URL
-from sqlmodel import SQLModel, create_engine, Session, select
-from dotenv import load_dotenv
-from weasyprint import HTML, CSS
+import datetime
+import logging
+import os
+from pathlib import Path
 
-# from app_setup import engine
-from backend.llm import send_req_to_llm
-from backend.models import (
-    ProfileModel,
-    ProgrammingLanguage,
-    Language,
-    Tool,
+from dotenv import load_dotenv
+from sqlalchemy import URL
+from sqlmodel import Session, SQLModel, create_engine, select
+from weasyprint import CSS, HTML
+
+from backend.database.models import (
     Certificate,
     Charity,
     Education,
     Experience,
+    Language,
+    ProgrammingLanguage,
     Project,
     SocialPlatform,
+    Tool,
+    User,
 )
-
-import os
-from pathlib import Path
-import datetime
-import logging
-
+from backend.llm import send_req_to_llm
+from backend.scrapers.base_scraper import JobEntry
 
 logging.basicConfig(format="%(levelname)s: %(message)s", level=logging.INFO)
 PDF_ENGINE = "weasyprint"
@@ -117,7 +116,7 @@ TEMPLATE = """
 DRIVERNAME = "postgresql+psycopg"
 
 
-def _get_info_for_cv(profile: ProfileModel, mode: str) -> dict[str, str]:
+def _get_info_for_cv(profile: User, mode: str) -> dict[str, str]:
     load_dotenv()
     username = os.environ.get("POSTGRE_USERNAME")
     password = os.environ.get("POSTGRE_PASSWORD")
@@ -172,11 +171,8 @@ def _get_info_for_cv(profile: ProfileModel, mode: str) -> dict[str, str]:
 
 
 def create_cv(
-    profile: ProfileModel,
-    posting_id: str,
-    requirements: str,
-    location: str,
-    company_url: str,
+    profile: User,
+    job_entry: JobEntry,
     mode: str = "llm-selection",
 ) -> Path:
     # TODO: Here we will get data from the database
@@ -186,6 +182,7 @@ def create_cv(
     # 3) Make LLM write the CV from the ground up
     # 4) Make algorithm for putting relevant skills into CV without use of LLM
     info = _get_info_for_cv(profile, mode)
+    requirements = job_entry.duties
     if mode == "llm-selection":
         skills = info.get("skills", "")
         name = info.get("name", "Jan Kolon Movano")
@@ -224,7 +221,9 @@ def create_cv(
     logging.info(f"CV:\n{cv}")
 
     current_time = datetime.datetime.today().strftime("%Y-%m-%d_%H:%M:%S")
-    cv_path = Path().joinpath(CV_DIR_NAME).joinpath(f"{current_time}_{posting_id}.pdf")
+    cv_path = (
+        Path().joinpath(CV_DIR_NAME).joinpath(f"{current_time}_{job_entry.title}.pdf")
+    )  # TODO: change job_entry.title
 
     if not os.path.isdir(CV_DIR_NAME):
         os.mkdir(CV_DIR_NAME)
