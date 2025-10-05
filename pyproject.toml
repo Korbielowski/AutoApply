@@ -32,3 +32,13 @@ dev = [
 
 [tool.setuptools.packages.find]
 exclude = ["branding*"]
+
+[tool.ruff]
+line-length = 80
+
+[tool.ruff.format]
+docstring-code-format = true
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+force-single-line = false
