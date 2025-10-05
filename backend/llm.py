@@ -1,29 +1,28 @@
 # TODO: If not used, remove openai-agents from dependencies and add normal OpenAI
 # TODO: Remove dotenv and code related to it from this file, when app setup works fine
-from openai import OpenAI, RateLimitError, AuthenticationError
-from dotenv import load_dotenv
-from loguru import logger
-
-import os
 import asyncio
 
-# TODO: Uncomment this in the future: from app_setup import API_KEY
-load_dotenv()
-API_KEY = os.getenv("API_KEY", "")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+from loguru import logger
+from openai import AuthenticationError, OpenAI, RateLimitError
+
+from backend.config import settings
+
 BASE_URL = "https://api.llm7.io/v1"
 MODEL = "deepseek-r1-0528"
 OPENAI_MODEL = "gpt-5-nano-2025-08-07"
 
 
 async def send_req_to_llm(
-    prompt: str, temperature: float = 1, use_openai: bool = False, retry: int = 3
+    prompt: str,
+    temperature: float = 1,
+    use_openai: bool = False,
+    retry: int = 3,
 ) -> str:
     # response = LLM.responses.create(model="deepseek/deepseek-r1-distill-llama-70b:free", instructions=prompt, input=str(description))
     response = ""
 
     if use_openai:
-        client = OpenAI(api_key=OPENAI_API_KEY)
+        client = OpenAI(api_key=settings.OPENAI_API_KEY)
         while not response and retry > 0:
             try:
                 response = client.responses.create(
@@ -52,7 +51,7 @@ async def send_req_to_llm(
 
             return response.output_text
     else:
-        client = OpenAI(api_key=API_KEY, base_url=BASE_URL)
+        client = OpenAI(api_key=settings.API_KEY, base_url=BASE_URL)
         try:
             response = client.responses.create(
                 model=MODEL,
