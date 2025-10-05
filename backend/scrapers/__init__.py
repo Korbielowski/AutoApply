@@ -2,21 +2,19 @@ import os
 from pathlib import Path
 from typing import Any, AsyncGenerator, Type
 
-from dotenv import load_dotenv
 from loguru import logger
 from playwright.async_api import async_playwright
 from playwright_stealth import Stealth
+from sqlmodel import Session, select
 
-from ..models import ProfileModel
-from ..pdf import create_cv
-from .base_scraper import BaseScraper
-from .linkedin import LinkedIn
-from .llm_scraper import LLMScraper
-from .pracuj_pl import PracujPl
+from backend.config import settings
+from backend.database.models import UserModel, Website
+from backend.pdf import create_cv
+from backend.scrapers.base_scraper import BaseScraper
+from backend.scrapers.linkedin import LinkedIn
+from backend.scrapers.llm_scraper import LLMScraper
+from backend.scrapers.pracuj_pl import PracujPl
 
-load_dotenv()
-USER_EMAIL = os.getenv("USER_EMAIL", "")
-PASSWORD = os.getenv("PASSWORD", "")
 SCRAPERS: dict[str, Type[BaseScraper]] = {
     "pracuj.pl": PracujPl,
     "linkedin.com": LinkedIn,
@@ -24,8 +22,9 @@ SCRAPERS: dict[str, Type[BaseScraper]] = {
 
 
 async def find_job_entries(
-    profile: ProfileModel,
-    links: list[str],
+    user: UserModel,
+    session: Session,
+    urls: list[str],
     auto_apply: bool = False,
     generate_cv: bool = False,
     use_llm: bool = False,
@@ -39,20 +38,21 @@ async def find_job_entries(
         # context.add_cookies()
         page = await browser.new_page(locale="en-US")
 
-        for link in links:
+        for url in urls:
+            website_info = session.exec(
+                select(Website).where(Website.url == url)
+            ).first()
             sc: Type[BaseScraper] = (
                 LLMScraper if use_llm else SCRAPERS.get("linkedin.com", LLMScraper)
             )
             # TODO: Replace with this --> SCRAPERS.get(link, LLMScraper)
             scraper = sc(
-                link=link,
-                profile=profile,
-                email=USER_EMAIL,
-                password=PASSWORD,
+                url=url,
+                email=settings.USER_EMAIL,
+                password=settings.PASSWORD,
                 browser=browser,
                 page=page,
-                auto_apply=auto_apply,
-                generate_cv=generate_cv,
+                website_info=website_info,
             )
             await scraper.login_to_page()
 
@@ -61,10 +61,9 @@ async def find_job_entries(
                 for job in await scraper.get_job_entries():
                     job_data = await scraper.process_and_evaluate_job(job)
                     if job_data:
-                        # TODO: Add use_own_cv flag to options
                         if not use_user_cv:
                             cv = create_cv(
-                                profile,
+                                user,
                                 job_data,
                                 "llm-selection",
                             )
@@ -74,7 +73,7 @@ async def find_job_entries(
                                 logger.error(
                                     "USER_CV variable with path to user's cv is not set"
                                 )
-                                # TODO: Do not return information if job is not valuable
+                                yield f"data:{job_data}\n\n"
                             cv = Path(path)
                         logger.info(cv)
                         # TODO: Create CV in here and then apply ;)
