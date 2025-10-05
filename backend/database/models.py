@@ -1,4 +1,6 @@
 import datetime
+from enum import StrEnum
+from typing import Callable
 
 from pydantic import EmailStr
 from sqlmodel import JSON, Column, Field, SQLModel
@@ -49,13 +51,42 @@ class JobEntry(SQLModel):
     company_url: None | str
 
 
+class AttributeType(StrEnum):
+    id = "id"
+    text = "text"
+    aria_label = "aria_label"
+    name = "name"
+    element_type = "element_type"
+    class_l = "class_l"
+
+
+class Step(SQLModel):
+    action: Callable
+    html_element_attribute: str  # TODO: Experiment with Locators too if you can
+    attribute_type: AttributeType
+    arguments: dict
+
+
+class AutomationSteps(SQLModel):
+    login_to_page: list[Step]
+    is_on_login_page: list[Step]
+    navigate_to_login_page: list[Step]
+    pass_cookies_popup: list[Step]
+    navigate_to_job_list: list[Step]
+    get_job_entries: list[Step]
+    navigate_to_next_page: list[Step]
+    # TODO: Uncomment if this function gets html elements get_job_information: list[Step]
+
+
 class WebsiteModel(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     cookies: str
     user_email: EmailStr
     user_password: str
     url: str
-    automation_steps: dict = Field(sa_column=Column(JSON), default_factory=dict)
+    automation_steps: AutomationSteps = Field(
+        sa_column=Column(JSON), default_factory=dict
+    )
 
 
 class Website(SQLModel):
@@ -63,7 +94,9 @@ class Website(SQLModel):
     user_email: EmailStr
     user_password: str
     url: str
-    automation_steps: dict = Field(sa_column=Column(JSON), default_factory=dict)
+    automation_steps: AutomationSteps = Field(
+        sa_column=Column(JSON), default_factory=dict
+    )
 
 
 class UserModel(SQLModel, table=True):
