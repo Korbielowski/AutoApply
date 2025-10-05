@@ -3,26 +3,26 @@ import abc
 from loguru import logger
 from playwright.async_api import Browser, Locator, Page
 
-from backend.database.models import JobEntry, User
+from backend.database.models import JobEntry, Website
 from backend.llm import send_req_to_llm
 
 
 class BaseScraper(abc.ABC):
     def __init__(
         self,
-        link: str,
-        profile: User,
+        url: str,
         email: str,
         password: str,
         browser: Browser,
         page: Page,
+        website_info: Website,
     ) -> None:
-        self.link = link
-        self.profile = profile
+        self.url = url
         self.email = email
         self.password = password
         self.browser = browser
         self.page = page
+        self.website_info = website_info if website_info else Website()
 
     @abc.abstractmethod
     async def login_to_page(self) -> None:
@@ -49,17 +49,17 @@ class BaseScraper(abc.ABC):
         pass
 
     @abc.abstractmethod
-    async def _get_job_information(self, link: str) -> None | JobEntry:
+    async def _get_job_information(self, url: str) -> JobEntry | None:
         pass
 
-    async def process_and_evaluate_job(self, locator: Locator) -> str:
-        link = await locator.get_attribute(
+    async def process_and_evaluate_job(self, locator: Locator) -> JobEntry | None:
+        url = await locator.get_attribute(
             "href"
-        )  # FIXME: This does not return link as this locator is more general and is a parent for other elements, also for a tag with url to job offer
-        job_entry = await self._get_job_information(link)
+        )  # FIXME: This does not return url as this locator is more general and is a parent for other elements, also for a tag with url to job offer
+        job_entry = await self._get_job_information(url)
 
         if not job_entry:
-            return ""
+            return None
 
         logger.info(job_entry.model_dump_json())
 
@@ -70,6 +70,6 @@ class BaseScraper(abc.ABC):
         logger.info(f"LLM evaluation: {response}")
 
         if "True" in response:
-            return job_entry.model_dump_json()
+            return job_entry
         else:
-            return ""
+            return None
