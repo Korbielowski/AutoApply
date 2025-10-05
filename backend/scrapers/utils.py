@@ -1,16 +1,19 @@
-from playwright.async_api import Page, Locator, TimeoutError
+import json
+
+import tiktoken
 from bs4 import BeautifulSoup
 from loguru import logger
-import tiktoken
+from playwright.async_api import Locator, Page, TimeoutError
 
+from backend.database.models import AttributeType, Step
 from backend.llm import send_req_to_llm
-
-import json
 
 TIK = tiktoken.encoding_for_model("gpt-5-")
 
 
-async def goto(page: Page, link: str, retry: int = 3, debug: bool = False) -> None:
+async def goto(
+    page: Page, link: str, retry: int = 3, debug: bool = False
+) -> None:
     done = False
     while not done and retry > 0:
         try:
@@ -24,22 +27,22 @@ async def goto(page: Page, link: str, retry: int = 3, debug: bool = False) -> No
 
 async def click(
     element: None | Locator, page: Page, retry: int = 3, debug: bool = False
-) -> None:
+) -> bool:
     if not element:
         logger.exception("Could not find button")
-        return
+        return False
 
-    done = False
-    while not done and retry > 0:
+    while retry > 0:
         try:
             if debug:
                 await element.highlight()
             await element.click()
             await page.wait_for_load_state("load")
-            done = True
+            return True
         except TimeoutError as e:
             logger.exception(e)
         retry -= 1
+    return False
 
 
 async def fill(
@@ -64,8 +67,11 @@ async def fill(
 async def get_page_content(page: Page) -> str:
     # TODO: Make page content smaller by e.g. excluding head or code tags and only by including body
     # TODO: Check in the future, whether regex would not be faster and overall better solution
+    # TODO: Add option to get important info about html tags and their content, then send all of it in json format to LLM
     page_content = await page.content()
-    logger.info(f"Amount of tokens before cleaning: {len(TIK.encode(page_content))}")
+    logger.info(
+        f"Amount of tokens before cleaning: {len(TIK.encode(page_content))}"
+    )
     soup = BeautifulSoup(page_content, "html.parser")
     cleaned_page_content = ""
     for tag in soup(
@@ -121,7 +127,9 @@ async def find_html_element_attributes(page: Page, prompt: str) -> None | dict:
     return attributes
 
 
-async def find_html_element(page: Page, prompt: str) -> None | Locator:
+async def find_html_element(
+    page: Page, prompt: str
+) -> None | tuple[Locator, str, AttributeType]:
     attributes = await find_html_element_attributes(page, prompt)
     if not attributes:
         return None
@@ -130,33 +138,33 @@ async def find_html_element(page: Page, prompt: str) -> None | Locator:
     element_id = attributes.get("id", "")
     locator = page.locator(f"#{element_id}")
     if await locator.count() != 0:
-        return locator.last
+        return locator.last, element_id, AttributeType.id
 
     text = attributes.get("text", "")
     locator = page.get_by_text(text)
     if await locator.count() != 0:
-        return locator.last
+        return locator.last, text, AttributeType.text
 
     aria_label = attributes.get("aria-label", "")
     locator = page.get_by_label(aria_label)
     if await locator.count() != 0:
-        return locator.last
+        return locator.last, aria_label, AttributeType.aria_label
 
     name = attributes.get("name", "")
     locator = page.locator(f'[name="{name}"]')
     if await locator.count() != 0:
-        return locator.last
+        return locator.last, name, AttributeType.name
 
     element_type = attributes.get("type", "")
     locator = page.locator(f'[type="{element_type}"]')
     if await locator.count() != 0:
-        return locator.last
+        return locator.last, element_type, AttributeType.element_type
 
     class_list = attributes.get("classList", [])
     for class_l in class_list:
         locator = page.locator(f".{class_l}")
         if 0 < await locator.count() <= 1:
-            return locator.last
+            return locator.last, class_l, AttributeType.class_l
 
     # placeholder = attributes.get("placeholder", "")
     # locator = self.page.get_by_placeholder(placeholder)
@@ -166,4 +174,22 @@ async def find_html_element(page: Page, prompt: str) -> None | Locator:
     # role = attributes.get("role", "")
     # locator = self.page.get_by_role()
 
+    return None
+
+
+async def get_locator(page: Page, step: Step) -> Locator | None:
+    attribute_type = step.attribute_type
+    attribute = step.html_element_attribute
+    if attribute_type == AttributeType.id:
+        return page.locator(f"#{attribute}")
+    elif attribute_type == AttributeType.text:
+        return page.get_by_text(attribute)
+    elif attribute_type == AttributeType.aria_label:
+        return page.get_by_label(attribute)
+    elif attribute_type == AttributeType.name:
+        return page.locator(f'[name="{attribute}"]')
+    elif attribute_type == AttributeType.element_type:
+        return page.locator(f'[type="{attribute}"]')
+    elif attribute_type == AttributeType.class_l:
+        return page.locator(f".{attribute}")
     return None
