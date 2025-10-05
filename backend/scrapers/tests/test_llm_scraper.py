@@ -1,12 +1,12 @@
-from playwright_stealth import Stealth
-from playwright.async_api import async_playwright
+import logging
+
 import pytest
 from loguru import logger
+from playwright.async_api import async_playwright
+from playwright_stealth import Stealth
 
+from backend.database.models import ProfileModel
 from backend.scrapers import LLMScraper
-from backend.models import ProfileModel
-
-import logging
 
 
 @pytest.mark.asyncio
