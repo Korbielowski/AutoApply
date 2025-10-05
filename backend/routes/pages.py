@@ -4,14 +4,11 @@ from fastapi import APIRouter, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 
-from backend.database.models import User
-from backend.routes.deps import CurrentUser
+from backend.routes.deps import CurrentUser, SessionDep
 from backend.scrapers import find_job_entries
 
 router = APIRouter(tags=["pages"])
 templates = Jinja2Templates("templates")
-
-profile: None | User = None
 
 
 @router.get("/", response_class=Union[RedirectResponse, HTMLResponse])
@@ -25,11 +22,14 @@ async def index(current_user: CurrentUser, request: Request):
 
 
 @router.get("/scrape_jobs", response_class=StreamingResponse)
-async def scrape_jobs():
+async def scrape_jobs(current_user: CurrentUser, session: SessionDep):
+    # TODO: Get sites/urls to scrape from database and user/website form
+    # TODO: Get program options like generate_cv from database and user/website form
     return StreamingResponse(
         find_job_entries(
-            profile,
-            [
+            user=current_user,
+            session=session,
+            urls=[
                 "https://www.linkedin.com/jobs/collections/recommended/?currentJobId=3706084909"
             ],
         ),
