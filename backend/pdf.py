@@ -18,7 +18,7 @@ from backend.database.models import (
     Project,
     SocialPlatform,
     Tool,
-    User,
+    UserModel,
 )
 from backend.llm import send_req_to_llm
 from backend.scrapers.base_scraper import JobEntry
@@ -116,7 +116,7 @@ TEMPLATE = """
 DRIVERNAME = "postgresql+psycopg"
 
 
-def _get_info_for_cv(profile: User, mode: str) -> dict[str, str]:
+def _get_info_for_cv(user: UserModel, mode: str) -> dict[str, str]:
     load_dotenv()
     username = os.environ.get("POSTGRE_USERNAME")
     password = os.environ.get("POSTGRE_PASSWORD")
@@ -143,19 +143,19 @@ def _get_info_for_cv(profile: User, mode: str) -> dict[str, str]:
     )
     with Session(engine) as session:
         links_query = session.execute(
-            select(SocialPlatform).where(SocialPlatform.profile_id == profile.id)
+            select(SocialPlatform).where(SocialPlatform.user_id == user.id)
         )
         output = {
-            "name": f"{profile.firstname} {profile.middlename} {profile.surname}",
-            "email": profile.email,
-            # "phone_number": profile.phone_number,
+            "name": f"{user.firstname} {user.middlename} {user.surname}",
+            "email": user.email,
+            # "phone_number": user.phone_number,
         }
         if mode == "llm-selection" or mode == "llm-generation":
             links_arr = (link.link for link in links_query)
             output["links"] = ",".join(links_arr)
             output["skills"] = ""
             for c in model_classes:
-                query = session.execute(select(c).where(c.profile_id == profile.id))
+                query = session.execute(select(c).where(c.user_id == user.id))
                 arr = (row for row in query)
                 output["skills"] += ",".join(arr)
         elif mode == "user-cv":
@@ -164,14 +164,14 @@ def _get_info_for_cv(profile: User, mode: str) -> dict[str, str]:
                 output["links"][link.name] = link.link
             output["skills"] = ""
             for c in model_classes:
-                query = session.execute(select(c).where(c.profile_id == profile.id))
+                query = session.execute(select(c).where(c.user_id == user.id))
                 arr = (row for row in query)
                 output[c.__name__] = ",".join(arr)
         return output
 
 
 def create_cv(
-    profile: User,
+    user: UserModel,
     job_entry: JobEntry,
     mode: str = "llm-selection",
 ) -> Path:
@@ -181,7 +181,7 @@ def create_cv(
     # 2) Make LLM put adequate skills etc. into the template string
     # 3) Make LLM write the CV from the ground up
     # 4) Make algorithm for putting relevant skills into CV without use of LLM
-    info = _get_info_for_cv(profile, mode)
+    info = _get_info_for_cv(user, mode)
     requirements = job_entry.duties
     if mode == "llm-selection":
         skills = info.get("skills", "")
