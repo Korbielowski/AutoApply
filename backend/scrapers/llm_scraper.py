@@ -20,19 +20,19 @@ from backend.scrapers.utils import (
 # If saved information does not work at any stage of the process, switch back to LLM scraper and update adequate steps in database
 class LLMScraper(BaseScraper):
     async def login_to_page(self) -> None:
-        await goto(self.page, self.link)
+        await goto(self.page, self.url)
         # TODO: Make a loop out of this code
         await self._pass_cookies_popup()
         if not await self._is_on_login_page():
             await self._navigate_to_login_page()
 
-        email_field_locator = await find_html_element(
+        email_field_locator, _, _ = await find_html_element(
             self.page, "Find the login input field for username/email."
         )
-        password_field_locator = await find_html_element(
+        password_field_locator, _, _ = await find_html_element(
             self.page, "Find the login input field for password."
         )
-        sign_in_btn_locator = await find_html_element(
+        sign_in_btn_locator, _, _ = await find_html_element(
             self.page, "Find the sign in/login button."
         )
 
@@ -42,7 +42,12 @@ class LLMScraper(BaseScraper):
 
     async def _is_on_login_page(self) -> bool:
         url = self.page.url
-        if "login" in url or "signin" in url or "sign-in" in url or "sign_in" in url:
+        if (
+            "login" in url
+            or "signin" in url
+            or "sign-in" in url
+            or "sign_in" in url
+        ):
             return True
 
         if "True" in await send_req_to_llm(
@@ -54,23 +59,47 @@ class LLMScraper(BaseScraper):
         return False
 
     async def _navigate_to_login_page(self) -> None:
-        btn = await find_html_element(self.page, "Find a button that opens login page")
-        await click(btn, self.page)
-
-    async def _pass_cookies_popup(self) -> None:
-        # TODO: Try using cookies to avoid popups
-        btn = await find_html_element(
-            self.page, "Find button responsible for accepting website cookies"
+        btn, _, _ = await find_html_element(
+            self.page, "Find a button that opens login page"
         )
         await click(btn, self.page)
 
+    async def _pass_cookies_popup(self) -> None:
+        btn, attribute, attribute_type = await find_html_element(
+            self.page,
+            "Find button responsible for accepting website cookies",
+        )
+        await click(btn, self.page)
+        # cookies_steps = self.website_info.automation_steps.pass_cookies_popup
+        # TODO: Try using cookies to avoid popups
+        # if cookies_steps:
+        #     btn = await get_locator(self.page, cookies_steps[0])
+        #     if await click(btn, self.page):
+        #         return
+        # btn, attribute, attribute_type = await find_html_element(
+        #     self.page,
+        #     "Find button responsible for accepting website cookies",
+        # )
+        # await click(btn, self.page)
+        #
+        # step = Step(
+        #     action=click,
+        #     html_element_attribute=attribute,
+        #     attribute_type=attribute_type,
+        #     arguments={},
+        # )
+        #
+        # self.website_info.automation_steps.pass_cookies_popup = [step]
+
     # TODO: Change this method name to "_navigate_to_job_list"
     async def _go_to_job_list(self) -> None:
-        btn = await find_html_element(self.page, "Find button that opens job list")
+        btn, _, _ = await find_html_element(
+            self.page, "Find button that opens job list"
+        )
         await click(btn, self.page)
 
     async def get_job_entries(self) -> tuple[Locator, ...]:
-        element = await find_html_element(
+        element, _, _ = await find_html_element(
             self.page,
             "Find an element that is at the bottom of the page, so once in view port it loads all of the page content",
         )
@@ -109,8 +138,9 @@ class LLMScraper(BaseScraper):
                 return tuple(await locator.all())
         return tuple()
 
+    # TODO: Rename to "navigate_to_next_page"
     async def go_to_next_page(self) -> bool:
-        btn = await find_html_element(
+        btn, _, _ = await find_html_element(
             self.page,
             "Find button that is responsible for moving to next job listing page",
         )
