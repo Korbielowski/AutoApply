@@ -1,77 +1,290 @@
-<html>
-  <head>
+<html lang="en">
+<head>
     <title>Main Page</title>
     <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-      integrity="sha384-SgOJa3DmI69IUzQ2PVdRZhwQ+dy64/BUtbMJw1MZ8t5HZApcHrRKUc4W0kG879m7"
-      crossorigin="anonymous"
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css"
+            rel="stylesheet"
+            integrity="sha384-SgOJa3DmI69IUzQ2PVdRZhwQ+dy64/BUtbMJw1MZ8t5HZApcHrRKUc4W0kG879m7"
+            crossorigin="anonymous"
     />
     <script
-      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js"
-      integrity="sha384-k6d4wzSIapyDyv1kpU366/PK5hCdSbCRGRCMv+eplOQJWyd1fbcAu9OCUj5zNLiq"
-      crossorigin="anonymous"
+            src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-k6d4wzSIapyDyv1kpU366/PK5hCdSbCRGRCMv+eplOQJWyd1fbcAu9OCUj5zNLiq"
+            crossorigin="anonymous"
     ></script>
-    <link rel="icon" type="image/x-icon" href="/static/favicon.ico" />
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico"/>
     <style>
-      ul {
-        list-style-type: none;
-        margin: 0;
-        padding: 0;
-      }
+        :root {
+            --backgorund-main: #0A0E1A;
+            --surface: #121829;
+            --primary-accent: #1E40AF;
+            --secondary-accent: #38BDF8;
+            --primary-hover: #2563EB;
+            --primary-active: #1D4ED8;
+            --text-primary: #E2E8F0;
+            --text-secondary: #94A3B8;
+            --link: #38BDF8;
+            --link-hover: #60A5FA;
+            --link-active: #2563EB;
+            --borders: #1E293B;
+            --success: #22C55E;
+            --error: #EF4444;
+        }
 
-      li {
-        border-width: 2px;
-        border-radius: 5px;
-        border-style: solid;
-        background-color: bisque;
-        padding: 10px;
-      }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Inter, serif;
+            font-size: 16px;
+            color: var(--text-primary);
+        }
+
+        body {
+            background-color: var(--backgorund-main);
+        }
+
+        h5, p {
+            display: inline;
+        }
+
+        p {
+            color: var(--text-secondary);
+        }
+
+        button {
+            background-color: var(--surface);
+            border: 2px solid var(--borders);
+            border-radius: 5px;
+            transition: all 0.2s ease-in;
+        }
+
+        button:hover {
+            background-color: var(--primary-hover);
+            transition: all 0.2s ease-in;
+        }
+
+        button:active {
+            background-color: var(--primary-active);
+        }
+
+        a {
+            color: var(--link);
+            text-decoration: none;
+            transition: all 0.2s ease-in;
+        }
+
+        a:hover {
+            color: var(--link-hover);
+            transition: all 0.2s ease-in;
+        }
+
+        a:active {
+            color: var(--link-active)
+        }
+
+        ul {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        summary {
+            user-select: none;
+            font-size: 1.2rem;
+        }
+
+        summary::marker {
+            color: var(--text-secondary);
+            transition: all 0.2s ease-in;
+        }
+
+        ::-webkit-scrollbar {
+            width: 7px;
+            background-color: var(--backgorund-main);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background-color: var(--surface);
+            margin: 10px;
+            border-radius: 2px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            transition: linear 0.2s;
+            background-color: var(--primary-hover);
+        }
+
+        ::-webkit-scrollbar-thumb:active {
+            transition: linear 0.2s;
+            background-color: var(--primary-active);
+        }
+
+        #navigation-bar {
+            width: 100%;
+            border: 2px solid var(--borders);
+            border-radius: 5px;
+        }
+
+        #nav-links-list {
+            padding: 10px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 0 20px;
+        }
+
+        #scrape-container {
+            padding: 10px 10px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        #job-entries-container li {
+            margin: 10px 0;
+            padding: 10px;
+            background-color: var(--surface);
+            border: 2px solid var(--borders);
+            border-radius: 5px;
+        }
+
+        .job-data-container {
+            padding: 10px;
+            border: 2px solid var(--borders);
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+
+        .job-data {
+
+        }
     </style>
-  </head>
+</head>
 
-  <body>
-    <div id="user-info-container"></div>
-    <div id="scrape-container">
-      <button id="scrape-btn" onclick="scrape_jobs()">Start job search</button>
-      <ul id="job-entries-container"></ul>
-    </div>
-  </body>
+<body>
+<nav id="navigation-bar">
+    <ul id="nav-links-list">
+        <li>
+            <a href="">Logout</a>
+        </li>
+        <li>
+            <a href="">Settings</a>
+        </li>
+    </ul>
+</nav>
+<div id="user-info-container"></div>
+<div id="scrape-container">
+    <button id="scrape-btn" onclick="scrape_jobs()">Start job search</button>
+    <ul id="job-entries-container"></ul>
+</div>
+</body>
 </html>
 
 <script>
-  let eventSrc = null;
-  function draw_job(data) {
-    jobContainer = document.getElementById("job-entries-container");
-    let li = document.createElement("li");
+    let eventSrc = null;
 
-    // li.textContent = `url: ${data.url}, id: ${data.posting_id}, desc: ${data.description}, location: ${data.location}, url: ${data.company_url}`;
-    li.innerHTML = `
-    <p>Job id: ${data.posting_id}</p>
-    </br>
-    <p>url: ${data.url}</p>
-    <details>
-    <summary>Job description</summary>
-    <p>${data.description}</p>
-    </details>
-    <p>Location: ${data.location}</p>
-    <a href="${data.company_url}">Company url: ${data.company_url}</a>
-    `;
-    jobContainer.appendChild(li);
-  }
+    function draw_job(data) {
+        let jobContainer = document.getElementById("job-entries-container");
+        let li = document.createElement("li");
 
-  function scrape_jobs() {
-    let button = document.getElementById("scrape-btn");
-    if (button.innerText == "Start job search") {
-      eventSrc = new EventSource("{{ url_for('scrape_jobs') }}");
-      eventSrc.onmessage = function (event) {
-        draw_job(JSON.parse(event.data));
-      };
-      button.innerText = "Stop job search";
-    } else {
-      eventSrc.close();
-      eventSrc = null;
-      button.innerText = "Start job search";
+        li.innerHTML = `
+            <div>
+                <h5>Job Title: </h5>
+                <p class="job-data">${data.title}</p>
+                <br>
+                <h5>Location: </h5>
+                <p class="job-data">${data.location}</p>
+                <br>
+                <h5>Company Name: </h5>
+                <p class="job-data">${data.company_name}</p>
+            </div>
+            <details>
+                <summary>Job details</summary>
+                <div class="job-data-container">
+                    <h5>Job Url: </h5>
+                     <p>
+                         <a href="${data.job_url}" target="_blank">${data.job_url}</a>
+                     </p>
+                </div>
+                <div class="job-data-container">
+                    <h5>Company Url: </h5>
+                    <p>
+                        <a href="${data.company_url}" target="_blank">${data.company_url}</a>
+                    </p>
+                </div>
+                <div class="job-data-container">
+                    <h5>Contract Type: </h5>
+                    <p class="job-data">${data.contract_type}</p>
+                </div>
+                <div class="job-data-container">
+                    <h5>Employment Type: </h5>
+                    <p class="job-data">${data.employment_type}</p>
+                </div>
+                <div class="job-data-container">
+                    <h5>Work Arrangement: </h5>
+                    <p class="job-data">${data.work_arrangement}</p>
+                </div>
+                <div class="job-data-container">
+                    <h5>Job Requirements: </h5>
+                    <p class="job-data">${data.requirements}</p>
+                </div>
+                <div class="job-data-container">
+                    <h5>Duties: </h5>
+                    <p class="job-data">${data.duties}</p>
+                </div>
+                <div class="job-data-container">
+                    <h5>About Project: </h5>
+                    <p class="job-data">${data.about_project}</p>
+                </div>
+                <div class="job-data-container">
+                    <h5>Company Benefits: </h5>
+                    <p class="job-data">${data.offer_benefits}</p>
+                </div>
+                <div class="job-data-container">
+                    <h5>Additional Information: </h5>
+                    <p class="job-data">${data.additional_information}</p>
+                </div>
+            </details>
+        `;
+        jobContainer.appendChild(li);
     }
-  }
+
+    function scrape_jobs() {
+        // const data = {
+        //     title: "Junior Python Engineer",
+        //     company_name: "ACAISOFT POLAND Sp. z o.o.",
+        //     location: "Whole Poland (remote work)",
+        //     requirements: "At least 1 year of experience building Python-based backends\n" +
+        //         "Minimum 6 months of practice with AI-based systems.\n" +
+        //         "Familiarity with AI-based tools for coding.\n" +
+        //         "Optional\n" +
+        //         "Knowledge of Google Cloud and Neo4j.\n" +
+        //         "Experience working with serverless functions.\n" +
+        //         "A degree related to the IT field (or in progress)",
+        //     job_url: "https://www.pracuj.pl/praca/junior-python-engineer-warszawa-aleja-niepodleglosci-18,oferta,1004372500",
+        //     duties: "documentation, issue tracking, testing environment",
+        //     about_project: "Our customer is transforming risk management and compliance with AI-driven automation. They integrate and distill regulatory standards, security frameworks, and risk assessments into a unified solution, enabling organizations to navigate complexity, reduce risk, and stay ahead of change.\n" +
+        //         "The main objective of the project is to build an MVP of an AI-driven compliance automation platform.",
+        //     offer_benefits: "Private medical care, remote work opportunities",
+        //     contract_type: "B2B contract, Contract of Employment",
+        //     employment_type: "Full-time",
+        //     work_arrangement: "XDD",
+        //     additional_information: "Immediate employment",
+        //     company_url: "https://pracodawcy.pracuj.pl/company/20303751",
+        // }
+        // draw_job(data)
+        let button = document.getElementById("scrape-btn");
+        if (button.innerText === "Start job search") {
+            eventSrc = new EventSource("{{ url_for('scrape_jobs') }}");
+            eventSrc.onmessage = function (event) {
+                draw_job(JSON.parse(event.data));
+            };
+            button.innerText = "Stop job search";
+        } else {
+            eventSrc.close();
+            eventSrc = null;
+            button.innerText = "Start job search";
+        }
+    }
 </script>
