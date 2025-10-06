@@ -1,28 +1,27 @@
-from sqlalchemy import URL
-from sqlmodel import SQLModel, create_engine, Session, select
-from dotenv import load_dotenv
-from weasyprint import HTML, CSS
+import datetime
+import logging
+import os
+from pathlib import Path
 
-# from app_setup import engine
-from .llm import send_req_to_llm
-from .models import (
-    ProfileModel,
-    ProgrammingLanguage,
-    Language,
-    Tool,
+from dotenv import load_dotenv
+from sqlalchemy import URL
+from sqlmodel import Session, SQLModel, create_engine, select
+from weasyprint import CSS, HTML
+
+from backend.database.models import (
     Certificate,
     Charity,
     Education,
     Experience,
+    Language,
+    ProgrammingLanguage,
     Project,
     SocialPlatform,
+    Tool,
+    UserModel,
 )
-
-import os
-from pathlib import Path
-import datetime
-import logging
-
+from backend.llm import send_req_to_llm
+from backend.scrapers.base_scraper import JobEntry
 
 logging.basicConfig(format="%(levelname)s: %(message)s", level=logging.INFO)
 PDF_ENGINE = "weasyprint"
@@ -117,7 +116,7 @@ TEMPLATE = """
 DRIVERNAME = "postgresql+psycopg"
 
 
-def _get_info_for_cv(profile: ProfileModel, mode: str) -> dict[str, str]:
+def _get_info_for_cv(user: UserModel, mode: str) -> dict[str, str]:
     load_dotenv()
     username = os.environ.get("POSTGRE_USERNAME")
     password = os.environ.get("POSTGRE_PASSWORD")
@@ -144,19 +143,19 @@ def _get_info_for_cv(profile: ProfileModel, mode: str) -> dict[str, str]:
     )
     with Session(engine) as session:
         links_query = session.execute(
-            select(SocialPlatform).where(SocialPlatform.profile_id == profile.id)
+            select(SocialPlatform).where(SocialPlatform.user_id == user.id)
         )
         output = {
-            "name": f"{profile.firstname} {profile.middlename} {profile.surname}",
-            "email": profile.email,
-            # "phone_number": profile.phone_number,
+            "name": f"{user.firstname} {user.middlename} {user.surname}",
+            "email": user.email,
+            # "phone_number": user.phone_number,
         }
         if mode == "llm-selection" or mode == "llm-generation":
             links_arr = (link.link for link in links_query)
             output["links"] = ",".join(links_arr)
             output["skills"] = ""
             for c in model_classes:
-                query = session.execute(select(c).where(c.profile_id == profile.id))
+                query = session.execute(select(c).where(c.user_id == user.id))
                 arr = (row for row in query)
                 output["skills"] += ",".join(arr)
         elif mode == "user-cv":
@@ -165,18 +164,15 @@ def _get_info_for_cv(profile: ProfileModel, mode: str) -> dict[str, str]:
                 output["links"][link.name] = link.link
             output["skills"] = ""
             for c in model_classes:
-                query = session.execute(select(c).where(c.profile_id == profile.id))
+                query = session.execute(select(c).where(c.user_id == user.id))
                 arr = (row for row in query)
                 output[c.__name__] = ",".join(arr)
         return output
 
 
 def create_cv(
-    profile: ProfileModel,
-    posting_id: str,
-    requirements: str,
-    location: str,
-    company_url: str,
+    user: UserModel,
+    job_entry: JobEntry,
     mode: str = "llm-selection",
 ) -> Path:
     # TODO: Here we will get data from the database
@@ -185,7 +181,8 @@ def create_cv(
     # 2) Make LLM put adequate skills etc. into the template string
     # 3) Make LLM write the CV from the ground up
     # 4) Make algorithm for putting relevant skills into CV without use of LLM
-    info = _get_info_for_cv(profile, mode)
+    info = _get_info_for_cv(user, mode)
+    requirements = job_entry.duties
     if mode == "llm-selection":
         skills = info.get("skills", "")
         name = info.get("name", "Jan Kolon Movano")
@@ -224,7 +221,9 @@ def create_cv(
     logging.info(f"CV:\n{cv}")
 
     current_time = datetime.datetime.today().strftime("%Y-%m-%d_%H:%M:%S")
-    cv_path = Path().joinpath(CV_DIR_NAME).joinpath(f"{current_time}_{posting_id}.pdf")
+    cv_path = (
+        Path().joinpath(CV_DIR_NAME).joinpath(f"{current_time}_{job_entry.title}.pdf")
+    )  # TODO: change job_entry.title
 
     if not os.path.isdir(CV_DIR_NAME):
         os.mkdir(CV_DIR_NAME)
@@ -232,7 +231,3 @@ def create_cv(
     HTML(string=cv).write_pdf(cv_path, stylesheets=[CSS(string=STYLING)])
 
     return cv_path
-
-
-if __name__ == "__main__":
-    create_cv("123", "", "", "")

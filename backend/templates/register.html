@@ -348,7 +348,7 @@
     experiences = [];
     educations = [];
     charities = [];
-    socialPlatfroms = [];
+    socialPlatforms = [];
     tools = [];
     projects = [];
 
@@ -361,7 +361,7 @@
       state = formData.get("state");
       city = formData.get("city");
       zipCode = formData.get("zip-code");
-      elem = { country: country, state: state, city: city, zipcode: zipCode };
+      elem = { country: country, state: state, city: city, zip_code: zipCode };
       console.log(JSON.stringify(elem));
 
       locations.push(elem);
@@ -474,7 +474,7 @@
         "<li>" + JSON.stringify(elem) + "</li>";
     }
 
-    function addExperince() {
+    function addExperience() {
       event.preventDefault();
       const formData = new FormData(document.getElementById("experience-form"));
 
@@ -520,7 +520,7 @@
       link = formData.get("link");
       elem = { name: name, link: link };
 
-      socialPlatfroms.push(elem);
+      socialPlatforms.push(elem);
       document.getElementById("social-platforms-list").innerHTML +=
         "<li>" + JSON.stringify(elem) + "</li>";
     }
@@ -538,8 +538,8 @@
 
       let dataJson = {
         profile: {
-          firstname: firstname,
-          middlename: formData.get("middlename"),
+          first_name: firstname,
+          middle_name: formData.get("middlename"),
           surname: surname,
           age: formData.get("age"),
           email: email,
@@ -553,9 +553,10 @@
         educations: educations,
         experiences: experiences,
         projects: projects,
-        social_platforms: socialPlatfroms,
+        social_platforms: socialPlatforms,
       };
 
+      console.log(JSON.stringify(dataJson));
       const response = await fetch("{{ url_for('register') }}", {
         method: "POST",
         headers: {

@@ -4,11 +4,14 @@ version = "0.1.0"
 description = "AI agents that create tailored CVs and cover letters, and even apply to jobs for you. Fully automated — no more manual effort"
 readme = "README.md"
 requires-python = ">=3.12"
+
 dependencies = [
+    "beautifulsoup4>=4.13.5",
     "dotenv>=0.9.9",
     "fastapi[standard]>=0.115.12",
     "openai-agents>=0.0.13",
     "playwright>=1.51.0",
+    "playwright-stealth>=2.0.0",
     "psycopg>=3.2.6",
     "pydantic>=2.11.3",
     "sqlmodel>=0.0.24",
@@ -18,8 +21,24 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "loguru>=0.7.3",
     "mypy>=1.15.0",
     "pre-commit>=4.2.0",
     "pytest>=8.3.5",
+    "pytest-asyncio>=1.1.0",
+    "pytest-playwright>=0.7.0",
     "ruff>=0.11.7",
 ]
+
+[tool.setuptools.packages.find]
+exclude = ["branding*"]
+
+[tool.ruff]
+line-length = 80
+
+[tool.ruff.format]
+docstring-code-format = true
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+force-single-line = false
