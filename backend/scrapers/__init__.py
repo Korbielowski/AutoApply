@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import Any, AsyncGenerator, Type
+from typing import Any, AsyncGenerator
 
 from loguru import logger
 from playwright.async_api import async_playwright
@@ -8,17 +8,9 @@ from playwright_stealth import Stealth
 from sqlmodel import Session, select
 
 from backend.config import settings
-from backend.database.models import UserModel, Website
+from backend.database.models import UserModel, WebsiteModel
 from backend.pdf import create_cv
-from backend.scrapers.base_scraper import BaseScraper
-from backend.scrapers.linkedin import LinkedIn
 from backend.scrapers.llm_scraper import LLMScraper
-from backend.scrapers.pracuj_pl import PracujPl
-
-SCRAPERS: dict[str, Type[BaseScraper]] = {
-    "pracuj.pl": PracujPl,
-    "linkedin.com": LinkedIn,
-}
 
 
 async def find_job_entries(
@@ -27,7 +19,6 @@ async def find_job_entries(
     urls: list[str],
     auto_apply: bool = False,
     generate_cv: bool = False,
-    use_llm: bool = False,
     use_user_cv: bool = False,
 ) -> AsyncGenerator[str, Any]:
     async with Stealth().use_async(async_playwright()) as playwright:
@@ -40,13 +31,9 @@ async def find_job_entries(
 
         for url in urls:
             website_info = session.exec(
-                select(Website).where(Website.url == url)
+                select(WebsiteModel).where(WebsiteModel.url == url)
             ).first()
-            sc: Type[BaseScraper] = (
-                LLMScraper if use_llm else SCRAPERS.get("linkedin.com", LLMScraper)
-            )
-            # TODO: Replace with this --> SCRAPERS.get(link, LLMScraper)
-            scraper = sc(
+            scraper = LLMScraper(
                 url=url,
                 email=settings.USER_EMAIL,
                 password=settings.PASSWORD,
