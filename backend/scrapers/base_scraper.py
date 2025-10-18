@@ -15,7 +15,7 @@ class BaseScraper(abc.ABC):
         password: str,
         browser: Browser,
         page: Page,
-        website_info: WebsiteModel,
+        website_info: WebsiteModel | None,
     ) -> None:
         self.url = url
         self.email = (
