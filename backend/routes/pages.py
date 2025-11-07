@@ -29,9 +29,7 @@ async def scrape_jobs(current_user: CurrentUser, session: SessionDep):
         find_job_entries(
             user=current_user,
             session=session,
-            urls=[
-                "https://www.linkedin.com/jobs/collections/recommended/?currentJobId=3706084909"
-            ],
+            urls=["https://it.pracuj.pl/praca"],
         ),
         media_type="text/event-stream",
     )
