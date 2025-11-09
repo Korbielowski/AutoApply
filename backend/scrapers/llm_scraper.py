@@ -1,5 +1,8 @@
+import asyncio
+import json
+
 from loguru import logger
-from playwright.async_api import Locator, Page
+from playwright.async_api import Locator, Page, TimeoutError
 from pydantic import ValidationError
 
 from backend.llm import send_req_to_llm
@@ -21,23 +24,42 @@ from backend.scrapers.utils import (
 class LLMScraper(BaseScraper):
     async def login_to_page(self) -> None:
         await goto(self.page, self.url)
-        # TODO: Make a loop out of this code
+
         await self._pass_cookies_popup()
-        if not await self._is_on_login_page():
+
+        retry = 0
+        while not await self._is_on_login_page() and retry < 5:
             await self._navigate_to_login_page()
+            retry += 1
+
+        if retry >= 5:
+            logger.error("We did not do it ;)")
+            return
 
         email_field_locator, _, _ = await find_html_element(
-            self.page, "Find the login input field for username/email."
+            self.page, "Find input field for username/email."
         )
-        password_field_locator, _, _ = await find_html_element(
-            self.page, "Find the login input field for password."
-        )
-        sign_in_btn_locator, _, _ = await find_html_element(
-            self.page, "Find the sign in/login button."
-        )
-
         await fill(email_field_locator, self.email)
+
+        password_field_locator, _, _ = await find_html_element(
+            self.page, "Find input field for password."
+        )
+        if not password_field_locator:
+            sign_in_btn_locator, _, _ = await find_html_element(
+                self.page, "Find button that moves to next part of login page."
+            )
+            await click(sign_in_btn_locator, self.page)
+
+            password_field_locator, _, _ = await find_html_element(
+                self.page, "Find input field for password."
+            )
         await fill(password_field_locator, self.password)
+
+        sign_in_btn_locator, _, _ = await find_html_element(
+            self.page,
+            "Find the sign in/login button or button that moves to next part of login page.",
+            additional_llm=True,
+        )
         await click(sign_in_btn_locator, self.page)
 
     async def _is_on_login_page(self) -> bool:
@@ -60,16 +82,22 @@ class LLMScraper(BaseScraper):
 
     async def _navigate_to_login_page(self) -> None:
         btn, _, _ = await find_html_element(
-            self.page, "Find a button that opens login page"
+            self.page,
+            "Find a button/link that opens login page or menu that lets user open login page",
         )
         await click(btn, self.page)
 
     async def _pass_cookies_popup(self) -> None:
-        btn, attribute, attribute_type = await find_html_element(
-            self.page,
-            "Find button responsible for accepting website cookies",
-        )
-        await click(btn, self.page)
+        retry = 0
+        passed = False
+        while not passed and retry < 5:
+            btn, attribute, attribute_type = await find_html_element(
+                self.page,
+                "Find button that accepts cookies or closes the cookie consent banner. If multiple buttons exist, choose the one that makes the popup disappear",
+            )
+            passed = await click(btn, self.page)
+            retry += 1
+
         # cookies_steps = self.website_info.automation_steps.pass_cookies_popup
         # TODO: Try using cookies to avoid popups
         # if cookies_steps:
@@ -91,28 +119,107 @@ class LLMScraper(BaseScraper):
         #
         # self.website_info.automation_steps.pass_cookies_popup = [step]
 
-    # TODO: Change this method name to "_navigate_to_job_list"
-    async def _go_to_job_list(self) -> None:
-        btn, _, _ = await find_html_element(
-            self.page, "Find button that opens job list"
-        )
-        await click(btn, self.page)
+    async def _remove_any_popup(self) -> None:
+        retry = 0
+        passed = False
+        while not passed and retry < 5:
+            btn, attribute, attribute_type = await find_html_element(
+                self.page,
+                "Find button that closes the popup banner. If multiple buttons exist, choose the one that makes the popup disappear",
+            )
+            passed = await click(btn, self.page)
+            retry += 1
+
+    async def _is_on_job_list_page(self) -> bool:
+        url = self.page.url
+        if "job" in url or "job-list" in url or "job_list" in url:
+            return True
+
+        if "True" in await send_req_to_llm(
+            f"Determine if this site is a job listing page, return only True or False. Consider it a job listing page if the content or url suggests: a list of open positions. Based upon url: {url} and page content: {await get_page_content(self.page)}",
+            use_openai=True,
+        ):
+            logger.info("LLM thinks we are on job listing page")
+            return True
+
+        logger.info("We are not on a job listing page")
+        return False
+
+    async def _navigate_to_job_list_page(self) -> None:
+        logger.info("Navigating to job listing page")
+        retry = 0
+        while not await self._is_on_job_list_page() and retry < 5:
+            logger.info(f"Navigation step: {retry}")
+            btn, _, _ = await find_html_element(
+                self.page,
+                "Find button/link that opens job listing page or menu that lets user open job listing page",
+            )
+            await click(btn, self.page)
+            retry += 1
+
+        if retry >= 5:
+            logger.error("Could not get to job listing page")
+            return
+        logger.info("Navigation to job listing page ended")
 
     async def get_job_entries(self) -> tuple[Locator, ...]:
-        element, _, _ = await find_html_element(
+        await self._remove_any_popup()
+
+        await self._navigate_to_job_list_page()
+
+        bottom_element, _, _ = await find_html_element(
             self.page,
-            "Find an element that is at the bottom of the page, so once in view port it loads all of the page content",
+            "Find a footer of a website, if there is no footer find an element that is at the bottom of the page, so once in view port it loads all of the page content",
         )
-        if not element:
+
+        if bottom_element:
+            try:
+                await bottom_element.scroll_into_view_if_needed()  # TODO: Scroll to this element, but in the way that only a few of entries are loaded at a given time
+                logger.info(
+                    "Scrolling to element using scroll_into_view_if_needed method"
+                )
+            except TimeoutError:
+                retry = 0
+                while not await bottom_element.is_visible() and retry < 100:
+                    await self.page.mouse.wheel(0, 500)
+                    logger.info(
+                        f"Scrolling to element using while loop. is_visible: {await bottom_element.is_visible()}, retry: {retry}"
+                    )
+                    await asyncio.sleep(0.5)
+                    retry += 1
+                if not await bottom_element.is_visible():
+                    logger.exception(
+                        "Element at the bottom of the page is not visible and it cannot be scrolled to"
+                    )
+                    # TODO: Make use of scrollbar if possible
+                    # scrollbar, _, _ = await find_html_element(
+                    #     self.page,
+                    #     "Find a scrollbar element that is able to scroll to the bottom of the page",
+                    # )
+                    await self.page.keyboard.press("End")
+                    logger.info(
+                        "Scrolling to the bottom of the page using 'End' key"
+                    )
+        else:
             logger.exception(
                 "Could not find an element that is at the bottom of the page"
             )
-            return tuple()
-        await element.scroll_into_view_if_needed()
+            await self.page.keyboard.press("End")
+            logger.info("Scrolled to bottom of the page using 'End' key")
 
+        # TODO: Add some verification for this types of lines as the one below
+        prompt = """
+            Find <a> element inside job tiles of job offers that take user to job offer pages.
+            A job offer link typically:
+            - Contains the job title text, or
+            - Has an href that includes words like "job", "jobs", "careers", "position", or "opportunity"
+            and
+            - Does NOT link to saving, sharing, applying, or company info.
+        """
+        # prompt = "Find an element that is responsible for holding job offer tile",
         attributes = await find_html_element_attributes(
-            self.page,
-            "Find an element that is responsible for holding job entry information and link to job offer. CSS class that are to be selected, must only select job entries and no other elements",
+            page=self.page,
+            prompt=prompt,
         )
         if not attributes:
             logger.exception(
@@ -120,26 +227,42 @@ class LLMScraper(BaseScraper):
             )
             return tuple()
 
-        logger.info(f"{attributes=}")
         class_list = attributes.get("classList", [])
-        for class_l in class_list:
-            locator = self.page.locator(f".{class_l}")
-            response = await send_req_to_llm(
-                f"Does this CSS class '{class_l}' select only job offers and no other elements. Return 'True' if only jobs are selected and 'False' if '{class_l}' class selects also other elements. {'\n'.join(await locator.all_inner_texts())}",
-                use_openai=True,
+        if not class_list:
+            logger.error("Did not find class_list for selecting job tiles")
+            return tuple()
+        logger.info("We are going to select job tiles")
+
+        lol = f".{'.'.join(class_list)}"
+        logger.info(lol)
+        locator = self.page.locator(lol)
+
+        x = [await z.get_attribute("href") for z in await locator.all()]
+        logger.info(
+            f"Do those classes CSS classes: {class_list} select only job offers and no other elements. Return 'True' if only jobs are selected and 'False' if {class_list} CSS classes select also other elements. {'\n'.join(x)}"
+        )
+        response = await send_req_to_llm(
+            f"Do those classes CSS classes: {class_list} select only job offers and no other elements. Return 'True' if only jobs are selected and 'False' if {class_list} CSS classes select also other elements. {'\n'.join(await locator.all_inner_texts())}",
+            use_openai=True,
+        )
+        if "True" in response:
+            jobs = set(await locator.all())
+            jobs_2 = set(
+                await locator.and_(self.page.get_by_role("link")).all()
             )
-            if "True" in response:
-                logger.info(
-                    f"Chosen {class_l} as it only selects job entries on the page"
-                )
-                logger.info(
-                    f"Amount of elements selected by {class_l} CSS class: {len(await locator.all())}"
-                )
-                return tuple(await locator.all())
+            jobs3 = set(await locator.get_by_role("link").all())
+            logger.info(
+                f"Amount of elements selected by {class_list} CSS classes: {len(jobs)} and second version: {len(jobs_2)}, and third version: {len(jobs3)}"
+            )
+            return tuple(jobs)
+
+        logger.error(f"{class_list} don't select only job entries")
+        logger.error(
+            f"Amount of elements selected by {class_list} CSS classes: {len(await locator.all())}"
+        )
         return tuple()
 
-    # TODO: Rename to "navigate_to_next_page"
-    async def go_to_next_page(self) -> bool:
+    async def navigate_to_next_page(self) -> bool:
         btn, _, _ = await find_html_element(
             self.page,
             "Find button that is responsible for moving to next job listing page",
@@ -157,13 +280,36 @@ class LLMScraper(BaseScraper):
         pass
 
     async def _get_job_information(self, link: str) -> None | JobEntry:
-        job_page: Page = await self.browser.new_page(locale="en-US")
+        job_page: Page = await self.context.new_page()
         await goto(job_page, link)
 
+        # response = await send_req_to_llm(
+        #     f"Get job information like title, company_name, requirements, duties, about_project, offer_benefits, location, contract_type, employment_type, work_arrangement, additional_information. Do not explain, only return JSON\n{await get_page_content(job_page)}",
+        #     use_openai=True,
+        # )
+        # response = None
+        # try:
+        #     response = await send_req_to_llm(
+        #         prompt=f"Retrieve all information about this job offer from this page: {await get_page_content(job_page)}",
+        #         use_openai=True,
+        #         use_json_schema=True,
+        #         model=JobEntry,
+        #     )
+        # except Exception as e:
+        #     logger.exception(e)
+
         response = await send_req_to_llm(
-            f"Get job information like title, company_name, requirements, duties, about_project, offer_benefits, location, contract_type, employment_type, work_arrangement, additional_information. Do not explain, only return JSON\n{await get_page_content(job_page)}",
+            prompt=f"Retrieve all information about this job offer as a JSON in this schema: {JobEntry.model_json_schema()} from this page: {await get_page_content(job_page)}",
             use_openai=True,
         )
+
+        attributes = json.loads(response)
+        logger.info(
+            f"Job information retrieved by LLM using normal method: {json.dumps(attributes, indent=2)}"
+        )
+        # logger.info(
+        #     f"Job information retrieved by LLM using JSON outputs: {response}"
+        # )
         await job_page.close()
 
         try:
