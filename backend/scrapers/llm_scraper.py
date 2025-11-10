@@ -1,9 +1,9 @@
 import asyncio
+import datetime
 import json
 
 from loguru import logger
 from playwright.async_api import Locator, Page, TimeoutError
-from pydantic import ValidationError
 
 from backend.llm import send_req_to_llm
 from backend.scrapers.base_scraper import BaseScraper, JobEntry
@@ -26,15 +26,7 @@ class LLMScraper(BaseScraper):
         await goto(self.page, self.url)
 
         await self._pass_cookies_popup()
-
-        retry = 0
-        while not await self._is_on_login_page() and retry < 5:
-            await self._navigate_to_login_page()
-            retry += 1
-
-        if retry >= 5:
-            logger.error("We did not do it ;)")
-            return
+        await self._navigate_to_login_page()
 
         email_field_locator, _, _ = await find_html_element(
             self.page, "Find input field for username/email."
@@ -81,11 +73,26 @@ class LLMScraper(BaseScraper):
         return False
 
     async def _navigate_to_login_page(self) -> None:
-        btn, _, _ = await find_html_element(
-            self.page,
-            "Find a button/link that opens login page or menu that lets user open login page",
-        )
-        await click(btn, self.page)
+        retry = 0
+        attribute_list = []
+
+        while not await self._is_on_login_page() and retry < 5:
+            if not attribute_list:
+                prompt = "Find a button/link that opens login page or menu that lets user open login page"
+            else:
+                prompt = f"Find a button/link that opens login page or menu that lets user open login page. Those are elements that were used in a previous steps, do not use them again: {attribute_list}"
+
+            btn, attributes, _ = await find_html_element(
+                page=self.page, prompt=prompt
+            )
+            attribute_list.append(attributes)
+
+            await click(btn, self.page)
+            retry += 1
+
+        if retry >= 5:
+            logger.error("We did not do it ;)")
+        #     return
 
     async def _pass_cookies_popup(self) -> None:
         retry = 0
@@ -132,11 +139,26 @@ class LLMScraper(BaseScraper):
 
     async def _is_on_job_list_page(self) -> bool:
         url = self.page.url
-        if "job" in url or "job-list" in url or "job_list" in url:
-            return True
+        prompt = f"""
+        You are analyzing a web page to determine whether it is strictly a job listing page.
 
+        A job listings page is a page that displays a list of multiple open positions or links to individual job offers.
+        It is NOT:
+        - A single job offer page (showing details for one position)
+        - A company homepage or careers landing page without listings
+        - A user account webpage, where there can also be some job postings or user saved jobs
+        - A blog, article, or unrelated content
+
+        Return only one word: True or False
+
+        Base your decision on both the URL and the visible page content.
+
+        URL: {url}
+        Page content: {await get_page_content(self.page)}
+        """
         if "True" in await send_req_to_llm(
-            f"Determine if this site is a job listing page, return only True or False. Consider it a job listing page if the content or url suggests: a list of open positions. Based upon url: {url} and page content: {await get_page_content(self.page)}",
+            prompt=prompt,
+            # f"Determine if this site is a job listing page, return only True or False. Consider it a job listing page if the content or url suggests: a list of open positions. Based upon url: {url} and page content: {await get_page_content(self.page)}",
             use_openai=True,
         ):
             logger.info("LLM thinks we are on job listing page")
@@ -148,12 +170,22 @@ class LLMScraper(BaseScraper):
     async def _navigate_to_job_list_page(self) -> None:
         logger.info("Navigating to job listing page")
         retry = 0
+        attribute_list = []
+
         while not await self._is_on_job_list_page() and retry < 5:
             logger.info(f"Navigation step: {retry}")
-            btn, _, _ = await find_html_element(
-                self.page,
-                "Find button/link that opens job listing page or menu that lets user open job listing page",
+            if not attribute_list:
+                prompt = (
+                    "Find button/link that opens job listing page or menu that lets user open job listing page",
+                )
+            else:
+                prompt = f"Find button/link that opens job listing page or menu that lets user open job listing page. Those are elements that were used in a previous steps, do not use them again: {attribute_list}"
+
+            btn, attributes, _ = await find_html_element(
+                page=self.page, prompt=prompt
             )
+            attribute_list.append(attributes)
+
             await click(btn, self.page)
             retry += 1
 
@@ -233,28 +265,27 @@ class LLMScraper(BaseScraper):
             return tuple()
         logger.info("We are going to select job tiles")
 
-        lol = f".{'.'.join(class_list)}"
-        logger.info(lol)
-        locator = self.page.locator(lol)
+        class_selector = f".{'.'.join(class_list)}"
+        locator = self.page.locator(class_selector)
 
-        x = [await z.get_attribute("href") for z in await locator.all()]
+        job_entry_links = [
+            await z.get_attribute("href") for z in await locator.all()
+        ]
         logger.info(
-            f"Do those classes CSS classes: {class_list} select only job offers and no other elements. Return 'True' if only jobs are selected and 'False' if {class_list} CSS classes select also other elements. {'\n'.join(x)}"
+            f"Do those classes CSS classes: {class_list} select only job offers and no other elements. Return 'True' if only jobs are selected and 'False' if {class_list} CSS classes select also other elements. {'\n'.join(job_entry_links)}"
         )
-        response = await send_req_to_llm(
-            f"Do those classes CSS classes: {class_list} select only job offers and no other elements. Return 'True' if only jobs are selected and 'False' if {class_list} CSS classes select also other elements. {'\n'.join(await locator.all_inner_texts())}",
-            use_openai=True,
+        # response = await send_req_to_llm(
+        #     f"Do those classes CSS classes: {class_list} select only job offers and no other elements. Return 'True' if only jobs are selected and 'False' if {class_list} CSS classes select also other elements. {'\n'.join(await locator.all_inner_texts())}",
+        #     use_openai=True,
+        # )
+        # if "True" in response:
+        jobs = set(await locator.all())
+        jobs_2 = set(await locator.and_(self.page.get_by_role("link")).all())
+        jobs3 = set(await locator.get_by_role("link").all())
+        logger.info(
+            f"Amount of elements selected by {class_list} CSS classes: {len(jobs)} and second version: {len(jobs_2)}, and third version: {len(jobs3)}"
         )
-        if "True" in response:
-            jobs = set(await locator.all())
-            jobs_2 = set(
-                await locator.and_(self.page.get_by_role("link")).all()
-            )
-            jobs3 = set(await locator.get_by_role("link").all())
-            logger.info(
-                f"Amount of elements selected by {class_list} CSS classes: {len(jobs)} and second version: {len(jobs_2)}, and third version: {len(jobs3)}"
-            )
-            return tuple(jobs)
+        return tuple(jobs)
 
         logger.error(f"{class_list} don't select only job entries")
         logger.error(
@@ -297,23 +328,32 @@ class LLMScraper(BaseScraper):
         #     )
         # except Exception as e:
         #     logger.exception(e)
+        model_dict = JobEntry.model_json_schema()["properties"]
+        logger.info(type(model_dict))
+        model_dict.pop("discovery_date")
+        model_dict.pop("job_url")
 
         response = await send_req_to_llm(
-            prompt=f"Retrieve all information about this job offer as a JSON in this schema: {JobEntry.model_json_schema()} from this page: {await get_page_content(job_page)}",
+            prompt=f"Retrieve all information about this job offer as a JSON in this schema: {model_dict} from this page: {await get_page_content(job_page)}",
             use_openai=True,
         )
 
         attributes = json.loads(response)
-        logger.info(
-            f"Job information retrieved by LLM using normal method: {json.dumps(attributes, indent=2)}"
-        )
+        attributes["discovery_date"] = datetime.date.today()
+        attributes["job_url"] = link
+
+        logger.info(f"Something:\n{attributes}")
         # logger.info(
         #     f"Job information retrieved by LLM using JSON outputs: {response}"
         # )
         await job_page.close()
 
         try:
-            return JobEntry.model_validate_json(response)
-        except ValidationError as e:
+            data = JobEntry.model_validate(attributes)
+            logger.info(
+                f"JobEntry model data: {data.model_dump_json(indent=2)}"
+            )
+            return data
+        except Exception as e:
             logger.exception(e)
         return None
