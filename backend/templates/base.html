@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}AutoApply{% endblock title %}</title>
+
+    <link rel="icon" type="image/x-icon"
+          href="{{ url_for('static', path='favicon.ico') }}"/>
+    <link rel="stylesheet" type="text/css"
+          href="{{ url_for('static', path='base.css') }}">
+
+    {% block styles %}{% endblock styles %}
+</head>
+<body>
+
+<nav id="navigation-bar">
+    <ul id="nav-links-list">
+        {% if user %}
+        <li>
+            <a href="{{ url_for('account_details') }}">Account</a>
+        </li>
+        <li>
+            <a href="{{ url_for('logout') }}">Logout/Switch User</a>
+        </li>
+        {% endif %}
+        <!--        <li>-->
+        <!--            <a href="{{ url_for('load_manage_users_page') }}">Manage users</a>-->
+        <!--        </li>-->
+    </ul>
+</nav>
+
+{% block content %}{% endblock content %}
+
+<!--<footer>-->
+<!--    <p>&copy; 2025 My Website</p>-->
+<!--</footer>-->
+
+{% block scripts %}{% endblock scripts %}
+</body>
+</html>
