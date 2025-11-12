@@ -15,7 +15,9 @@ from sqlmodel import JSON, Column, Field, SQLModel
 # https://github.com/rapidfuzz/RapidFuzz
 class JobEntryModel(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    user_id: int | None = Field(default=None, foreign_key="usermodel.id")
+    user_id: int | None = Field(
+        default=None, foreign_key="usermodel.id", ondelete="CASCADE"
+    )
     title: str
     company_name: str
     discovery_date: datetime.date = Field(default_factory=datetime.date.today)
@@ -78,27 +80,6 @@ class AutomationSteps(SQLModel):
     # TODO: Uncomment if this function gets html elements get_job_information: list[Step]
 
 
-class WebsiteModel(SQLModel, table=True):
-    id: int | None = Field(default=None, primary_key=True)
-    cookies: str
-    user_email: EmailStr
-    user_password: str
-    url: str
-    automation_steps: AutomationSteps = Field(
-        sa_column=Column(JSON), default_factory=dict
-    )
-
-
-class Website(SQLModel):
-    cookies: str
-    user_email: EmailStr
-    user_password: str
-    url: str
-    automation_steps: AutomationSteps = Field(
-        sa_column=Column(JSON), default_factory=dict
-    )
-
-
 class UserModel(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     email: EmailStr = Field(unique=True, max_length=255)
@@ -116,9 +97,33 @@ class User(SQLModel):
     age: str | None
 
 
+class WebsiteModel(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    user_id: int | None = Field(
+        default=None, foreign_key="usermodel.id", ondelete="CASCADE"
+    )
+    cookies: str
+    user_email: EmailStr
+    user_password: str
+    url: str
+    automation_steps: AutomationSteps | None = Field(
+        sa_column=Column(JSON), default_factory=dict
+    )
+
+
+class Website(SQLModel):
+    cookies: str
+    user_email: EmailStr
+    user_password: str
+    url: str
+    automation_steps: AutomationSteps | None
+
+
 class LocationModel(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    user_id: int | None = Field(default=None, foreign_key="usermodel.id")
+    user_id: int | None = Field(
+        default=None, foreign_key="usermodel.id", ondelete="CASCADE"
+    )
     country: str
     state: str
     city: str
@@ -134,7 +139,9 @@ class Location(SQLModel):
 
 class ProgrammingLanguageModel(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    user_id: int | None = Field(default=None, foreign_key="usermodel.id")
+    user_id: int | None = Field(
+        default=None, foreign_key="usermodel.id", ondelete="CASCADE"
+    )
     language: str
     level: str  # Maybe in the future change to int
 
@@ -146,7 +153,9 @@ class ProgrammingLanguage(SQLModel):
 
 class LanguageModel(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    user_id: int | None = Field(default=None, foreign_key="usermodel.id")
+    user_id: int | None = Field(
+        default=None, foreign_key="usermodel.id", ondelete="CASCADE"
+    )
     language: str
     level: str  # Maybe in the future change to int
 
@@ -158,7 +167,9 @@ class Language(SQLModel):
 
 class ToolModel(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    user_id: int | None = Field(default=None, foreign_key="usermodel.id")
+    user_id: int | None = Field(
+        default=None, foreign_key="usermodel.id", ondelete="CASCADE"
+    )
     name: str
     level: str  # Maybe in the future change to int
 
@@ -170,7 +181,9 @@ class Tool(SQLModel):
 
 class CertificateModel(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    user_id: int | None = Field(default=None, foreign_key="usermodel.id")
+    user_id: int | None = Field(
+        default=None, foreign_key="usermodel.id", ondelete="CASCADE"
+    )
     name: str
     description: str
     organisation: str
@@ -184,7 +197,9 @@ class Certificate(SQLModel):
 
 class CharityModel(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    user_id: int | None = Field(default=None, foreign_key="usermodel.id")
+    user_id: int | None = Field(
+        default=None, foreign_key="usermodel.id", ondelete="CASCADE"
+    )
     name: str
     description: str
     organisation: str
@@ -202,7 +217,9 @@ class Charity(SQLModel):
 
 class EducationModel(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    user_id: int | None = Field(default=None, foreign_key="usermodel.id")
+    user_id: int | None = Field(
+        default=None, foreign_key="usermodel.id", ondelete="CASCADE"
+    )
     school: str
     major: str
     description: str
@@ -220,7 +237,9 @@ class Education(SQLModel):
 
 class ExperienceModel(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    user_id: int | None = Field(default=None, foreign_key="usermodel.id")
+    user_id: int | None = Field(
+        default=None, foreign_key="usermodel.id", ondelete="CASCADE"
+    )
     company: str
     position: str
     description: str
@@ -238,7 +257,9 @@ class Experience(SQLModel):
 
 class ProjectModel(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    user_id: int | None = Field(default=None, foreign_key="usermodel.id")
+    user_id: int | None = Field(
+        default=None, foreign_key="usermodel.id", ondelete="CASCADE"
+    )
     name: str
     description: str
     url: str
@@ -252,7 +273,9 @@ class Project(SQLModel):
 
 class SocialPlatformModel(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    user_id: int | None = Field(default=None, foreign_key="usermodel.id")
+    user_id: int | None = Field(
+        default=None, foreign_key="usermodel.id", ondelete="CASCADE"
+    )
     name: str
     url: str
 
@@ -274,6 +297,7 @@ class ProfileInfo(SQLModel):
     experiences: list[Experience] | None
     projects: list[Project] | None
     social_platforms: list[SocialPlatform] | None
+    websites: list[Website] | None
 
 
 # locations: list[LocationModel] | None  # TODO: In the future make this priority list
