@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block title %}AutoApply | Account{% endblock title %}
+
+{% block styles %}
+{{ super() }}
+<!--<style>-->
+<!--</style>-->
+{% endblock styles %}
+
+{% block content %}
+
+<p> {{ user.email }}</p>
+<p> {{ user.first_name }}</p>
+<p> {{ user.middle_name }}</p>
+<p> {{ user.surname }}</p>
+<p> {{ user.age }}</p>
+
+<form action="{{ url_for('delete_account') }}" method="post">
+    <input type="hidden" value="{{ user.email }}" name="email">
+    <input type="submit" value="Delete Account">
+</form>
+<form action="{{ url_for('edit_account') }}" method="post">
+    <input type="hidden" value="{{ user.email }}" name="email">
+    <input type="submit" value="Edit Account">
+</form>
+
+<ul>
+    {% for location in locations %}
+    <li>
+        <p>{{ location.country }}</p>
+        <p>{{ location.state }}</p>
+        <p>{{ location.city }}</p>
+        <p>{{ location.zip_code }}</p>
+    </li>
+    {% endfor %}
+</ul>
+
+<ul>
+    {% for programming_language in programming_languages %}
+    <li>
+        <p>{{ programming_language.language }}</p>
+        <p>{{ programming_language.level }}</p>
+    </li>
+    {% endfor %}
+</ul>
+
+<ul>
+    {% for language in languages %}
+    <li>
+        <p>{{ language.language }}</p>
+        <p>{{ language.level }}</p>
+    </li>
+    {% endfor %}
+</ul>
+
+<ul>
+    {% for tool in tools %}
+    <li>
+        <p>{{ tool.name }}</p>
+        <p>{{ tool.level }}</p>
+    </li>
+    {% endfor %}
+</ul>
+
+<ul>
+    {% for certificate in certificates %}
+    <li>
+        <p>{{ certificate.name }}</p>
+        <p>{{ certificate.description }}</p>
+        <p>{{ certificate.organisation }}</p>
+    </li>
+    {% endfor %}
+</ul>
+
+<ul>
+    {% for charity in charities %}
+    <li>
+        <p>{{ charity.name }}</p>
+        <p>{{ charity.description }}</p>
+        <p>{{ charity.organisation }}</p>
+        <p>{{ charity.start_date }}</p>
+        <p>{{ charity.end_date }}</p>
+    </li>
+    {% endfor %}
+</ul>
+
+<ul>
+    {% for education in educations %}
+    <li>
+        <p>{{ education.school }}</p>
+        <p>{{ education.major }}</p>
+        <p>{{ education.description }}</p>
+        <p>{{ education.start_date }}</p>
+        <p>{{ education.end_date }}</p>
+    </li>
+    {% endfor %}
+</ul>
+
+<ul>
+    {% for experience in experiences %}
+    <li>
+        <p>{{ experience.company }}</p>
+        <p>{{ experience.position }}</p>
+        <p>{{ experience.description }}</p>
+        <p>{{ experience.start_date }}</p>
+        <p>{{ experience.end_date }}</p>
+    </li>
+    {% endfor %}
+</ul>
+
+<ul>
+    {% for project in projects %}
+    <li>
+        <p>{{ project.name }}</p>
+        <p>{{ project.description }}</p>
+        <p>{{ project.url }}</p>
+    </li>
+    {% endfor %}
+</ul>
+
+<ul>
+    {% for social_platform in social_platforms %}
+    <li>
+        <p>{{ social_platform.name }}</p>
+        <p>{{ social_platform.url }}</p>
+    </li>
+    {% endfor %}
+</ul>
+
+<!--TODO: Hide user_password field, so that user has to click a button in order to reveal it-->
+<ul>
+    {% for website in websites %}
+    <li>
+        <p>{{ website.cookies }}</p>
+        <p>{{ website.user_email }}</p>
+        <p>{{ website.user_password }}</p>
+        <p>{{ website.url }}</p>
+        <p>{{ website.automation_steps }}</p>
+    </li>
+    {% endfor %}
+</ul>
+
+{% endblock content %}
