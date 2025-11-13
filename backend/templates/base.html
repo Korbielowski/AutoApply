@@ -13,21 +13,24 @@
 </head>
 <body>
 
+{% if user %}
 <nav id="navigation-bar">
     <ul id="nav-links-list">
-        {% if user %}
+        <li>
+            <a href="{{ url_for('index') }}">Home</a>
+        </li>
         <li>
             <a href="{{ url_for('account_details') }}">Account</a>
         </li>
         <li>
             <a href="{{ url_for('logout') }}">Logout/Switch User</a>
         </li>
-        {% endif %}
         <!--        <li>-->
         <!--            <a href="{{ url_for('load_manage_users_page') }}">Manage users</a>-->
         <!--        </li>-->
     </ul>
 </nav>
+{% endif %}
 
 {% block content %}{% endblock content %}
 
