@@ -9,6 +9,7 @@ class Settings(BaseSettings):
         extra="ignore",
     )
     PROJECT_NAME: str = "AutoApply"
+    DEBUG: bool = False
     USER_EMAIL: str
     PASSWORD: str
     API_KEY: str
