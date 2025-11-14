@@ -40,6 +40,18 @@
 
 body {
     background-color: var(--backgorund-main);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    /*gap: 2rem;*/
+}
+
+main {
+    padding: 1rem 0.5rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
 }
 
 h5, p {
@@ -180,6 +192,7 @@ summary::marker {
 }
 
 #navigation-bar {
+    background-color: var(--surface);
     width: 100%;
     border: 2px solid var(--borders);
     border-radius: 5px;
