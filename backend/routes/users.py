@@ -7,18 +7,29 @@ from sqlmodel import select
 
 from backend.database.crud import create_user, delete_user
 from backend.database.models import (
+    Certificate,
     CertificateModel,
+    Charity,
     CharityModel,
+    Education,
     EducationModel,
+    Experience,
     ExperienceModel,
+    Language,
     LanguageModel,
+    Location,
     LocationModel,
     ProfileInfo,
+    ProgrammingLanguage,
     ProgrammingLanguageModel,
+    Project,
     ProjectModel,
+    SocialPlatform,
     SocialPlatformModel,
+    Tool,
     ToolModel,
     UserModel,
+    Website,
     WebsiteModel,
 )
 from backend.logging import get_logger
@@ -121,49 +132,49 @@ async def account_details(
             select(LocationModel).where(
                 LocationModel.user_id == current_user.id
             )
-        ),
+        ).all(),
         "programming_languages": session.exec(
             select(ProgrammingLanguageModel).where(
                 ProgrammingLanguageModel.user_id == current_user.id
             )
-        ),
+        ).all(),
         "languages": session.exec(
             select(LanguageModel).where(
                 LanguageModel.user_id == current_user.id
             )
-        ),
+        ).all(),
         "tools": session.exec(
             select(ToolModel).where(ToolModel.user_id == current_user.id)
-        ),
+        ).all(),
         "certificates": session.exec(
             select(CertificateModel).where(
                 CertificateModel.user_id == current_user.id
             )
-        ),
+        ).all(),
         "charities": session.exec(
             select(CharityModel).where(CharityModel.user_id == current_user.id)
-        ),
+        ).all(),
         "educations": session.exec(
             select(EducationModel).where(
                 EducationModel.user_id == current_user.id
             )
-        ),
+        ).all(),
         "experience": session.exec(
             select(ExperienceModel).where(
                 ExperienceModel.user_id == current_user.id
             )
-        ),
+        ).all(),
         "projects": session.exec(
             select(ProjectModel).where(ProjectModel.user_id == current_user.id)
-        ),
+        ).all(),
         "social_platforms": session.exec(
             select(SocialPlatformModel).where(
                 SocialPlatformModel.user_id == current_user.id
             )
-        ),
+        ).all(),
         "websites": session.exec(
             select(WebsiteModel).where(WebsiteModel.user_id == current_user.id)
-        ),
+        ).all(),
     }
     return templates.TemplateResponse(
         request=request, name="account.html", context=context
@@ -184,11 +195,49 @@ async def delete_account(
     )
 
 
-@router.post("/edit_account", response_class=Union[HTMLResponse, HTMLResponse])
-async def edit_account(
-    session: SessionDep, request: Request, user: str = Form(...)
+@router.post("/add_new_information_to_account")
+async def add_new_information_to_account(
+    user: CurrentUser,
+    session: SessionDep,
+    form_data: Union[
+        Location,
+        ProgrammingLanguage,
+        Language,
+        Tool,
+        Certificate,
+        Charity,
+        Education,
+        Experience,
+        Project,
+        SocialPlatform,
+        Website,
+    ],  # TODO: Name fields differently in ProgramminLanguage and Language models, as they are the same for the fastapi
 ):
-    logger.info(user)
+    d = {
+        "Location": LocationModel,
+        "ProgrammingLanguage": ProgrammingLanguageModel,
+        "Language": LanguageModel,
+        "Tool": ToolModel,
+        "Certificate": CertificateModel,
+        "Charity": CharityModel,
+        "Education": EducationModel,
+        "Experience": ExperienceModel,
+        "Project": ProjectModel,
+        "SocialPlatform": SocialPlatformModel,
+        "Website": WebsiteModel,
+    }
+    form_dump = form_data.model_dump()
+
+    validator = d[form_data.__class__.__name__]
+    model = validator.model_validate(form_dump)
+
+    model.user_id = user.id
+    session.add(model)
+    session.commit()
+    session.refresh(model)
+
+    logger.info(model)
+    return model
 
 
 @router.get("/manage_users", response_class=HTMLResponse)
