@@ -89,7 +89,7 @@
                 placeholder="City"
         />
         <input
-                name="zip-code"
+                name="zip_code"
                 class="form-control"
                 type="text"
                 placeholder="Zip code"
@@ -110,7 +110,7 @@
                 class="form-control"
                 type="text"
                 placeholder="Programming language name"
-                name="language"
+                name="programming_language"
         />
         <select class="form-control form-control-lg" name="level">
             <option>Beginner</option>
@@ -211,9 +211,9 @@
                 name="description"
         />
         <label for="languageName" class="form-label">Start date</label>
-        <input class="form-control" type="date" name="start-date"/>
+        <input class="form-control" type="date" name="start_date"/>
         <label for="languageName" class="form-label">End date</label>
-        <input class="form-control" type="date" name="end-date"/>
+        <input class="form-control" type="date" name="end_date"/>
         <input type="submit" class="btn btn-dark" value="Add"/>
     </form>
 </div>
@@ -241,9 +241,9 @@
                 name="description"
         />
         <label for="languageName" class="form-label">Start date</label>
-        <input class="form-control" type="date" name="start-date"/>
+        <input class="form-control" type="date" name="start_date"/>
         <label for="languageName" class="form-label">End date</label>
-        <input class="form-control" type="date" name="end-date"/>
+        <input class="form-control" type="date" name="end_date"/>
         <input type="submit" class="btn btn-dark" value="Add"/>
     </form>
 </div>
@@ -271,9 +271,9 @@
                 name="description"
         />
         <label for="languageName" class="form-label">Start date</label>
-        <input class="form-control" type="date" name="start-date"/>
+        <input class="form-control" type="date" name="start_date"/>
         <label for="languageName" class="form-label">End date</label>
-        <input class="form-control" type="date" name="end-date"/>
+        <input class="form-control" type="date" name="end_date"/>
         <input type="submit" class="btn btn-dark" value="Add"/>
     </form>
 </div>
@@ -316,7 +316,7 @@
                 class="form-control"
                 type="text"
                 placeholder="Social platform name"
-                name="social-platform"
+                name="social_platform"
         />
         <input
                 class="form-control"
@@ -332,9 +332,9 @@
     <h3>Job Posting Websites for Scraping</h3>
     <ul id="websites-list"></ul>
     <form onsubmit="addWebsite()" id="website-form">
-        <input type="text" placeholder="User login email" name="user-email">
+        <input type="text" placeholder="User login email" name="user_email">
         <input type="text" placeholder="User login password"
-               name="user-password">
+               name="user_password">
         <input type="text" placeholder="Url to a website" name="url">
         <input type="submit" class="btn btn-dark" value="Add"/>
     </form>
@@ -370,7 +370,7 @@
             country: formData.get("country"),
             state: formData.get("state"),
             city: formData.get("city"),
-            zip_code: formData.get("zip-code")
+            zip_code: formData.get("zip_code")
         };
 
         locations.push(elem);
@@ -399,7 +399,7 @@
         );
 
         const elem = {
-            language: formData.get("language"),
+            programming_language: formData.get("programming_language"),
             level: formData.get("level")
         };
 
@@ -412,7 +412,7 @@
         event.preventDefault();
         const formData = new FormData(document.getElementById("tool-form"));
 
-        const elem = {name: formData.get("tool"), level: formData.get("level")};
+        const elem = {tool: formData.get("tool"), level: formData.get("level")};
 
         tools.push(elem);
         document.getElementById("tools-list").innerHTML +=
@@ -426,7 +426,7 @@
         );
 
         const elem = {
-            name: formData.get("certificate"),
+            certificate: formData.get("certificate"),
             description: formData.get("organisation"),
             organisation: formData.get("description"),
         };
@@ -441,11 +441,11 @@
         const formData = new FormData(document.getElementById("charity-form"));
 
         const elem = {
-            name: formData.get("charity"),
+            charity: formData.get("charity"),
             description: formData.get("organisation"),
             organisation: formData.get("description"),
-            start_date: formData.get("start-date"),
-            end_date: formData.get("end-date"),
+            start_date: formData.get("start_date"),
+            end_date: formData.get("end_date"),
         };
 
         charities.push(elem);
@@ -461,8 +461,8 @@
             school: formData.get("school"),
             major: formData.get("major"),
             description: formData.get("description"),
-            start_date: formData.get("start-date"),
-            end_date: formData.get("end-date"),
+            start_date: formData.get("start_date"),
+            end_date: formData.get("end_date"),
         };
 
         educations.push(elem);
@@ -478,8 +478,8 @@
             company: formData.get("company"),
             position: formData.get("position"),
             description: formData.get("description"),
-            start_date: formData.get("start-date"),
-            end_date: formData.get("end-date"),
+            start_date: formData.get("start_date"),
+            end_date: formData.get("end_date"),
         };
 
         experiences.push(elem);
@@ -492,7 +492,7 @@
         const formData = new FormData(document.getElementById("project-form"));
 
         const elem = {
-            name: formData.get("project"),
+            project: formData.get("project"),
             description: formData.get("description"),
             url: formData.get("url")
         };
@@ -509,7 +509,7 @@
         );
 
         const elem = {
-            name: formData.get("social-platform"),
+            social_platform: formData.get("social_platform"),
             url: formData.get("url")
         };
 
@@ -524,8 +524,8 @@
 
         const elem = {
             cookies: "", // TODO: Remove this line after fix in Python code
-            user_email: formData.get("user-email"),
-            user_password: formData.get("user-password"),
+            user_email: formData.get("user_email"),
+            user_password: formData.get("user_password"),
             url: formData.get("url"),
             automation_steps: null,
         };
