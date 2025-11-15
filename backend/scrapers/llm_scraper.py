@@ -2,10 +2,10 @@ import asyncio
 import datetime
 import json
 
-from loguru import logger
 from playwright.async_api import Locator, Page, TimeoutError
 
 from backend.llm import send_req_to_llm
+from backend.logging import get_logger
 from backend.scrapers.base_scraper import BaseScraper, JobEntry
 from backend.scrapers.utils import (
     click,
@@ -15,6 +15,8 @@ from backend.scrapers.utils import (
     get_page_content,
     goto,
 )
+
+logger = get_logger()
 
 
 # TODO: Add try except blocks to all operations that can timeout
@@ -56,16 +58,16 @@ class LLMScraper(BaseScraper):
 
     async def _is_on_login_page(self) -> bool:
         url = self.page.url
-        if (
-            "login" in url
-            or "signin" in url
-            or "sign-in" in url
-            or "sign_in" in url
-        ):
-            return True
+        # if (
+        #     "login" in url
+        #     or "signin" in url
+        #     or "sign-in" in url
+        #     or "sign_in" in url
+        # ):
+        #     return True
 
         if "True" in await send_req_to_llm(
-            f"Determine if this site is a login page, return only True or False: {await get_page_content(self.page)}",
+            f"Determine if this site is a login page based upon its source code and url, it should contain input field for user's email, sometimes login page contains password field too, return only True or False. url: {url}\npage: {await get_page_content(self.page)}",
             use_openai=True,
         ):
             return True
@@ -78,9 +80,9 @@ class LLMScraper(BaseScraper):
 
         while not await self._is_on_login_page() and retry < 5:
             if not attribute_list:
-                prompt = "Find a button/link that opens login page or menu that lets user open login page"
+                prompt = "Find a button/link that opens login page for a job candidate, where user logins using email and password or menu that lets user open login page"
             else:
-                prompt = f"Find a button/link that opens login page or menu that lets user open login page. Those are elements that were used in a previous steps, do not use them again: {attribute_list}"
+                prompt = f"Find a button/link that opens login page for a job candidate, where user logins using email and password or menu that lets user open login page. Those are elements that were used in a previous steps, do not use them again: {attribute_list}"
 
             btn, attributes, _ = await find_html_element(
                 page=self.page, prompt=prompt
@@ -266,11 +268,13 @@ class LLMScraper(BaseScraper):
         logger.info("We are going to select job tiles")
 
         class_selector = f".{'.'.join(class_list)}"
+        logger.info(f"{class_selector=}")
         locator = self.page.locator(class_selector)
 
         job_entry_links = [
             await z.get_attribute("href") for z in await locator.all()
         ]
+        # TODO: Add check for None inside of job_entry_links
         logger.info(
             f"Do those classes CSS classes: {class_list} select only job offers and no other elements. Return 'True' if only jobs are selected and 'False' if {class_list} CSS classes select also other elements. {'\n'.join(job_entry_links)}"
         )
