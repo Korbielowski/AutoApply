@@ -142,12 +142,12 @@ class ProgrammingLanguageModel(SQLModel, table=True):
     user_id: int | None = Field(
         default=None, foreign_key="usermodel.id", ondelete="CASCADE"
     )
-    language: str
+    programming_language: str
     level: str  # Maybe in the future change to int
 
 
 class ProgrammingLanguage(SQLModel):
-    language: str
+    programming_language: str
     level: str  # Maybe in the future change to int
 
 
@@ -170,12 +170,12 @@ class ToolModel(SQLModel, table=True):
     user_id: int | None = Field(
         default=None, foreign_key="usermodel.id", ondelete="CASCADE"
     )
-    name: str
+    tool: str
     level: str  # Maybe in the future change to int
 
 
 class Tool(SQLModel):
-    name: str
+    tool: str
     level: str  # Maybe in the future change to int
 
 
@@ -184,13 +184,13 @@ class CertificateModel(SQLModel, table=True):
     user_id: int | None = Field(
         default=None, foreign_key="usermodel.id", ondelete="CASCADE"
     )
-    name: str
+    certificate: str
     description: str
     organisation: str
 
 
 class Certificate(SQLModel):
-    name: str
+    certificate: str
     description: str
     organisation: str
 
@@ -200,7 +200,7 @@ class CharityModel(SQLModel, table=True):
     user_id: int | None = Field(
         default=None, foreign_key="usermodel.id", ondelete="CASCADE"
     )
-    name: str
+    charity: str
     description: str
     organisation: str
     start_date: datetime.date | None = Field(default=None)
@@ -208,7 +208,7 @@ class CharityModel(SQLModel, table=True):
 
 
 class Charity(SQLModel):
-    name: str
+    charity: str
     description: str
     organisation: str
     start_date: datetime.date | None
@@ -260,13 +260,13 @@ class ProjectModel(SQLModel, table=True):
     user_id: int | None = Field(
         default=None, foreign_key="usermodel.id", ondelete="CASCADE"
     )
-    name: str
+    project: str
     description: str
     url: str
 
 
 class Project(SQLModel):
-    name: str
+    project: str
     description: str
     url: str
 
@@ -276,12 +276,12 @@ class SocialPlatformModel(SQLModel, table=True):
     user_id: int | None = Field(
         default=None, foreign_key="usermodel.id", ondelete="CASCADE"
     )
-    name: str
+    social_platform: str
     url: str
 
 
 class SocialPlatform(SQLModel):
-    name: str
+    social_platform: str
     url: str
 
 
