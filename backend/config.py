@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     )
     PROJECT_NAME: str = "AutoApply"
     DEBUG: bool = False
+    LOG_TO_FILE: bool = True
     USER_EMAIL: str
     PASSWORD: str
     API_KEY: str
