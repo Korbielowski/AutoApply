@@ -1,13 +1,19 @@
 import datetime
 from enum import StrEnum
-from typing import Callable
+from typing import Annotated, Callable
 
-from pydantic import EmailStr
+from pydantic import BaseModel, BeforeValidator, ConfigDict, EmailStr
 from sqlmodel import JSON, Column, Field, SQLModel
 
 # TODO: Add model for storing all of the users preferences regarding scraping, cv creation and applying
 
 # TODO: Add priority to each category of skills and qualifications, so that the system can decide what should go into cv
+
+
+def ensure_date(value: str | datetime.date):
+    if isinstance(value, str):
+        return datetime.date.fromisoformat(value)
+    return value
 
 
 # TODO: How to recognise duplicate job offers on a different sites and on the same site at different time
@@ -111,6 +117,18 @@ class WebsiteModel(SQLModel, table=True):
     )
 
 
+class WebsitePost(BaseModel):
+    id: int
+    user_id: int
+    cookies: str
+    user_email: EmailStr
+    user_password: str
+    url: str
+    automation_steps: AutomationSteps | None
+
+    model_config = ConfigDict(strict=True)
+
+
 class Website(SQLModel):
     cookies: str
     user_email: EmailStr
@@ -130,6 +148,17 @@ class LocationModel(SQLModel, table=True):
     zip_code: str
 
 
+class LocationPost(SQLModel):
+    id: int
+    user_id: int
+    country: str
+    state: str
+    city: str
+    zip_code: str
+
+    model_config = ConfigDict(strict=True)
+
+
 class Location(SQLModel):
     country: str
     state: str
@@ -146,6 +175,15 @@ class ProgrammingLanguageModel(SQLModel, table=True):
     level: str  # Maybe in the future change to int
 
 
+class ProgrammingLanguagePost(BaseModel):
+    id: int
+    user_id: int
+    programming_language: str
+    level: str  # Maybe in the future change to int
+
+    model_config = ConfigDict(strict=True)
+
+
 class ProgrammingLanguage(SQLModel):
     programming_language: str
     level: str  # Maybe in the future change to int
@@ -158,6 +196,15 @@ class LanguageModel(SQLModel, table=True):
     )
     language: str
     level: str  # Maybe in the future change to int
+
+
+class LanguagePost(BaseModel):
+    id: int
+    user_id: int
+    language: str
+    level: str
+
+    model_config = ConfigDict(strict=True)
 
 
 class Language(SQLModel):
@@ -174,6 +221,15 @@ class ToolModel(SQLModel, table=True):
     level: str  # Maybe in the future change to int
 
 
+class ToolPost(BaseModel):
+    id: int
+    user_id: int
+    tool: str
+    level: str
+
+    model_config = ConfigDict(strict=True)
+
+
 class Tool(SQLModel):
     tool: str
     level: str  # Maybe in the future change to int
@@ -187,6 +243,16 @@ class CertificateModel(SQLModel, table=True):
     certificate: str
     description: str
     organisation: str
+
+
+class CertificatePost(BaseModel):
+    id: int
+    user_id: int
+    certificate: str
+    description: str
+    organisation: str
+
+    model_config = ConfigDict(strict=True)
 
 
 class Certificate(SQLModel):
@@ -205,6 +271,18 @@ class CharityModel(SQLModel, table=True):
     organisation: str
     start_date: datetime.date | None = Field(default=None)
     end_date: datetime.date | None = Field(default=None)
+
+
+class CharityPost(BaseModel):
+    id: int
+    user_id: int
+    charity: str
+    description: str
+    organisation: str
+    start_date: Annotated[datetime.date, BeforeValidator(ensure_date)]
+    end_date: Annotated[datetime.date, BeforeValidator(ensure_date)]
+
+    model_config = ConfigDict(strict=True)
 
 
 class Charity(SQLModel):
@@ -227,6 +305,18 @@ class EducationModel(SQLModel, table=True):
     end_date: datetime.date | None = Field(default=None)
 
 
+class EducationPost(BaseModel):
+    id: int
+    user_id: int
+    school: str
+    major: str
+    description: str
+    start_date: Annotated[datetime.date, BeforeValidator(ensure_date)]
+    end_date: Annotated[datetime.date, BeforeValidator(ensure_date)]
+
+    model_config = ConfigDict(strict=True)
+
+
 class Education(SQLModel):
     school: str
     major: str
@@ -247,6 +337,18 @@ class ExperienceModel(SQLModel, table=True):
     end_date: datetime.date | None = Field(default=None)
 
 
+class ExperiencePost(BaseModel):
+    id: int
+    user_id: int
+    company: str
+    position: str
+    description: str
+    start_date: Annotated[datetime.date, BeforeValidator(ensure_date)]
+    end_date: Annotated[datetime.date, BeforeValidator(ensure_date)]
+
+    model_config = ConfigDict(strict=True)
+
+
 class Experience(SQLModel):
     company: str
     position: str
@@ -265,6 +367,16 @@ class ProjectModel(SQLModel, table=True):
     url: str
 
 
+class ProjectPost(BaseModel):
+    id: int
+    user_id: int
+    project: str
+    description: str
+    url: str
+
+    model_config = ConfigDict(strict=True)
+
+
 class Project(SQLModel):
     project: str
     description: str
@@ -280,6 +392,15 @@ class SocialPlatformModel(SQLModel, table=True):
     url: str
 
 
+class SocialPlatformPost(BaseModel):
+    id: int
+    user_id: int
+    social_platform: str
+    url: str
+
+    model_config = ConfigDict(strict=True)
+
+
 class SocialPlatform(SQLModel):
     social_platform: str
     url: str
@@ -287,7 +408,9 @@ class SocialPlatform(SQLModel):
 
 class ProfileInfo(SQLModel):
     profile: User
-    locations: list[Location] | None
+    locations: (
+        list[Location] | None
+    )  # TODO: Maybe make this field a priority list
     programming_languages: list[ProgrammingLanguage] | None
     languages: list[Language] | None
     tools: list[Tool] | None
@@ -298,6 +421,3 @@ class ProfileInfo(SQLModel):
     projects: list[Project] | None
     social_platforms: list[SocialPlatform] | None
     websites: list[Website] | None
-
-
-# locations: list[LocationModel] | None  # TODO: In the future make this priority list
