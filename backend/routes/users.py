@@ -1,7 +1,7 @@
 from typing import Union
 
 from fastapi import APIRouter, Form, Request, status
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlmodel import select
 
@@ -9,28 +9,39 @@ from backend.database.crud import create_user, delete_user
 from backend.database.models import (
     Certificate,
     CertificateModel,
+    CertificatePost,
     Charity,
     CharityModel,
+    CharityPost,
     Education,
     EducationModel,
+    EducationPost,
     Experience,
     ExperienceModel,
+    ExperiencePost,
     Language,
     LanguageModel,
+    LanguagePost,
     Location,
     LocationModel,
+    LocationPost,
     ProfileInfo,
     ProgrammingLanguage,
     ProgrammingLanguageModel,
+    ProgrammingLanguagePost,
     Project,
     ProjectModel,
+    ProjectPost,
     SocialPlatform,
     SocialPlatformModel,
+    SocialPlatformPost,
     Tool,
     ToolModel,
+    ToolPost,
     UserModel,
     Website,
     WebsiteModel,
+    WebsitePost,
 )
 from backend.logging import get_logger
 from backend.routes.deps import (
@@ -118,7 +129,7 @@ async def register(
     )
 
 
-@router.get("/account", response_class=Union[HTMLResponse, HTMLResponse])
+@router.get("/account", response_class=Union[HTMLResponse, RedirectResponse])
 async def account_details(
     current_user: CurrentUser, session: SessionDep, request: Request
 ):
@@ -159,7 +170,7 @@ async def account_details(
                 EducationModel.user_id == current_user.id
             )
         ).all(),
-        "experience": session.exec(
+        "experiences": session.exec(
             select(ExperienceModel).where(
                 ExperienceModel.user_id == current_user.id
             )
@@ -182,7 +193,7 @@ async def account_details(
 
 
 @router.post(
-    "/delete_account", response_class=Union[HTMLResponse, HTMLResponse]
+    "/delete_account", response_class=Union[HTMLResponse, RedirectResponse]
 )
 async def delete_account(
     session: SessionDep, request: Request, email: str = Form(...)
@@ -211,7 +222,7 @@ async def add_new_information_to_account(
         Project,
         SocialPlatform,
         Website,
-    ],  # TODO: Name fields differently in ProgramminLanguage and Language models, as they are the same for the fastapi
+    ],
 ):
     d = {
         "Location": LocationModel,
@@ -227,6 +238,7 @@ async def add_new_information_to_account(
         "Website": WebsiteModel,
     }
     form_dump = form_data.model_dump()
+    logger.debug(f"Model sent for 'create' operation: {form_dump}")
 
     validator = d[form_data.__class__.__name__]
     model = validator.model_validate(form_dump)
@@ -236,8 +248,54 @@ async def add_new_information_to_account(
     session.commit()
     session.refresh(model)
 
-    logger.info(model)
     return model
+
+
+@router.post("/edit_information_about_account", response_class=JSONResponse)
+async def edit_information_about_account(
+    session: SessionDep,
+    form_data: Union[
+        LocationPost,
+        ProgrammingLanguagePost,
+        LanguagePost,
+        ToolPost,
+        CertificatePost,
+        CharityPost,
+        EducationPost,
+        ExperiencePost,
+        ProjectPost,
+        SocialPlatformPost,
+        WebsitePost,
+    ],
+):
+    d = {
+        "LocationPost": LocationModel,
+        "ProgrammingLanguagePost": ProgrammingLanguageModel,
+        "LanguagePost": LanguageModel,
+        "ToolPost": ToolModel,
+        "CertificatePost": CertificateModel,
+        "CharityPost": CharityModel,
+        "EducationPost": EducationModel,
+        "ExperiencePost": ExperienceModel,
+        "ProjectPost": ProjectModel,
+        "SocialPlatformPost": SocialPlatformModel,
+        "WebsitePost": WebsiteModel,
+    }
+
+    form_dump = form_data.model_dump()
+    logger.debug(f"Model sent for 'update' operation: {form_dump}")
+
+    model_class = d[form_data.__class__.__name__]
+    model_to_update = session.exec(
+        select(model_class).where(model_class.id == form_data.id)
+    ).one()
+
+    model_to_update.sqlmodel_update(form_dump)
+    session.add(model_to_update)
+    session.commit()
+    session.refresh(model_to_update)
+
+    return model_to_update
 
 
 @router.get("/manage_users", response_class=HTMLResponse)
