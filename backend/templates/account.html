@@ -5,7 +5,7 @@
 {% block styles %}
 {{ super() }}
 <style>
-    #add-new-info-form {
+    #add-new-info-form, #edit-info-form {
         background-color: var(--surface);
         width: 20rem;
         min-height: 10rem;
@@ -22,29 +22,29 @@
         transform: translate(-50%, -50%);
     }
 
-    #add-new-info-container {
+    #add-new-info-container, #edit-info-container {
         display: flex;
         flex-direction: column;
         gap: 0.2rem;
     }
 
-    #add-new-info-btn-container {
+    #add-new-info-btn-container, #edit-info-btn-container {
         margin-top: 0.3rem;
         display: flex;
         gap: 0.2rem;
         align-content: stretch;
     }
 
-    #add-new-info-btn-container button {
+    #add-new-info-btn-container button, #edit-info-btn-container button {
         flex-grow: 1;
         text-align: center;
     }
 
-    #add-new-info-form-btn:hover {
+    #add-new-info-form-btn:hover, #edit-info-form-btn:hover {
         background-color: var(--success);
     }
 
-    #close-new-info-form-btn:hover {
+    #close-new-info-form-btn:hover, #close-edit-info-form-btn:hover {
         background-color: var(--error);
     }
 </style>
@@ -66,7 +66,7 @@
         <input type="hidden" value="{{ user.email }}" name="email">
         <input type="submit" value="Delete Account">
     </form>
-    <form action="{{ url_for('edit_information_about_account') }}"
+    <form action=""
           method="post">
         <input type="hidden" value="{{ user.email }}" name="email">
         <input type="submit" value="Edit Account">
@@ -79,12 +79,14 @@
     </button>
     <ul id="locations-list">
         {% for location in locations %}
-        <li class="info-item" data-id="{{ location.id }}">
+        <li class="info-item" id="location-'{{ location.id }}'">
             <p>{{ location.country }}</p>
             <p>{{ location.state }}</p>
             <p>{{ location.city }}</p>
             <p>{{ location.zip_code }}</p>
-            <button onclick="openEditInformationForm()">Edit Item</button>
+            <button onclick="openEditInformationForm('location', '{{ location.id }}')">
+                Edit Item
+            </button>
             <button onclick="deleteInformation()">Delete Item</button>
         </li>
         {% endfor %}
@@ -99,9 +101,14 @@
     </button>
     <ul id="programming-languages-list">
         {% for programming_language in programming_languages %}
-        <li class="info-item" data-id="{{ programming_language.id }}">
+        <li class="info-item"
+            id="programmingLanguage-'{{ programming_language.id }}'">
             <p>{{ programming_language.programming_language }}</p>
             <p>{{ programming_language.level }}</p>
+            <button onclick="openEditInformationForm('programmingLanguage', '{{ programming_language.id }}')">
+                Edit Item
+            </button>
+            <button onclick="deleteInformation()">Delete Item</button>
         </li>
         {% endfor %}
     </ul>
@@ -113,9 +120,13 @@
     </button>
     <ul id="languages-list">
         {% for language in languages %}
-        <li class="info-item" data-id="{{ language.id }}">
+        <li class="info-item" id="language-'{{ language.id }}'">
             <p>{{ language.language }}</p>
             <p>{{ language.level }}</p>
+            <button onclick="openEditInformationForm('language', '{{ language.id }}')">
+                Edit Item
+            </button>
+            <button onclick="deleteInformation()">Delete Item</button>
         </li>
         {% endfor %}
     </ul>
@@ -127,9 +138,13 @@
     </button>
     <ul id="tools-list">
         {% for tool in tools %}
-        <li class="info-item" data-id="{{ tool.id }}">
+        <li class="info-item" id="tool-'{{ tool.id }}'">
             <p>{{ tool.tool }}</p>
             <p>{{ tool.level }}</p>
+            <button onclick="openEditInformationForm('tool', '{{ tool.id }}')">
+                Edit Item
+            </button>
+            <button onclick="deleteInformation()">Delete Item</button>
         </li>
         {% endfor %}
     </ul>
@@ -141,10 +156,14 @@
     </button>
     <ul id="certificates-list">
         {% for certificate in certificates %}
-        <li class="info-item" data-id="{{ certificate.id }}">
+        <li class="info-item" id="certificate-'{{ certificate.id }}'">
             <p>{{ certificate.certificate }}</p>
             <p>{{ certificate.description }}</p>
             <p>{{ certificate.organisation }}</p>
+            <button onclick="openEditInformationForm('certificate', '{{ certificate.id }}')">
+                Edit Item
+            </button>
+            <button onclick="deleteInformation()">Delete Item</button>
         </li>
         {% endfor %}
     </ul>
@@ -156,12 +175,16 @@
     </button>
     <ul id="charities-list">
         {% for charity in charities %}
-        <li class="info-item" data-id="{{ charity.id }}">
+        <li class="info-item" id="charity-'{{ charity.id }}'">
             <p>{{ charity.charity }}</p>
             <p>{{ charity.description }}</p>
             <p>{{ charity.organisation }}</p>
             <p>{{ charity.start_date }}</p>
             <p>{{ charity.end_date }}</p>
+            <button onclick="openEditInformationForm('charity', '{{ charity.id }}')">
+                Edit Item
+            </button>
+            <button onclick="deleteInformation()">Delete Item</button>
         </li>
         {% endfor %}
     </ul>
@@ -173,12 +196,16 @@
     </button>
     <ul id="educations-list">
         {% for education in educations %}
-        <li class="info-item" data-id="{{ education.id }}">
+        <li class="info-item" id="education-'{{ education.id }}'">
             <p>{{ education.school }}</p>
             <p>{{ education.major }}</p>
             <p>{{ education.description }}</p>
             <p>{{ education.start_date }}</p>
             <p>{{ education.end_date }}</p>
+            <button onclick="openEditInformationForm('education', '{{ education.id }}')">
+                Edit Item
+            </button>
+            <button onclick="deleteInformation()">Delete Item</button>
         </li>
         {% endfor %}
     </ul>
@@ -190,12 +217,16 @@
     </button>
     <ul id="experiences-list">
         {% for experience in experiences %}
-        <li class="info-item" data-id="{{ experience.id }}">
+        <li class="info-item" id="experience-'{{ experience.id }}'">
             <p>{{ experience.company }}</p>
             <p>{{ experience.position }}</p>
             <p>{{ experience.description }}</p>
             <p>{{ experience.start_date }}</p>
             <p>{{ experience.end_date }}</p>
+            <button onclick="openEditInformationForm('experience', '{{ experience.id }}')">
+                Edit Item
+            </button>
+            <button onclick="deleteInformation()">Delete Item</button>
         </li>
         {% endfor %}
     </ul>
@@ -207,10 +238,14 @@
     </button>
     <ul id="projects-list">
         {% for project in projects %}
-        <li class="info-item" data-id="{{ project.id }}">
+        <li class="info-item" id="project-'{{ project.id }}'">
             <p>{{ project.project }}</p>
             <p>{{ project.description }}</p>
             <p>{{ project.url }}</p>
+            <button onclick="openEditInformationForm('project', '{{ project.id }}')">
+                Edit Item
+            </button>
+            <button onclick="deleteInformation()">Delete Item</button>
         </li>
         {% endfor %}
     </ul>
@@ -223,9 +258,13 @@
     </button>
     <ul id="social-platforms-list">
         {% for social_platform in social_platforms %}
-        <li class="info-item" data-id="{{ social_platform.id }}">
+        <li class="info-item" id="socialPlatform-'{{ social_platform.id }}'">
             <p>{{ social_platform.social_platform }}</p>
             <p>{{ social_platform.url }}</p>
+            <button onclick="openEditInformationForm('socialPlatform', '{{ social_platform.id }}')">
+                Edit Item
+            </button>
+            <button onclick="deleteInformation()">Delete Item</button>
         </li>
         {% endfor %}
     </ul>
@@ -238,26 +277,41 @@
     </button>
     <ul id="websites-list">
         {% for website in websites %}
-        <li class="info-item" data-id="{{ website.id }}">
+        <li class="info-item" id="website-'{{ website.id }}'">
             <p>{{ website.cookies }}</p>
             <p>{{ website.user_email }}</p>
             <!--        <p data-pass="{{ website.user_password }}">***********</p>-->
             <p>{{ website.user_password }}</p>
             <p>{{ website.url }}</p>
             <p>{{ website.automation_steps }}</p>
+            <button onclick="openEditInformationForm('website', '{{ website.id }}')">
+                Edit Item
+            </button>
+            <button onclick="deleteInformation()">Delete Item</button>
         </li>
         {% endfor %}
     </ul>
 </div>
 
 <form onsubmit="addNewInfoForm()" id="add-new-info-form">
-    <div id="add-new-info-container">
-
-    </div>
+    <div id="add-new-info-container"></div>
     <div id="add-new-info-btn-container">
         <button id="add-new-info-form-btn" data-type="" type="submit">Add
         </button>
         <button id="close-new-info-form-btn" onclick="closeAddNewInfoForm()">
+            Close
+        </button>
+    </div>
+</form>
+
+<form onsubmit="sendEditInformationForm()" id="edit-info-form">
+    <div id="edit-info-container"></div>
+    <div id="edit-info-btn-container">
+        <button id="edit-info-form-btn" data-type="" data-id="" type="submit">
+            Edit
+        </button>
+        <button id="close-edit-info-form-btn"
+                onclick="closeEditInformationForm()">
             Close
         </button>
     </div>
@@ -458,25 +512,26 @@
         `
     }
 
-    const form = document.getElementById("add-new-info-form")
+    const addForm = document.getElementById("add-new-info-form")
+    const editForm = document.getElementById("edit-info-form")
 
     function openAddNewInfoForm(type) {
         document.getElementById("add-new-info-container").innerHTML = formTemplates[type];
         document.getElementById("add-new-info-form-btn").setAttribute("data-type", type);
-        form.style.display = "block";
+        addForm.style.display = "block";
     }
 
     function closeAddNewInfoForm() {
         event.preventDefault();
         document.getElementById("add-new-info-container").innerHTML = "";
-        form.style.display = "none";
+        addForm.style.display = "none";
     }
 
     async function addNewInfoForm() {
         event.preventDefault();
 
         const type = document.getElementById("add-new-info-form-btn").getAttribute("data-type");
-        const formData = new FormData(form);
+        const formData = new FormData(addForm);
 
         const jsonData = Object.fromEntries(formData.entries());
 
@@ -485,28 +540,103 @@
             jsonData["automation_steps"] = null;
         }
         console.log(`Type: ${type}, json: ${JSON.stringify(jsonData)}`);
+        console.log("{{ url_for('add_new_information_to_account') }}");
 
         // TODO: Add error handling
-        response = await fetch("{{ url_for('add_new_information_to_account') }}", {
+        await fetch("{{ url_for('add_new_information_to_account') }}", {
             method: "POST",
             headers: {
                 Accept: "application/json",
                 "Content-Type": "application/json",
             },
             body: JSON.stringify(jsonData),
-        });
+        }).then(response => response.json()).then(async model => {
+            document.getElementById("add-new-info-container").innerHTML = "";
+            document.getElementById("add-new-info-form-btn").setAttribute("data-type", "");
+            addForm.style.display = "none";
 
-        document.getElementById("add-new-info-container").innerHTML = "";
-        document.getElementById("add-new-info-form-btn").setAttribute("data-type", "");
-        form.style.display = "none";
-
-        const list = infoList[type]
-        list.innerHTML += "<li>";
-        Object.keys(jsonData).forEach(key => {
-            list.innerHTML += `<p>${jsonData[key]}<p/><br>`;
+            const list = infoList[type];
+            let tmp = "";
+            Object.keys(jsonData).forEach(key => {
+                tmp += `<p>${jsonData[key]}</p>`;
+            });
+            list.innerHTML += `
+            <li class="info-item" id="${type}-'${model.id}'">
+                ${tmp}
+                <button onclick="openEditInformationForm('${type}', '${model.id}')">Edit Item</button>
+                <button onclick="deleteInformation()">Delete Item</button>
+            </li>`;
         });
-        list.innerHTML += "</li>";
-        console.log("Done")
+    }
+
+
+    function openEditInformationForm(type, id) {
+        document.getElementById("edit-info-container").innerHTML = formTemplates[type];
+        const pTagList = document.getElementById(`${type}-'${id}'`).getElementsByTagName("p");
+
+        let allTags = [];
+        allTags = Array.prototype.concat.apply(allTags, document.getElementById("edit-info-container").getElementsByTagName("input"));
+        allTags = Array.prototype.concat.apply(allTags, document.getElementById("edit-info-container").getElementsByTagName("select"));
+        for (const i in allTags) {
+            allTags[i].placeholder = "";
+            allTags[i].value = pTagList[i].innerText;
+        }
+        document.getElementById("edit-info-form-btn").setAttribute("data-type", type);
+        document.getElementById("edit-info-form-btn").setAttribute("data-id", id);
+        editForm.style.display = "block";
+    }
+
+    async function closeEditInformationForm() {
+        event.preventDefault();
+
+        document.getElementById("edit-info-container").innerHTML = "";
+        editForm.style.display = "none";
+    }
+
+    async function sendEditInformationForm() {
+        event.preventDefault();
+
+        const formData = new FormData(editForm);
+        const type = document.getElementById("edit-info-form-btn").getAttribute("data-type");
+        const id = document.getElementById("edit-info-form-btn").getAttribute("data-id");
+
+        const jsonData = Object.fromEntries(formData.entries());
+        jsonData["id"] = parseInt(id)
+        jsonData["user_id"] = parseInt("{{ user.id }}");
+
+        // TODO: Horrible workaround, fix later if possible :(
+        if (type === "website") {
+            jsonData["automation_steps"] = null;
+        }
+        console.log(`Type: ${type}, json: ${JSON.stringify(jsonData)}`);
+
+        // TODO: Add error handling
+        await fetch("{{ url_for('edit_information_about_account') }}", {
+            method: "POST",
+            headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(jsonData),
+        }).then(response => response.json()).then(async model => {
+            let listItem = document.getElementById(`${type}-'${id}'`);
+
+            let tmp = "";
+            Object.keys(model).forEach(key => {
+                tmp += `<p>${model[key]}</p>`;
+            });
+            listItem.innerHTML = `
+            ${tmp}
+            <button onclick="openEditInformationForm(${type}-'${id}')">Edit Item</button>
+            <button onclick="deleteInformation(${type}-'${id}')">Delete Item</button>
+        `;
+            document.getElementById("edit-info-container").innerHTML = "";
+            editForm.style.display = "none";
+        });
+    }
+
+    async function deleteInformation(type, id) {
+
     }
 </script>
 {% endblock content %}
