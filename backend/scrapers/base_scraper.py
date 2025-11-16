@@ -1,10 +1,12 @@
 import abc
 
-from loguru import logger
 from playwright.async_api import BrowserContext, Locator, Page
 
 from backend.database.models import JobEntry, WebsiteModel
 from backend.llm import send_req_to_llm
+from backend.logging import get_logger
+
+logger = get_logger()
 
 
 class BaseScraper(abc.ABC):
