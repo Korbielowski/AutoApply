@@ -1,0 +1,642 @@
+{% extends "base.html" %}
+
+{% block title %}AutoApply | Account{% endblock title %}
+
+{% block styles %}
+{{ super() }}
+<style>
+    #add-new-info-form, #edit-info-form {
+        background-color: var(--surface);
+        width: 20rem;
+        min-height: 10rem;
+        max-height: 25rem;
+        border: 2px solid var(--borders);
+        border-radius: 5px;
+        display: none;
+        padding: 1rem;
+        align-items: stretch;
+
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+
+    #add-new-info-container, #edit-info-container {
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+    }
+
+    #add-new-info-btn-container, #edit-info-btn-container {
+        margin-top: 0.3rem;
+        display: flex;
+        gap: 0.2rem;
+        align-content: stretch;
+    }
+
+    #add-new-info-btn-container button, #edit-info-btn-container button {
+        flex-grow: 1;
+        text-align: center;
+    }
+
+    #add-new-info-form-btn:hover, #edit-info-form-btn:hover {
+        background-color: var(--success);
+    }
+
+    #close-new-info-form-btn:hover, #close-edit-info-form-btn:hover {
+        background-color: var(--error);
+    }
+</style>
+{% endblock styles %}
+
+{% block content %}
+
+<div>
+    <p>Email: {{ user.email }}</p>
+    <br>
+    <p>First name: {{ user.first_name }}</p>
+    <br>
+    <p>Middle name: {{ user.middle_name }}</p>
+    <br>
+    <p>Surname: {{ user.surname }}</p>
+    <br>
+    <p>Age: {{ user.age }}</p>
+    <form action="{{ url_for('delete_account') }}" method="post">
+        <input type="hidden" value="{{ user.email }}" name="email">
+        <input type="submit" value="Delete Account">
+    </form>
+    <form action=""
+          method="post">
+        <input type="hidden" value="{{ user.email }}" name="email">
+        <input type="submit" value="Edit Account">
+    </form>
+</div>
+
+<div>
+    <h3>Locations</h3>
+    <button onclick="openAddNewInfoForm('location')">Add new location
+    </button>
+    <ul id="locations-list">
+        {% for location in locations %}
+        <li class="info-item" id="location-'{{ location.id }}'">
+            <p>{{ location.country }}</p>
+            <p>{{ location.state }}</p>
+            <p>{{ location.city }}</p>
+            <p>{{ location.zip_code }}</p>
+            <button onclick="openEditInformationForm('location', '{{ location.id }}')">
+                Edit Item
+            </button>
+            <button onclick="deleteInformation()">Delete Item</button>
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+
+<div>
+    <h3>Programming Languages</h3>
+    <button onclick="openAddNewInfoForm('programmingLanguage')">Add new
+        programming
+        language
+    </button>
+    <ul id="programming-languages-list">
+        {% for programming_language in programming_languages %}
+        <li class="info-item"
+            id="programmingLanguage-'{{ programming_language.id }}'">
+            <p>{{ programming_language.programming_language }}</p>
+            <p>{{ programming_language.level }}</p>
+            <button onclick="openEditInformationForm('programmingLanguage', '{{ programming_language.id }}')">
+                Edit Item
+            </button>
+            <button onclick="deleteInformation()">Delete Item</button>
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+
+<div>
+    <h3>Languages</h3>
+    <button onclick="openAddNewInfoForm('language')">Add new language
+    </button>
+    <ul id="languages-list">
+        {% for language in languages %}
+        <li class="info-item" id="language-'{{ language.id }}'">
+            <p>{{ language.language }}</p>
+            <p>{{ language.level }}</p>
+            <button onclick="openEditInformationForm('language', '{{ language.id }}')">
+                Edit Item
+            </button>
+            <button onclick="deleteInformation()">Delete Item</button>
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+
+<div>
+    <h3>Tools</h3>
+    <button onclick="openAddNewInfoForm('tool')">Add new tool
+    </button>
+    <ul id="tools-list">
+        {% for tool in tools %}
+        <li class="info-item" id="tool-'{{ tool.id }}'">
+            <p>{{ tool.tool }}</p>
+            <p>{{ tool.level }}</p>
+            <button onclick="openEditInformationForm('tool', '{{ tool.id }}')">
+                Edit Item
+            </button>
+            <button onclick="deleteInformation()">Delete Item</button>
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+
+<div>
+    <h3>Certificates</h3>
+    <button onclick="openAddNewInfoForm('certificate')">Add new certificate
+    </button>
+    <ul id="certificates-list">
+        {% for certificate in certificates %}
+        <li class="info-item" id="certificate-'{{ certificate.id }}'">
+            <p>{{ certificate.certificate }}</p>
+            <p>{{ certificate.description }}</p>
+            <p>{{ certificate.organisation }}</p>
+            <button onclick="openEditInformationForm('certificate', '{{ certificate.id }}')">
+                Edit Item
+            </button>
+            <button onclick="deleteInformation()">Delete Item</button>
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+
+<div>
+    <h3>Charities</h3>
+    <button onclick="openAddNewInfoForm('charity')">Add new charity
+    </button>
+    <ul id="charities-list">
+        {% for charity in charities %}
+        <li class="info-item" id="charity-'{{ charity.id }}'">
+            <p>{{ charity.charity }}</p>
+            <p>{{ charity.description }}</p>
+            <p>{{ charity.organisation }}</p>
+            <p>{{ charity.start_date }}</p>
+            <p>{{ charity.end_date }}</p>
+            <button onclick="openEditInformationForm('charity', '{{ charity.id }}')">
+                Edit Item
+            </button>
+            <button onclick="deleteInformation()">Delete Item</button>
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+
+<div>
+    <h3>Education</h3>
+    <button onclick="openAddNewInfoForm('education')">Add new education
+    </button>
+    <ul id="educations-list">
+        {% for education in educations %}
+        <li class="info-item" id="education-'{{ education.id }}'">
+            <p>{{ education.school }}</p>
+            <p>{{ education.major }}</p>
+            <p>{{ education.description }}</p>
+            <p>{{ education.start_date }}</p>
+            <p>{{ education.end_date }}</p>
+            <button onclick="openEditInformationForm('education', '{{ education.id }}')">
+                Edit Item
+            </button>
+            <button onclick="deleteInformation()">Delete Item</button>
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+
+<div>
+    <h3>Experience</h3>
+    <button onclick="openAddNewInfoForm('experience')">Add new experience
+    </button>
+    <ul id="experiences-list">
+        {% for experience in experiences %}
+        <li class="info-item" id="experience-'{{ experience.id }}'">
+            <p>{{ experience.company }}</p>
+            <p>{{ experience.position }}</p>
+            <p>{{ experience.description }}</p>
+            <p>{{ experience.start_date }}</p>
+            <p>{{ experience.end_date }}</p>
+            <button onclick="openEditInformationForm('experience', '{{ experience.id }}')">
+                Edit Item
+            </button>
+            <button onclick="deleteInformation()">Delete Item</button>
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+
+<div>
+    <h3>Projects</h3>
+    <button onclick="openAddNewInfoForm('project')">Add new project
+    </button>
+    <ul id="projects-list">
+        {% for project in projects %}
+        <li class="info-item" id="project-'{{ project.id }}'">
+            <p>{{ project.project }}</p>
+            <p>{{ project.description }}</p>
+            <p>{{ project.url }}</p>
+            <button onclick="openEditInformationForm('project', '{{ project.id }}')">
+                Edit Item
+            </button>
+            <button onclick="deleteInformation()">Delete Item</button>
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+
+<div>
+    <h3>Social Platforms</h3>
+    <button onclick="openAddNewInfoForm('socialPlatform')">Add new social
+        platform
+    </button>
+    <ul id="social-platforms-list">
+        {% for social_platform in social_platforms %}
+        <li class="info-item" id="socialPlatform-'{{ social_platform.id }}'">
+            <p>{{ social_platform.social_platform }}</p>
+            <p>{{ social_platform.url }}</p>
+            <button onclick="openEditInformationForm('socialPlatform', '{{ social_platform.id }}')">
+                Edit Item
+            </button>
+            <button onclick="deleteInformation()">Delete Item</button>
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+
+<div>
+    <!--TODO: Hide user_password field, so that user has to click a button in order to reveal it-->
+    <h3>Job Posting Websites</h3>
+    <button onclick="openAddNewInfoForm('website')">Add new job posting website
+    </button>
+    <ul id="websites-list">
+        {% for website in websites %}
+        <li class="info-item" id="website-'{{ website.id }}'">
+            <p>{{ website.cookies }}</p>
+            <p>{{ website.user_email }}</p>
+            <!--        <p data-pass="{{ website.user_password }}">***********</p>-->
+            <p>{{ website.user_password }}</p>
+            <p>{{ website.url }}</p>
+            <p>{{ website.automation_steps }}</p>
+            <button onclick="openEditInformationForm('website', '{{ website.id }}')">
+                Edit Item
+            </button>
+            <button onclick="deleteInformation()">Delete Item</button>
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+
+<form onsubmit="addNewInfoForm()" id="add-new-info-form">
+    <div id="add-new-info-container"></div>
+    <div id="add-new-info-btn-container">
+        <button id="add-new-info-form-btn" data-type="" type="submit">Add
+        </button>
+        <button id="close-new-info-form-btn" onclick="closeAddNewInfoForm()">
+            Close
+        </button>
+    </div>
+</form>
+
+<form onsubmit="sendEditInformationForm()" id="edit-info-form">
+    <div id="edit-info-container"></div>
+    <div id="edit-info-btn-container">
+        <button id="edit-info-form-btn" data-type="" data-id="" type="submit">
+            Edit
+        </button>
+        <button id="close-edit-info-form-btn"
+                onclick="closeEditInformationForm()">
+            Close
+        </button>
+    </div>
+</form>
+
+<script>
+    const infoList = {
+        website: document.getElementById("websites-list"),
+        socialPlatform: document.getElementById("social-platforms-list"),
+        project: document.getElementById("projects-list"),
+        experience: document.getElementById("experiences-list"),
+        education: document.getElementById("education-list"),
+        charity: document.getElementById("charities-list"),
+        tool: document.getElementById("tools-list"),
+        language: document.getElementById("languages-list"),
+        programmingLanguage: document.getElementById("programming-languages-list"),
+        location: document.getElementById("locations-list"),
+    }
+
+    const formTemplates = {
+        website: `
+        <input type="hidden" name="cookies">
+        <input type="text" placeholder="User login email" name="user_email">
+        <input type="text" placeholder="User login password"
+               name="user_password">
+        <input type="text" placeholder="Url to a website" name="url">
+        <input type="hidden" name="automation_steps">
+        `,
+        socialPlatform: `
+        <input
+                type="text"
+                placeholder="Social platform name"
+                name="social_platform"
+        />
+        <input
+                type="text"
+                placeholder="Link to social platform"
+                name="url"
+        />
+        `,
+        project: `
+        <input
+                type="text"
+                placeholder="Project name"
+                name="project"
+        />
+        <input
+                type="text"
+                placeholder="Description"
+                name="description"
+        />
+        <input
+                type="text"
+                placeholder="Link to project"
+                name="url"
+        />
+        `,
+        experience: `
+        <input
+                type="text"
+                placeholder="Company name"
+                name="company"
+        />
+        <input
+                type="text"
+                placeholder="Position name"
+                name="position"
+        />
+        <input
+                type="text"
+                placeholder="Description"
+                name="description"
+        />
+        <label for="languageName">Start date</label>
+        <input  type="date" name="start_date"/>
+        <label for="languageName">End date</label>
+        <input  type="date" name="end_date"/>
+        `,
+        education: `
+        <input
+                type="text"
+                placeholder="School name"
+                name="school"
+        />
+        <input
+                type="text"
+                placeholder="Major name"
+                name="major"
+        />
+        <input
+                type="text"
+                placeholder="School description"
+                name="description"
+        />
+        <label for="languageName">Start date</label>
+        <input  type="date" name="start_date"/>
+        <label for="languageName">End date</label>
+        <input  type="date" name="end_date"/>
+        `,
+        charity: `
+        <input
+                type="text"
+                placeholder="Charity name"
+                name="charity"
+        />
+        <input
+                type="text"
+                placeholder="Organisation name"
+                name="organisation"
+        />
+        <input
+                type="text"
+                placeholder="Charity description"
+                name="description"
+        />
+        <label for="languageName">Start date</label>
+        <input  type="date" name="start_date"/>
+        <label for="languageName">End date</label>
+        <input  type="date" name="end_date"/>
+        `,
+        certificate: `
+        <input
+                type="text"
+                placeholder="Certificate name"
+                name="certificate"
+        />
+        <input
+                type="text"
+                placeholder="Organisation name"
+                name="organisation"
+        />
+        <input
+                type="text"
+                placeholder="Certificate description"
+                name="description"
+        />
+        `,
+        tool: `
+        <input
+                type="text"
+                placeholder="Tool name"
+                name="tool"
+        />
+        <select name="level">
+            <option>Beginner</option>
+            <option>Intermediate</option>
+            <option>Expert</option>
+            <option>Master</option>
+        </select>
+        `,
+        language: `
+        <input
+                type="text"
+                placeholder="Language name"
+                name="language"
+        />
+        <select name="level">
+            <option>Beginner</option>
+            <option>Intermediate</option>
+            <option>Expert</option>
+            <option>Master</option>
+        </select>
+       `,
+        programmingLanguage: `
+        <input
+                type="text"
+                placeholder="Programming language name"
+                name="programming_language"
+        />
+        <select name="level">
+            <option>Beginner</option>
+            <option>Intermediate</option>
+            <option>Expert</option>
+            <option>Master</option>
+        </select>
+        `,
+        location: `
+        <input
+                name="country"
+                type="text"
+                placeholder="Country"
+        />
+        <input
+                name="state"
+                type="text"
+                placeholder="State"
+        />
+        <input
+                name="city"
+                type="text"
+                placeholder="City"
+        />
+        <input
+                name="zip_code"
+                type="text"
+                placeholder="Zip code"
+        />
+        `
+    }
+
+    const addForm = document.getElementById("add-new-info-form")
+    const editForm = document.getElementById("edit-info-form")
+
+    function openAddNewInfoForm(type) {
+        document.getElementById("add-new-info-container").innerHTML = formTemplates[type];
+        document.getElementById("add-new-info-form-btn").setAttribute("data-type", type);
+        addForm.style.display = "block";
+    }
+
+    function closeAddNewInfoForm() {
+        event.preventDefault();
+        document.getElementById("add-new-info-container").innerHTML = "";
+        addForm.style.display = "none";
+    }
+
+    async function addNewInfoForm() {
+        event.preventDefault();
+
+        const type = document.getElementById("add-new-info-form-btn").getAttribute("data-type");
+        const formData = new FormData(addForm);
+
+        const jsonData = Object.fromEntries(formData.entries());
+
+        // TODO: Horrible workaround, fix later if possible :(
+        if (type === "website") {
+            jsonData["automation_steps"] = null;
+        }
+        console.log(`Type: ${type}, json: ${JSON.stringify(jsonData)}`);
+        console.log("{{ url_for('add_new_information_to_account') }}");
+
+        // TODO: Add error handling
+        await fetch("{{ url_for('add_new_information_to_account') }}", {
+            method: "POST",
+            headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(jsonData),
+        }).then(response => response.json()).then(async model => {
+            document.getElementById("add-new-info-container").innerHTML = "";
+            document.getElementById("add-new-info-form-btn").setAttribute("data-type", "");
+            addForm.style.display = "none";
+
+            const list = infoList[type];
+            let tmp = "";
+            Object.keys(jsonData).forEach(key => {
+                tmp += `<p>${jsonData[key]}</p>`;
+            });
+            list.innerHTML += `
+            <li class="info-item" id="${type}-'${model.id}'">
+                ${tmp}
+                <button onclick="openEditInformationForm('${type}', '${model.id}')">Edit Item</button>
+                <button onclick="deleteInformation()">Delete Item</button>
+            </li>`;
+        });
+    }
+
+
+    function openEditInformationForm(type, id) {
+        document.getElementById("edit-info-container").innerHTML = formTemplates[type];
+        const pTagList = document.getElementById(`${type}-'${id}'`).getElementsByTagName("p");
+
+        let allTags = [];
+        allTags = Array.prototype.concat.apply(allTags, document.getElementById("edit-info-container").getElementsByTagName("input"));
+        allTags = Array.prototype.concat.apply(allTags, document.getElementById("edit-info-container").getElementsByTagName("select"));
+        for (const i in allTags) {
+            allTags[i].placeholder = "";
+            allTags[i].value = pTagList[i].innerText;
+        }
+        document.getElementById("edit-info-form-btn").setAttribute("data-type", type);
+        document.getElementById("edit-info-form-btn").setAttribute("data-id", id);
+        editForm.style.display = "block";
+    }
+
+    async function closeEditInformationForm() {
+        event.preventDefault();
+
+        document.getElementById("edit-info-container").innerHTML = "";
+        editForm.style.display = "none";
+    }
+
+    async function sendEditInformationForm() {
+        event.preventDefault();
+
+        const formData = new FormData(editForm);
+        const type = document.getElementById("edit-info-form-btn").getAttribute("data-type");
+        const id = document.getElementById("edit-info-form-btn").getAttribute("data-id");
+
+        const jsonData = Object.fromEntries(formData.entries());
+        jsonData["id"] = parseInt(id)
+        jsonData["user_id"] = parseInt("{{ user.id }}");
+
+        // TODO: Horrible workaround, fix later if possible :(
+        if (type === "website") {
+            jsonData["automation_steps"] = null;
+        }
+        console.log(`Type: ${type}, json: ${JSON.stringify(jsonData)}`);
+
+        // TODO: Add error handling
+        await fetch("{{ url_for('edit_information_about_account') }}", {
+            method: "POST",
+            headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(jsonData),
+        }).then(response => response.json()).then(async model => {
+            let listItem = document.getElementById(`${type}-'${id}'`);
+
+            let tmp = "";
+            Object.keys(model).forEach(key => {
+                tmp += `<p>${model[key]}</p>`;
+            });
+            listItem.innerHTML = `
+            ${tmp}
+            <button onclick="openEditInformationForm(${type}-'${id}')">Edit Item</button>
+            <button onclick="deleteInformation(${type}-'${id}')">Delete Item</button>
+        `;
+            document.getElementById("edit-info-container").innerHTML = "";
+            editForm.style.display = "none";
+        });
+    }
+
+    async function deleteInformation(type, id) {
+
+    }
+</script>
+{% endblock content %}

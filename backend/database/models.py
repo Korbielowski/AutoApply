@@ -1,8 +1,8 @@
 import datetime
 from enum import StrEnum
-from typing import Callable
+from typing import Annotated, Callable
 
-from pydantic import EmailStr
+from pydantic import BaseModel, BeforeValidator, ConfigDict, EmailStr
 from sqlmodel import JSON, Column, Field, SQLModel
 
 # TODO: Add model for storing all of the users preferences regarding scraping, cv creation and applying
@@ -10,12 +10,20 @@ from sqlmodel import JSON, Column, Field, SQLModel
 # TODO: Add priority to each category of skills and qualifications, so that the system can decide what should go into cv
 
 
+def ensure_date(value: str | datetime.date):
+    if isinstance(value, str):
+        return datetime.date.fromisoformat(value)
+    return value
+
+
 # TODO: How to recognise duplicate job offers on a different sites and on the same site at different time
 # Maybe try using normalization of several job information e.g. title, company name and part of description and fuzzy matching
 # https://github.com/rapidfuzz/RapidFuzz
 class JobEntryModel(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    user_id: int | None = Field(default=None, foreign_key="usermodel.id")
+    user_id: int | None = Field(
+        default=None, foreign_key="usermodel.id", ondelete="CASCADE"
+    )
     title: str
     company_name: str
     discovery_date: datetime.date = Field(default_factory=datetime.date.today)
@@ -78,27 +86,6 @@ class AutomationSteps(SQLModel):
     # TODO: Uncomment if this function gets html elements get_job_information: list[Step]
 
 
-class WebsiteModel(SQLModel, table=True):
-    id: int | None = Field(default=None, primary_key=True)
-    cookies: str
-    user_email: EmailStr
-    user_password: str
-    url: str
-    automation_steps: AutomationSteps = Field(
-        sa_column=Column(JSON), default_factory=dict
-    )
-
-
-class Website(SQLModel):
-    cookies: str
-    user_email: EmailStr
-    user_password: str
-    url: str
-    automation_steps: AutomationSteps = Field(
-        sa_column=Column(JSON), default_factory=dict
-    )
-
-
 class UserModel(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     email: EmailStr = Field(unique=True, max_length=255)
@@ -116,13 +103,60 @@ class User(SQLModel):
     age: str | None
 
 
+class WebsiteModel(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    user_id: int | None = Field(
+        default=None, foreign_key="usermodel.id", ondelete="CASCADE"
+    )
+    cookies: str
+    user_email: EmailStr
+    user_password: str
+    url: str
+    automation_steps: AutomationSteps | None = Field(
+        sa_column=Column(JSON), default_factory=dict
+    )
+
+
+class WebsitePost(BaseModel):
+    id: int
+    user_id: int
+    cookies: str
+    user_email: EmailStr
+    user_password: str
+    url: str
+    automation_steps: AutomationSteps | None
+
+    model_config = ConfigDict(strict=True)
+
+
+class Website(SQLModel):
+    cookies: str
+    user_email: EmailStr
+    user_password: str
+    url: str
+    automation_steps: AutomationSteps | None
+
+
 class LocationModel(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    user_id: int | None = Field(default=None, foreign_key="usermodel.id")
+    user_id: int | None = Field(
+        default=None, foreign_key="usermodel.id", ondelete="CASCADE"
+    )
     country: str
     state: str
     city: str
     zip_code: str
+
+
+class LocationPost(SQLModel):
+    id: int
+    user_id: int
+    country: str
+    state: str
+    city: str
+    zip_code: str
+
+    model_config = ConfigDict(strict=True)
 
 
 class Location(SQLModel):
@@ -134,21 +168,43 @@ class Location(SQLModel):
 
 class ProgrammingLanguageModel(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    user_id: int | None = Field(default=None, foreign_key="usermodel.id")
-    language: str
+    user_id: int | None = Field(
+        default=None, foreign_key="usermodel.id", ondelete="CASCADE"
+    )
+    programming_language: str
     level: str  # Maybe in the future change to int
 
 
+class ProgrammingLanguagePost(BaseModel):
+    id: int
+    user_id: int
+    programming_language: str
+    level: str  # Maybe in the future change to int
+
+    model_config = ConfigDict(strict=True)
+
+
 class ProgrammingLanguage(SQLModel):
-    language: str
+    programming_language: str
     level: str  # Maybe in the future change to int
 
 
 class LanguageModel(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    user_id: int | None = Field(default=None, foreign_key="usermodel.id")
+    user_id: int | None = Field(
+        default=None, foreign_key="usermodel.id", ondelete="CASCADE"
+    )
     language: str
     level: str  # Maybe in the future change to int
+
+
+class LanguagePost(BaseModel):
+    id: int
+    user_id: int
+    language: str
+    level: str
+
+    model_config = ConfigDict(strict=True)
 
 
 class Language(SQLModel):
@@ -158,42 +214,79 @@ class Language(SQLModel):
 
 class ToolModel(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    user_id: int | None = Field(default=None, foreign_key="usermodel.id")
-    name: str
+    user_id: int | None = Field(
+        default=None, foreign_key="usermodel.id", ondelete="CASCADE"
+    )
+    tool: str
     level: str  # Maybe in the future change to int
 
 
+class ToolPost(BaseModel):
+    id: int
+    user_id: int
+    tool: str
+    level: str
+
+    model_config = ConfigDict(strict=True)
+
+
 class Tool(SQLModel):
-    name: str
+    tool: str
     level: str  # Maybe in the future change to int
 
 
 class CertificateModel(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    user_id: int | None = Field(default=None, foreign_key="usermodel.id")
-    name: str
+    user_id: int | None = Field(
+        default=None, foreign_key="usermodel.id", ondelete="CASCADE"
+    )
+    certificate: str
     description: str
     organisation: str
 
 
+class CertificatePost(BaseModel):
+    id: int
+    user_id: int
+    certificate: str
+    description: str
+    organisation: str
+
+    model_config = ConfigDict(strict=True)
+
+
 class Certificate(SQLModel):
-    name: str
+    certificate: str
     description: str
     organisation: str
 
 
 class CharityModel(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    user_id: int | None = Field(default=None, foreign_key="usermodel.id")
-    name: str
+    user_id: int | None = Field(
+        default=None, foreign_key="usermodel.id", ondelete="CASCADE"
+    )
+    charity: str
     description: str
     organisation: str
     start_date: datetime.date | None = Field(default=None)
     end_date: datetime.date | None = Field(default=None)
 
 
+class CharityPost(BaseModel):
+    id: int
+    user_id: int
+    charity: str
+    description: str
+    organisation: str
+    start_date: Annotated[datetime.date, BeforeValidator(ensure_date)]
+    end_date: Annotated[datetime.date, BeforeValidator(ensure_date)]
+
+    model_config = ConfigDict(strict=True)
+
+
 class Charity(SQLModel):
-    name: str
+    charity: str
     description: str
     organisation: str
     start_date: datetime.date | None
@@ -202,12 +295,26 @@ class Charity(SQLModel):
 
 class EducationModel(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    user_id: int | None = Field(default=None, foreign_key="usermodel.id")
+    user_id: int | None = Field(
+        default=None, foreign_key="usermodel.id", ondelete="CASCADE"
+    )
     school: str
     major: str
     description: str
     start_date: datetime.date | None = Field(default=None)
     end_date: datetime.date | None = Field(default=None)
+
+
+class EducationPost(BaseModel):
+    id: int
+    user_id: int
+    school: str
+    major: str
+    description: str
+    start_date: Annotated[datetime.date, BeforeValidator(ensure_date)]
+    end_date: Annotated[datetime.date, BeforeValidator(ensure_date)]
+
+    model_config = ConfigDict(strict=True)
 
 
 class Education(SQLModel):
@@ -220,12 +327,26 @@ class Education(SQLModel):
 
 class ExperienceModel(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    user_id: int | None = Field(default=None, foreign_key="usermodel.id")
+    user_id: int | None = Field(
+        default=None, foreign_key="usermodel.id", ondelete="CASCADE"
+    )
     company: str
     position: str
     description: str
     start_date: datetime.date | None = Field(default=None)
     end_date: datetime.date | None = Field(default=None)
+
+
+class ExperiencePost(BaseModel):
+    id: int
+    user_id: int
+    company: str
+    position: str
+    description: str
+    start_date: Annotated[datetime.date, BeforeValidator(ensure_date)]
+    end_date: Annotated[datetime.date, BeforeValidator(ensure_date)]
+
+    model_config = ConfigDict(strict=True)
 
 
 class Experience(SQLModel):
@@ -238,33 +359,58 @@ class Experience(SQLModel):
 
 class ProjectModel(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    user_id: int | None = Field(default=None, foreign_key="usermodel.id")
-    name: str
+    user_id: int | None = Field(
+        default=None, foreign_key="usermodel.id", ondelete="CASCADE"
+    )
+    project: str
     description: str
     url: str
 
 
+class ProjectPost(BaseModel):
+    id: int
+    user_id: int
+    project: str
+    description: str
+    url: str
+
+    model_config = ConfigDict(strict=True)
+
+
 class Project(SQLModel):
-    name: str
+    project: str
     description: str
     url: str
 
 
 class SocialPlatformModel(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    user_id: int | None = Field(default=None, foreign_key="usermodel.id")
-    name: str
+    user_id: int | None = Field(
+        default=None, foreign_key="usermodel.id", ondelete="CASCADE"
+    )
+    social_platform: str
     url: str
 
 
+class SocialPlatformPost(BaseModel):
+    id: int
+    user_id: int
+    social_platform: str
+    url: str
+
+    model_config = ConfigDict(strict=True)
+
+
 class SocialPlatform(SQLModel):
-    name: str
+    social_platform: str
     url: str
 
 
 class ProfileInfo(SQLModel):
     profile: User
-    locations: list[Location] | None
+    locations: (
+        list[Location] | None
+    )  # TODO: Maybe make this field a priority list
     programming_languages: list[ProgrammingLanguage] | None
     languages: list[Language] | None
     tools: list[Tool] | None
@@ -274,6 +420,4 @@ class ProfileInfo(SQLModel):
     experiences: list[Experience] | None
     projects: list[Project] | None
     social_platforms: list[SocialPlatform] | None
-
-
-# locations: list[LocationModel] | None  # TODO: In the future make this priority list
+    websites: list[Website] | None

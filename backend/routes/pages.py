@@ -3,7 +3,9 @@ from typing import Union
 from fastapi import APIRouter, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
+from sqlmodel import func, select
 
+from backend.database.models import UserModel, WebsiteModel
 from backend.routes.deps import CurrentUser, SessionDep
 from backend.scrapers import find_job_entries
 
@@ -12,26 +14,32 @@ templates = Jinja2Templates("templates")
 
 
 @router.get("/", response_class=Union[RedirectResponse, HTMLResponse])
-async def index(current_user: CurrentUser, request: Request):
+async def index(
+    current_user: CurrentUser, session: SessionDep, request: Request
+):
     if not current_user:
+        if session.scalar(func.count(UserModel.id)) >= 1:
+            return RedirectResponse(
+                url=request.url_for("load_login_page"),
+                status_code=status.HTTP_303_SEE_OTHER,
+            )
         return RedirectResponse(
             url=request.url_for("load_register_page"),
             status_code=status.HTTP_303_SEE_OTHER,
         )
-    return templates.TemplateResponse(request=request, name="index.html")
+    return templates.TemplateResponse(
+        request=request, name="index.html", context={"user": current_user}
+    )
 
 
 @router.get("/scrape_jobs", response_class=StreamingResponse)
 async def scrape_jobs(current_user: CurrentUser, session: SessionDep):
-    # TODO: Get sites/urls to scrape from database and user/website form
-    # TODO: Get program options like generate_cv from database and user/website form
+    websites = session.exec(
+        select(WebsiteModel).where(WebsiteModel.user_id == current_user.id)
+    ).all()
     return StreamingResponse(
-        find_job_entries(
-            user=current_user,
-            session=session,
-            urls=[
-                "https://www.linkedin.com/jobs/collections/recommended/?currentJobId=3706084909"
-            ],
+        content=find_job_entries(
+            user=current_user, session=session, websites=websites
         ),
         media_type="text/event-stream",
     )

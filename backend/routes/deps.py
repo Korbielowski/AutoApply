@@ -1,7 +1,8 @@
 from typing import Annotated, Generator
 
 from fastapi import Depends
-from sqlmodel import Session, func, select
+from pydantic import EmailStr
+from sqlmodel import Session, select
 
 from backend.database.db import engine
 from backend.database.models import UserModel
@@ -15,19 +16,17 @@ def get_session() -> Generator[Session, None, None]:
 
 
 def current_user() -> UserModel | None:
-    if user:
-        return user
-
-    with Session(engine) as session:
-        profile_count = session.scalar(func.count(UserModel.id))
-        if profile_count > 1 or profile_count < 1:
-            return None
-        return session.exec(select(UserModel)).first()
+    return user
 
 
-def set_current_user(session: Session, email: str) -> None:
+def set_current_user(session: Session, email: EmailStr | str | None) -> None:
     global user
-    user = session.exec(select(UserModel).where(UserModel.email == email)).first()
+    if email:
+        user = session.exec(
+            select(UserModel).where(UserModel.email == email)
+        ).first()
+    else:
+        user = None
 
 
 SessionDep = Annotated[Session, Depends(get_session)]

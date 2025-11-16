@@ -27,3 +27,6 @@ venv/
 # Code editors
 .idea/
 .vscode/
+
+# Log files
+*.log

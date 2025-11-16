@@ -1,0 +1,206 @@
+:root {
+    --backgorund-main: #0A0E1A;
+    --surface: #121829;
+    --primary-accent: #1E40AF;
+    --secondary-accent: #38BDF8;
+    --primary-hover: #2563EB;
+    --primary-active: #1D4ED8;
+    --text-primary: #E2E8F0;
+    --text-secondary: #94A3B8;
+    --link: #38BDF8;
+    --link-hover: #60A5FA;
+    --link-active: #2563EB;
+    --borders: #1E293B;
+    --success: #22C55E;
+    --error: #EF4444;
+
+    /* Form-specific colors (same naming style) */
+    --field-background: #1E2536;
+    --field-background-hover: #252C40;
+    --field-background-focus: #1E293B;
+    --field-border: var(--borders);
+    --field-border-hover: #2C3A5C;
+    --field-border-focus: var(--primary-hover);
+    --field-text: var(--text-primary);
+    --field-placeholder: #64748B;
+    --field-disabled-background: #0F172A;
+    --field-disabled-text: #475569;
+    --field-border-error: var(--error);
+    --field-border-success: var(--success);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Inter, serif;
+    font-size: 16px;
+    color: var(--text-primary);
+}
+
+body {
+    background-color: var(--backgorund-main);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    /*gap: 2rem;*/
+}
+
+main {
+    padding: 1rem 0.5rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+h5, p {
+    display: inline;
+}
+
+p {
+    color: var(--text-secondary);
+}
+
+/*input:-webkit-autofill,*/
+/*textarea:-webkit-autofill,*/
+/*select:-webkit-autofill {*/
+/*    -webkit-box-shadow: 0 0 0px 1000px var(--field-background) inset !important;*/
+/*    -webkit-text-fill-color: var(--field-text) !important;*/
+/*    caret-color: var(--field-text);*/
+/*    transition: background-color 0s, color 0s;*/
+/*}*/
+
+input,
+select,
+textarea {
+    background: var(--field-background);
+    color: var(--field-text);
+    border: 1px solid var(--field-border);
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+    transition: all 0.2s ease;
+}
+
+input:hover,
+select:hover,
+textarea:hover {
+    background: var(--field-background-hover);
+    border-color: var(--field-border-hover);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    background: var(--field-background-focus);
+    border-color: var(--field-border-focus);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.3);
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: var(--field-placeholder);
+}
+
+input:disabled,
+select:disabled,
+textarea:disabled {
+    background: var(--field-disabled-background);
+    color: var(--field-disabled-text);
+    cursor: not-allowed;
+}
+
+input.error,
+select.error,
+textarea.error {
+    border-color: var(--field-border-error);
+}
+
+input.success,
+select.success,
+textarea.success {
+    border-color: var(--field-border-success);
+}
+
+button, input[type=submit] {
+    background-color: var(--surface);
+    border: 2px solid var(--borders);
+    border-radius: 5px;
+    transition: all 0.2s ease-in;
+}
+
+button:hover, input[type=submit]:hover {
+    background-color: var(--primary-hover);
+    transition: all 0.2s ease-in;
+}
+
+button:active, input[type=submit]:hover {
+    background-color: var(--primary-active);
+}
+
+a {
+    color: var(--link);
+    text-decoration: none;
+    transition: all 0.2s ease-in;
+}
+
+a:hover {
+    color: var(--link-hover);
+    transition: all 0.2s ease-in;
+}
+
+a:active {
+    color: var(--link-active)
+}
+
+ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+summary {
+    user-select: none;
+    font-size: 1.2rem;
+}
+
+summary::marker {
+    color: var(--text-secondary);
+    transition: all 0.2s ease-in;
+}
+
+::-webkit-scrollbar {
+    width: 7px;
+    background-color: var(--backgorund-main);
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: var(--surface);
+    margin: 10px;
+    border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    transition: linear 0.2s;
+    background-color: var(--primary-hover);
+}
+
+::-webkit-scrollbar-thumb:active {
+    transition: linear 0.2s;
+    background-color: var(--primary-active);
+}
+
+#navigation-bar {
+    background-color: var(--surface);
+    width: 100%;
+    border: 2px solid var(--borders);
+    border-radius: 5px;
+}
+
+#nav-links-list {
+    padding: 10px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0 20px;
+}
