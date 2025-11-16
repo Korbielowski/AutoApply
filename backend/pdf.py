@@ -1,5 +1,4 @@
 import datetime
-import logging
 import os
 from pathlib import Path
 
@@ -21,9 +20,10 @@ from backend.database.models import (
     UserModel,
 )
 from backend.llm import send_req_to_llm
+from backend.logging import get_logger
 from backend.scrapers.base_scraper import JobEntry
 
-logging.basicConfig(format="%(levelname)s: %(message)s", level=logging.INFO)
+logger = get_logger()
 PDF_ENGINE = "weasyprint"
 CV_DIR_NAME = "cv"
 
@@ -195,7 +195,7 @@ def create_cv(
         skills = info.get("skills", "")
         name = info.get("name", "Jan Kolon Movano")
         links = info.get("links", "")
-        logging.info(f"name: {name}\nskills: {skills}\nlinks: {links}")
+        logger.info(f"name: {name}\nskills: {skills}\nlinks: {links}")
         prompt = f"Select skills and other qualifications from information: {skills} that match those of job requirements: {requirements}"
         response = send_req_to_llm(prompt)
         prompt = f"Generate a complete personal CV page using only HTML and CSS with no additional comments or explanations, based upon these qualifications: {response}. Name: {name}. Social media links: {links}"
@@ -205,7 +205,9 @@ def create_cv(
             name=info.get("name", "Jan Kolon Movano"),
             email=info.get("email", "jakkolon123@gmail.com"),
             phone_number=info.get("phone_number", "+4 320 932 913"),
-            linkedin=info.get("links", {}).get("linkedin", "https://linkedin.com"),
+            linkedin=info.get("links", {}).get(
+                "linkedin", "https://linkedin.com"
+            ),
             github=info.get("links", {}).get("github", "https://github.com"),
             personal_website=info.get("links", {}).get(
                 "personal_website", "https://personal_website.com"
@@ -218,11 +220,13 @@ def create_cv(
             languages=info.get("languages", "placeholder"),
         )
 
-    logging.info(f"CV:\n{cv}")
+    logger.info(f"CV:\n{cv}")
 
     current_time = datetime.datetime.today().strftime("%Y-%m-%d_%H:%M:%S")
     cv_path = (
-        Path().joinpath(CV_DIR_NAME).joinpath(f"{current_time}_{job_entry.title}.pdf")
+        Path()
+        .joinpath(CV_DIR_NAME)
+        .joinpath(f"{current_time}_{job_entry.title}.pdf")
     )  # TODO: change job_entry.title
 
     if not os.path.isdir(CV_DIR_NAME):
