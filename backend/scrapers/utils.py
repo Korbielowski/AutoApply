@@ -1,20 +1,21 @@
 import asyncio
 import json
+import random
 
 import tiktoken
 from bs4 import BeautifulSoup
-from loguru import logger
 from playwright.async_api import Locator, Page, TimeoutError
 
+from backend.config import settings
 from backend.database.models import AttributeType, Step
 from backend.llm import send_req_to_llm
+from backend.logging import get_logger
 
 TIK = tiktoken.encoding_for_model("gpt-5-")
+logger = get_logger()
 
 
-async def goto(
-    page: Page, link: str, retry: int = 3, debug: bool = False
-) -> None:
+async def goto(page: Page, link: str, retry: int = 3) -> None:
     done = False
     while not done and retry > 0:
         try:
@@ -27,16 +28,14 @@ async def goto(
         retry -= 1
 
 
-async def click(
-    element: None | Locator, page: Page, retry: int = 3, debug: bool = True
-) -> bool:
+async def click(element: None | Locator, page: Page, retry: int = 3) -> bool:
     if not element:
         logger.exception("Button/Link is None")
         return False
 
     while retry > 0:
         try:
-            if debug:
+            if settings.DEBUG:
                 await element.highlight()
                 await asyncio.sleep(3)
             await element.click()
@@ -49,19 +48,19 @@ async def click(
     return False
 
 
-async def fill(
-    element: None | Locator, value: str, retry: int = 3, debug: bool = True
-) -> bool:
+async def fill(element: None | Locator, value: str, retry: int = 3) -> bool:
     if not element:
         logger.error("Could not find input field")
         return False
 
     while retry > 0:
         try:
-            if debug:
+            if settings.DEBUG:
                 await element.highlight()
                 await asyncio.sleep(3)
-            await element.fill(value)
+            await element.press_sequentially(
+                value, delay=random.randint(5, 10) * 100
+            )
             return True
         except TimeoutError:
             logger.exception("Timeout for fill")
@@ -69,21 +68,11 @@ async def fill(
     return False
 
 
-async def get_page_content(page: Page, debug: bool = False) -> str:
+async def get_page_content(page: Page) -> str:
     # TODO: Make page content smaller by e.g. excluding head or code tags and only by including body
     # TODO: Check in the future, whether regex would not be faster and overall better solution
     # TODO: Add option to get important info about html tags and their content, then send all of it in json format to LLM
     page_content = await page.content()
-
-    # if debug:
-    #     import random
-    #     import string
-    #
-    #     letters = "".join(
-    #         random.choice(string.ascii_lowercase) for _ in range(10)
-    #     )
-    #     with open(f"{letters}.html", "w") as file:
-    #         file.write(page_content)
 
     logger.info(
         f"Amount of tokens before cleaning: {len(TIK.encode(page_content))}"
@@ -119,24 +108,18 @@ async def get_page_content(page: Page, debug: bool = False) -> str:
     logger.info(
         f"Amount of tokens after cleaning: {len(TIK.encode(cleaned_page_content))}"
     )
-    # if debug:
-    #     import random
-    #     import string
-    #
-    #     letters = "".join(
-    #         random.choice(string.ascii_lowercase) for _ in range(10)
-    #     )
-    #     with open(f"{letters}.html", "w") as file:
-    #         file.write(cleaned_page_content)
     return cleaned_page_content
 
 
 async def find_html_element_attributes(
-    page: Page, prompt: str, debug: bool = False
+    page: Page | str, prompt: str
 ) -> None | dict:
     pre_prompt = "I will give you an HTML snippet."
     post_prompt = "Return only its identifying attributes in JSON format with the following keys: id, name, type, aria-label, placeholder, role, text, classList. If an attribute does not exist, return null for it, for classList return JSON list. Do not explain, only return JSON"
-    page_content = await get_page_content(page, debug)
+    if type(page) is Page:
+        page_content = await get_page_content(page)
+    else:
+        page_content = page
     final_prompt = f"{pre_prompt}{prompt}{post_prompt}\n{page_content}"
 
     response = await send_req_to_llm(
@@ -159,12 +142,13 @@ async def find_html_element_attributes(
 
 
 async def find_html_element(
-    page: Page, prompt: str, debug: bool = False, additional_llm: bool = False
+    page: Page, prompt: str, additional_llm: bool = False
 ) -> tuple[None, None, None] | tuple[Locator, str, AttributeType]:
     logger.info(f"Prompt: {prompt}")
 
+    page_content = await get_page_content(page)
     for _ in range(5):
-        attributes = await find_html_element_attributes(page, prompt, debug)
+        attributes = await find_html_element_attributes(page_content, prompt)
         if not attributes:
             return None, None, None
 
@@ -285,27 +269,40 @@ async def find_html_element(
                 count_dict[count] = await locator.all()
 
         class_list = attributes.get("classList", [])
+        # FIXME: playwright._impl._errors.Error: Locator.count: SyntaxError: Failed to execute 'querySelectorAll' on 'Document': '.tw-w-[120px]' is not a valid selector.
         logger.info(f"Class_list type: {type(class_list)}, {class_list}")
         if class_list:
-            for class_l in class_list:
-                if await locator.count() >= 2:
-                    locator = locator.and_(page.locator(f".{class_l}"))
-                    # locator = locator.filter(has=page.locator(f".{class_l}"))
-                else:
-                    locator = page.locator(f".{class_l}")
-                count = await locator.count()
-                await log_locator(
-                    locator,
-                    message="Search by class",
-                    count=count,
-                    class_l=class_l,
-                )
-                if 0 < count < 2 and await verify_if_right_element_was_chosen(
-                    locator.last, attributes, prompt
-                ):
-                    return locator.last, class_l, AttributeType.class_l
-                elif count > 2:
-                    count_dict[count] = await locator.all()
+            class_selector = f".{'.'.join(class_list)}"
+            if await locator.count() >= 2:
+                locator = locator.and_(page.locator(class_selector))
+            else:
+                locator = page.locator(class_selector)
+            count = await locator.count()
+            if 0 < count < 2 and await verify_if_right_element_was_chosen(
+                locator.last, attributes, prompt
+            ):
+                return locator.last, class_selector, AttributeType.class_l
+            elif count > 2:
+                count_dict[count] = await locator.all()
+            # for class_l in class_list:
+            #     if await locator.count() >= 2:
+            #         locator = locator.and_(page.locator(f".{class_l}"))
+            #         # locator = locator.filter(has=page.locator(f".{class_l}"))
+            #     else:
+            #         locator = page.locator(f".{class_l}")
+            #     count = await locator.count()
+            #     await log_locator(
+            #         locator,
+            #         message="Search by class",
+            #         count=count,
+            #         class_l=class_l,
+            #     )
+            #     if 0 < count < 2 and await verify_if_right_element_was_chosen(
+            #         locator.last, attributes, prompt
+            #     ):
+            #         return locator.last, class_l, AttributeType.class_l
+            #     elif count > 2:
+            #         count_dict[count] = await locator.all()
 
         # TODO: Add LLM element choosing
         if additional_llm:
@@ -334,8 +331,6 @@ async def find_html_element(
                 logger.exception(
                     f"ValueError while casting LLM response for locators: {response}"
                 )
-
-    # TODO: Move code from 'verify_if_right_element_was_chosen' function here, and look not only at attributes, but at locators data too
 
     return None, None, None
 
