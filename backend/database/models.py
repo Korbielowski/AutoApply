@@ -42,7 +42,7 @@ class JobEntryModel(SQLModel, table=True):
     )  # TODO: Here LLM will need to find information on the internet
 
 
-class JobEntry(SQLModel):
+class JobEntry(BaseModel):
     title: str
     company_name: str
     discovery_date: datetime.date
@@ -68,14 +68,14 @@ class AttributeType(StrEnum):
     class_l = "class_l"
 
 
-class Step(SQLModel):
+class Step(BaseModel):
     action: Callable
     html_element_attribute: str  # TODO: Experiment with Locators too if you can
     attribute_type: AttributeType
     arguments: dict
 
 
-class AutomationSteps(SQLModel):
+class AutomationSteps(BaseModel):
     login_to_page: list[Step]
     is_on_login_page: list[Step]
     navigate_to_login_page: list[Step]
@@ -89,14 +89,16 @@ class AutomationSteps(SQLModel):
 class UserModel(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     email: EmailStr = Field(unique=True, max_length=255)
+    phone_number: str
     first_name: str
     middle_name: str
     surname: str
     age: str | None
 
 
-class User(SQLModel):
+class User(BaseModel):
     email: EmailStr
+    phone_number: str
     first_name: str
     middle_name: str
     surname: str
@@ -129,7 +131,7 @@ class WebsitePost(BaseModel):
     model_config = ConfigDict(strict=True)
 
 
-class Website(SQLModel):
+class Website(BaseModel):
     cookies: str
     user_email: EmailStr
     user_password: str
@@ -148,7 +150,7 @@ class LocationModel(SQLModel, table=True):
     zip_code: str
 
 
-class LocationPost(SQLModel):
+class LocationPost(BaseModel):
     id: int
     user_id: int
     country: str
@@ -159,7 +161,7 @@ class LocationPost(SQLModel):
     model_config = ConfigDict(strict=True)
 
 
-class Location(SQLModel):
+class Location(BaseModel):
     country: str
     state: str
     city: str
@@ -184,7 +186,7 @@ class ProgrammingLanguagePost(BaseModel):
     model_config = ConfigDict(strict=True)
 
 
-class ProgrammingLanguage(SQLModel):
+class ProgrammingLanguage(BaseModel):
     programming_language: str
     level: str  # Maybe in the future change to int
 
@@ -207,7 +209,7 @@ class LanguagePost(BaseModel):
     model_config = ConfigDict(strict=True)
 
 
-class Language(SQLModel):
+class Language(BaseModel):
     language: str
     level: str  # Maybe in the future change to int
 
@@ -230,7 +232,7 @@ class ToolPost(BaseModel):
     model_config = ConfigDict(strict=True)
 
 
-class Tool(SQLModel):
+class Tool(BaseModel):
     tool: str
     level: str  # Maybe in the future change to int
 
@@ -255,7 +257,7 @@ class CertificatePost(BaseModel):
     model_config = ConfigDict(strict=True)
 
 
-class Certificate(SQLModel):
+class Certificate(BaseModel):
     certificate: str
     description: str
     organisation: str
@@ -285,7 +287,7 @@ class CharityPost(BaseModel):
     model_config = ConfigDict(strict=True)
 
 
-class Charity(SQLModel):
+class Charity(BaseModel):
     charity: str
     description: str
     organisation: str
@@ -317,7 +319,7 @@ class EducationPost(BaseModel):
     model_config = ConfigDict(strict=True)
 
 
-class Education(SQLModel):
+class Education(BaseModel):
     school: str
     major: str
     description: str
@@ -349,7 +351,7 @@ class ExperiencePost(BaseModel):
     model_config = ConfigDict(strict=True)
 
 
-class Experience(SQLModel):
+class Experience(BaseModel):
     company: str
     position: str
     description: str
@@ -377,7 +379,7 @@ class ProjectPost(BaseModel):
     model_config = ConfigDict(strict=True)
 
 
-class Project(SQLModel):
+class Project(BaseModel):
     project: str
     description: str
     url: str
@@ -401,12 +403,12 @@ class SocialPlatformPost(BaseModel):
     model_config = ConfigDict(strict=True)
 
 
-class SocialPlatform(SQLModel):
+class SocialPlatform(BaseModel):
     social_platform: str
     url: str
 
 
-class ProfileInfo(SQLModel):
+class ProfileInfo(BaseModel):
     profile: User
     locations: (
         list[Location] | None
