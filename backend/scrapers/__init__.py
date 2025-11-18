@@ -50,6 +50,7 @@ async def find_job_entries(
                         if not use_user_cv:
                             cv = create_cv(
                                 user=user,
+                                session=session,
                                 job_entry=job_data,
                                 mode="llm-selection",
                             )
