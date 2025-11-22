@@ -43,3 +43,13 @@ async def scrape_jobs(current_user: CurrentUser, session: SessionDep):
         ),
         media_type="text/event-stream",
     )
+
+
+@router.get("/upload_cv", response_class=HTMLResponse)
+async def upload_cv(
+    current_user: CurrentUser, session: SessionDep, request: Request
+):
+    return
+    # return templates.TemplateResponse(
+    #     request=request, name="cv_page.html", context={"user": current_user}
+    # )
