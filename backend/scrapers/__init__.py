@@ -48,7 +48,7 @@ async def find_job_entries(
                     job_data = await scraper.process_and_evaluate_job(job)
                     if job_data:
                         if not use_user_cv:
-                            cv = create_cv(
+                            cv = await create_cv(
                                 user=user,
                                 session=session,
                                 job_entry=job_data,
