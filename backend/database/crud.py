@@ -12,6 +12,7 @@ from backend.database.models import (
     SocialPlatformModel,
     ToolModel,
     UserModel,
+    UserPreferencesModel,
     WebsiteModel,
 )
 from backend.logging import get_logger
@@ -31,6 +32,16 @@ def delete_user(session: Session, email: str) -> None:
         session.exec(select(UserModel).where(UserModel.email == email)).first()
     )
     session.commit()
+
+
+def get_user_preferences(
+    session: Session, user: UserModel
+) -> UserPreferencesModel | None:
+    return session.exec(
+        select(UserPreferencesModel).where(
+            UserPreferencesModel.user_id == user.id
+        )
+    ).first()
 
 
 def get_skills(session: Session, user: UserModel) -> dict:
