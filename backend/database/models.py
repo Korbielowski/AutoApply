@@ -1,6 +1,6 @@
 import datetime
 from enum import StrEnum
-from typing import Annotated, Callable
+from typing import Annotated, Callable, Literal
 
 from pydantic import BaseModel, BeforeValidator, ConfigDict, EmailStr
 from sqlmodel import JSON, Column, Field, SQLModel
@@ -103,6 +103,17 @@ class User(BaseModel):
     middle_name: str
     surname: str
     age: str | None
+
+
+class UserPreferencesModel(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    user_id: int | None = Field(
+        default=None, foreign_key="usermodel.id", ondelete="CASCADE"
+    )
+    cv_mode: Literal[
+        "llm-generation", "llm-selection", "no-llm-generation", "user-specified"
+    ]
+    retries: int = 3
 
 
 class WebsiteModel(SQLModel, table=True):
