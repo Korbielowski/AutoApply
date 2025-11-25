@@ -32,27 +32,27 @@ class LLMScraper(BaseScraper):
         await self._navigate_to_login_page()
 
         email_field_locator, _, _ = await find_html_element(
-            self.page, await load_prompt("scraping:email_field")
+            self.page, await load_prompt("scraping:user:email_field")
         )
         await fill(email_field_locator, self.email)
 
         password_field_locator, _, _ = await find_html_element(
-            self.page, await load_prompt("scraping:password_field")
+            self.page, await load_prompt("scraping:user:password_field")
         )
         if not password_field_locator:
             sign_in_btn_locator, _, _ = await find_html_element(
-                self.page, await load_prompt("scraping:next_login_page")
+                self.page, await load_prompt("scraping:user:next_login_page")
             )
             await click(sign_in_btn_locator, self.page)
 
             password_field_locator, _, _ = await find_html_element(
-                self.page, await load_prompt("scraping:password_field")
+                self.page, await load_prompt("scraping:user:password_field")
             )
         await fill(password_field_locator, self.password)
 
         sign_in_btn_locator, _, _ = await find_html_element(
             self.page,
-            await load_prompt("scraping:sign_in_button"),
+            await load_prompt("scraping:user:sign_in_button"),
             additional_llm=True,
         )
         await click(sign_in_btn_locator, self.page)
@@ -67,7 +67,9 @@ class LLMScraper(BaseScraper):
         #     return True
         url = self.page.url
         page = await get_page_content(self.page)
-        prompt = await load_prompt("scraping:is_login_page", url=url, page=page)
+        prompt = await load_prompt(
+            "scraping:user:is_login_page", url=url, page=page
+        )
 
         if "True" in await send_req_to_llm(prompt=prompt, use_openai=True):
             return True
@@ -79,10 +81,12 @@ class LLMScraper(BaseScraper):
 
         while not await self._is_on_login_page() and retry < 5:
             if not attribute_list:
-                prompt = await load_prompt("scraping:navigate_to_login_page")
+                prompt = await load_prompt(
+                    "scraping:user:navigate_to_login_page"
+                )
             else:
                 prompt = await load_prompt(
-                    "scraping:navigate_to_login_page_with_params",
+                    "scraping:user:navigate_to_login_page_with_params",
                     attribute_list=attribute_list,
                 )
 
@@ -103,7 +107,7 @@ class LLMScraper(BaseScraper):
         passed = False
         while not passed and retry < 5:
             btn, attribute, attribute_type = await find_html_element(
-                self.page, "scraping:cookies_button"
+                self.page, "scraping:user:cookies_button"
             )
             passed = await click(btn, self.page)
             retry += 1
@@ -134,7 +138,7 @@ class LLMScraper(BaseScraper):
         passed = False
         while not passed and retry < 5:
             btn, attribute, attribute_type = await find_html_element(
-                self.page, await load_prompt("scraping:popup_button")
+                self.page, await load_prompt("scraping:user:popup_button")
             )
             passed = await click(btn, self.page)
             retry += 1
@@ -143,7 +147,7 @@ class LLMScraper(BaseScraper):
         url = self.page.url
         page = await get_page_content(self.page)
         prompt = await load_prompt(
-            "scraping:is_job_listing_page", url=url, page=page
+            "scraping:user:is_job_listing_page", url=url, page=page
         )
         if "True" in await send_req_to_llm(
             prompt=prompt,
@@ -164,10 +168,12 @@ class LLMScraper(BaseScraper):
         while not await self._is_on_job_list_page() and retry < 5:
             logger.info(f"Navigation step: {retry}")
             if not attribute_list:
-                prompt = await load_prompt("scraping:job_listing_page_button")
+                prompt = await load_prompt(
+                    "scraping:user:job_listing_page_button"
+                )
             else:
                 prompt = await load_prompt(
-                    "scraping:job_listing_page_button_with_params",
+                    "scraping:user:job_listing_page_button_with_params",
                     attribute_list=attribute_list,
                 )
 
@@ -190,7 +196,7 @@ class LLMScraper(BaseScraper):
         await self._navigate_to_job_list_page()
 
         bottom_element, _, _ = await find_html_element(
-            self.page, await load_prompt("scraping:footer")
+            self.page, await load_prompt("scraping:user:footer")
         )
 
         if bottom_element:
@@ -229,7 +235,7 @@ class LLMScraper(BaseScraper):
             logger.info("Scrolled to bottom of the page using 'End' key")
 
         # TODO: Add some verification for this types of lines as the one below
-        prompt = await load_prompt("scraping:job_offer_links")
+        prompt = await load_prompt("scraping:user:job_offer_links")
         # prompt = "Find an element that is responsible for holding job offer tile",
         attributes = await find_html_element_attributes(
             page=self.page,
@@ -279,7 +285,7 @@ class LLMScraper(BaseScraper):
 
     async def navigate_to_next_page(self) -> bool:
         btn, _, _ = await find_html_element(
-            self.page, await load_prompt("scarping:next_page_button")
+            self.page, await load_prompt("scarping:user:next_page_button")
         )
         if not btn:
             logger.info("Could not find next page button")
@@ -319,7 +325,7 @@ class LLMScraper(BaseScraper):
         page = await get_page_content(job_page)
         response = await send_req_to_llm(
             prompt=await load_prompt(
-                "scraping:job_offer_info", model_dict=model_dict, page=page
+                "scraping:user:job_offer_info", model_dict=model_dict, page=page
             ),
             use_openai=True,
         )
