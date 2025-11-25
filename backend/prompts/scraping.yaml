@@ -1,115 +1,116 @@
-email_field:
-  prompt: "Find input field for username/email."
+user:
+  email_field:
+    prompt: "Find input field for username/email."
 
-password_field:
-  prompt: "Find input field for password."
+  password_field:
+    prompt: "Find input field for password."
 
-next_login_page:
-  prompt: "Find button that moves to next part of login page."
+  next_login_page:
+    prompt: "Find button that moves to next part of login page."
 
-sing_in_button:
-  prompt: "Find the sign in/login button or button that moves to next part of login page."
+  sing_in_button:
+    prompt: "Find the sign in/login button or button that moves to next part of login page."
 
-is_login_page:
-  prompt: "
-  Determine if this site is a login page based upon its source code and url, it
-  should contain input field for user's email, sometimes login page contains
-  password field too, return only True or False. url: {url}\npage: {page}
-  "
-  params:
-    - url
-    - page
+  is_login_page:
+    prompt: "
+    Determine if this site is a login page based upon its source code and url, it
+    should contain input field for user's email, sometimes login page contains
+    password field too, return only True or False. url: {url}\npage: {page}
+    "
+    params:
+      - url
+      - page
 
-navigate_to_login_page:
-  prompt: "
-  Find a button/link that opens login page for a job candidate, where user logins
-  using email and password or menu that lets user open login page
-  "
+  navigate_to_login_page:
+    prompt: "
+    Find a button/link that opens login page for a job candidate, where user logins
+    using email and password or menu that lets user open login page
+    "
 
-navigate_to_login_page_with_params:
-  prompt: "
-  Find a button/link that opens login page for a job candidate, where user logins
-  using email and password or menu that lets user open login page. Those are
-  elements that were used in a previous steps, do not use them again:
-  {attribute_list}
-  "
-  params:
-    - attribute_list
+  navigate_to_login_page_with_params:
+    prompt: "
+    Find a button/link that opens login page for a job candidate, where user logins
+    using email and password or menu that lets user open login page. Those are
+    elements that were used in a previous steps, do not use them again:
+    {attribute_list}
+    "
+    params:
+      - attribute_list
 
-cookies_button:
-  prompt: "
-  Find button that accepts cookies or closes the cookie consent banner. If
-  multiple buttons exist, choose the one that makes the popup disappear
-  "
+  cookies_button:
+    prompt: "
+    Find button that accepts cookies or closes the cookie consent banner. If
+    multiple buttons exist, choose the one that makes the popup disappear
+    "
 
-popup_button:
-  prompt: "
-  Find button that closes the popup banner. If multiple buttons exist, choose the
-  one that makes the popup disappear
-  "
+  popup_button:
+    prompt: "
+    Find button that closes the popup banner. If multiple buttons exist, choose the
+    one that makes the popup disappear
+    "
 
-is_job_listing_page:
-  prompt: "
-  You are analyzing a web page to determine whether it is strictly a job listing page.
+  is_job_listing_page:
+    prompt: "
+    You are analyzing a web page to determine whether it is strictly a job listing page.
 
-  A job listings page is a page that displays a list of multiple open positions or links to individual job offers.
-  It is NOT:
-  - A single job offer page (showing details for one position)
-  - A company homepage or careers landing page without listings
-  - A user account webpage, where there can also be some job postings or user saved jobs
-  - A blog, article, or unrelated content
+    A job listings page is a page that displays a list of multiple open positions or links to individual job offers.
+    It is NOT:
+    - A single job offer page (showing details for one position)
+    - A company homepage or careers landing page without listings
+    - A user account webpage, where there can also be some job postings or user saved jobs
+    - A blog, article, or unrelated content
 
-  Return only one word: True or False
+    Return only one word: True or False
 
-  Base your decision on both the URL and the visible page content.
+    Base your decision on both the URL and the visible page content.
 
-  URL: {url}
-  Page content: {page}
-  "
-  params:
-    - url
-    - page
+    URL: {url}
+    Page content: {page}
+    "
+    params:
+      - url
+      - page
 
-job_listing_page_button:
-  prompt: "
-  Find button/link that opens job listing page or menu that lets user open job
-  listing page
-  "
+  job_listing_page_button:
+    prompt: "
+    Find button/link that opens job listing page or menu that lets user open job
+    listing page
+    "
 
-job_listing_page_button_with_params:
-  prompt: "
-  Find button/link that opens job listing page or menu that lets user open job
-  listing page. Those are elements that were used in a previous steps, do not use
-  them again: {attribute_list}
-  "
-  params: attribute_list
+  job_listing_page_button_with_params:
+    prompt: "
+    Find button/link that opens job listing page or menu that lets user open job
+    listing page. Those are elements that were used in a previous steps, do not use
+    them again: {attribute_list}
+    "
+    params: attribute_list
 
-footer:
-  prompt: "
-  Find a footer of a website, if there is no footer find an element that is at the
-  bottom of the page, so once in view port it loads all of the page content
-  "
+  footer:
+    prompt: "
+    Find a footer of a website, if there is no footer find an element that is at the
+    bottom of the page, so once in view port it loads all of the page content
+    "
 
-job_offer_links:
-  prompt: "
-  Find <a> element inside job tiles of job offers that take user to job offer pages.
-  A job offer link typically:
-  - Contains the job title text, or
-  - Has an href that includes words like \"job\", \"jobs\", \"careers\", \"position\", or \"opportunity\"
-  and
-  - Does NOT link to saving, sharing, applying, or company info.
-  "
+  job_offer_links:
+    prompt: "
+    Find <a> element inside job tiles of job offers that take user to job offer pages.
+    A job offer link typically:
+    - Contains the job title text, or
+    - Has an href that includes words like \"job\", \"jobs\", \"careers\", \"position\", or \"opportunity\"
+    and
+    - Does NOT link to saving, sharing, applying, or company info.
+    "
 
-next_page_button:
-  prompt: "
-  Find button that is responsible for moving to next job listing page
-  "
+  next_page_button:
+    prompt: "
+    Find button that is responsible for moving to next job listing page
+    "
 
-job_offer_info:
-  prompt: "
-  Retrieve all information about this job offer as a JSON in this schema:
-  {model_dict} from this page: {page}
-  "
-  params:
-    - model_dict
-    - page
+  job_offer_info:
+    prompt: "
+    Retrieve all information about this job offer as a JSON in this schema:
+    {model_dict} from this page: {page}
+    "
+    params:
+      - model_dict
+      - page
