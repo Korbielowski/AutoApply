@@ -1,4 +1,31 @@
+system:
+  get_attributes:
+    prompt: "
+    I will give you an HTML snippet. Return only its identifying attributes in JSON
+    format with the following keys:
+    id, name, type, aria-label, placeholder, role, text, classList. If an attribute
+    does not exist, return null for it, for classList return JSON list. Do not
+    explain, only return JSON.
+    "
+
 user:
+  llm_verify_output:
+    prompt: "
+    Verify if right element from website was chosen comparing element data:
+    {inner_texts}, {attributes}, and prompt: '{prompt}'. Return 'True' if right
+    element was chosen, otherwise 'False'.
+    "
+    params:
+      - inner_texts
+      - attributes
+      - prompt
+
+  llm_select_element:
+    prompt: "
+    Compare and choose one locator from these that suit the prompt the most, return
+    only the number, that represents the locator in the list, list starts from index
+    0.
+    "
   email_field:
     prompt: "Find input field for username/email."
 
