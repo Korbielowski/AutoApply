@@ -10,6 +10,7 @@ from backend.config import settings
 from backend.database.models import AttributeType, Step
 from backend.llm import send_req_to_llm
 from backend.logging import get_logger
+from backend.utils import load_prompt
 
 TIK = tiktoken.encoding_for_model("gpt-5-")
 logger = get_logger()
@@ -114,16 +115,14 @@ async def get_page_content(page: Page) -> str:
 async def find_html_element_attributes(
     page: Page | str, prompt: str
 ) -> None | dict:
-    pre_prompt = "I will give you an HTML snippet."
-    post_prompt = "Return only its identifying attributes in JSON format with the following keys: id, name, type, aria-label, placeholder, role, text, classList. If an attribute does not exist, return null for it, for classList return JSON list. Do not explain, only return JSON"
     if type(page) is Page:
         page_content = await get_page_content(page)
     else:
         page_content = page
-    final_prompt = f"{pre_prompt}{prompt}{post_prompt}\n{page_content}"
 
     response = await send_req_to_llm(
-        prompt=final_prompt,
+        system_prompt=await load_prompt("scraping:system:get_attributes"),
+        prompt=f"{prompt}\n{page_content}",
         use_openai=True,
     )
 
@@ -306,7 +305,9 @@ async def find_html_element(
 
         # TODO: Add LLM element choosing
         if additional_llm:
-            prompt_elements = "Compare and choose one locator from these that suit the prompt the most, return only the number, that represents the locator in the list, list starts from index 0."
+            prompt_elements = await load_prompt(
+                "scraping:user:llm_select_element"
+            )
             # TODO: We are choosing wrong item from dict by count
             for locator in count_dict[min(count_dict, key=count_dict.get)]:
                 prompt_elements += f"{await locator.all_inner_texts()}, "
@@ -338,7 +339,12 @@ async def find_html_element(
 async def verify_if_right_element_was_chosen(
     locator: Locator, attributes: dict, prompt: str
 ) -> bool:
-    check_prompt = f"Verify if right element from website was chosen comparing element data: {await locator.all_inner_texts()}, {attributes}, and prompt: '{prompt}'. Return 'True' if right element was chosen, otherwise 'False'."
+    check_prompt = await load_prompt(
+        "scraping:user:llm_verify_output",
+        inner_texts=await locator.all_inner_texts(),
+        attributes=attributes,
+        prompt=prompt,
+    )
     if "True" in await send_req_to_llm(prompt=check_prompt, use_openai=True):
         logger.info(
             f"LLM thinks this element:\n{json.dumps(attributes, indent=2)}\nSuits this prompt: {prompt}"
