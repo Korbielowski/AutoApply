@@ -23,7 +23,7 @@ async def send_req_to_llm(
     temperature: float = 1,
     use_openai: bool = True,
     use_json_schema: bool = False,
-    model: BaseModel | None = None,
+    model: type[BaseModel] | None = None,
     retry: int = 3,
 ) -> str:
     response = ""
