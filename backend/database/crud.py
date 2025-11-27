@@ -1,3 +1,5 @@
+from typing import Union
+
 from sqlmodel import Session, SQLModel, select
 
 from backend.database.models import (
@@ -88,7 +90,21 @@ def get_model(
         WebsiteModel,
     ],
     as_dict: bool = True,
-) -> list:
+) -> list[
+    Union[
+        LocationModel,
+        ProgrammingLanguageModel,
+        LanguageModel,
+        ToolModel,
+        CertificateModel,
+        CharityModel,
+        EducationModel,
+        ExperienceModel,
+        ProjectModel,
+        SocialPlatformModel,
+        WebsiteModel,
+    ]
+]:
     # TODO: Make this catch more errors
     if not issubclass(model, SQLModel):
         logger.error(
