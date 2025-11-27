@@ -6,6 +6,7 @@ from playwright.async_api import Locator, Page, TimeoutError
 
 from backend.llm import send_req_to_llm
 from backend.logging import get_logger
+from backend.prompts import load_prompt
 from backend.scrapers.base_scraper import BaseScraper, JobEntry
 from backend.scrapers.utils import (
     click,
@@ -15,7 +16,6 @@ from backend.scrapers.utils import (
     get_page_content,
     goto,
 )
-from backend.utils import load_prompt
 
 logger = get_logger()
 
