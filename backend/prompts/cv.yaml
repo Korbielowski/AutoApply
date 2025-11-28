@@ -88,3 +88,15 @@ user:
     params:
       - skills
       - requirements
+
+    cv_insert_skills:
+      prompt: "
+      Put all the relevant information: {skills}, {name}, {social_platforms}. Into
+      this template: {template}\nWhere each {{}} tells you where to put which category
+      of information
+      "
+      params:
+        - skills
+        - name
+        - social_platforms
+        - template
