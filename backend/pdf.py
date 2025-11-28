@@ -3,9 +3,11 @@ import os
 from pathlib import Path
 from typing import Literal
 
+from pydantic import BaseModel
 from sqlmodel import Session, select
 from weasyprint import CSS, HTML
 
+from backend.config import settings
 from backend.database.crud import get_model, get_skills, get_user_preferences
 from backend.database.models import (
     CertificateModel,
@@ -23,11 +25,12 @@ from backend.database.models import (
 )
 from backend.llm import send_req_to_llm
 from backend.logging import get_logger
+from backend.prompts import load_prompt
 from backend.scrapers.base_scraper import JobEntry
 
 logger = get_logger()
 PDF_ENGINE = "weasyprint"
-CV_DIR_NAME = "cv"
+CV_DIR_NAME = settings.ROOT_DIR / "cv"
 
 DEFAULT_STYLING = """
 body {
@@ -116,6 +119,18 @@ TEMPLATE = """
 """
 
 
+class Skills(BaseModel):
+    programming_languages: list[ProgrammingLanguageModel]
+    languages: list[LanguageModel]
+    tools: list[ToolModel]
+    certificates: list[CertificateModel]
+
+
+class CVOutput(BaseModel):
+    html: str
+    css: str
+
+
 def get_data(user: UserModel, session: Session) -> dict:
     model_classes = [
         LocationModel,
@@ -163,7 +178,7 @@ async def create_cv(
     # 3) Make LLM write the CV from the ground up
     # 4) Make algorithm for putting relevant skills into CV without use of LLM
     data = get_data(user=user, session=session)
-    skills = get_skills(session=session, user=user)
+    skills = Skills.model_validate(get_skills(session=session, user=user))
     requirements = {
         "requirements": job_entry.requirements,
         "duties": job_entry.duties,
@@ -179,88 +194,74 @@ async def create_cv(
         "email": user.email,
         "phone_number": user.phone_number,
     }
-    html, css = "", ""
 
     if mode == "llm-generation":
-        select_skills_system_prompt = """
-        You are an evaluation assistant whose exclusive role is to compare a candidate’s skills, experience, and qualifications with a specified job description.
-        Your responsibilities are strictly limited to:
-            1. Extracting job requirements from the provided job description.
-            2. Extracting the candidate’s skills and qualifications from user-provided information.
-            3. Identifying which of the candidate’s skills and qualifications directly match the job requirements.
-            4. Returning only the matching skills and qualifications.
-            5. If no matches exist, return 'False'.
-        Rules and constraints:
-            - Do not list missing skills, partial matches, extra skills, summaries, or recommendations.
-            - Do not generate resumes, rewrite content, or provide career advice.
-            - Do not infer qualifications that were not explicitly provided by the user.
-            - Output must be factual, concise, and limited strictly to the overlapping skills/qualifications.
-        """
-        prompt = f"Select candidates skills and qualifications: {skills} that match those of job requirements: {requirements}"
-        skills_chosen_by_llm = send_req_to_llm(
-            system_prompt=select_skills_system_prompt, prompt=prompt
+        skills_chosen_by_llm = await send_req_to_llm(
+            system_prompt=await load_prompt(
+                prompt_path="cv:system:skill_selection"
+            ),
+            prompt=await load_prompt(
+                prompt_path="cv:user:skill_selection",
+                skills=skills,
+                requirements=requirements,
+            ),
         )
-        create_cv_system_prompt = """
-        You are an assistant that outputs only two files in plain text:
-            1. A complete HTML document containing the CV structure.
-            2. A complete CSS stylesheet containing all styling.
-        No other text, explanations, comments, or metadata may be included.
-        Requirements:
-            - No external imports, libraries, fonts, scripts, CDNs, or frameworks are allowed in either HTML or CSS.
-            - No <style> blocks, no <script> tags, and no inline CSS attributes in the HTML. All styling must reside in the <style> tag.
-            - The resulting rendered page must fit onto exactly one PDF page when printed on A4 (210mm × 297mm). Ensure content, spacing, and typography guarantee that no content flows to a second printed page.
-            - Use semantic HTML5 elements (header, main, section, article, footer, nav as appropriate).
-            - The layout must be clean, professional, responsive, and print-friendly.
-            - Use only system fonts (e.g., a sensible system font stack) and basic CSS features. Do not reference or load web fonts.
-            - Provide sections only for the data explicitly provided by the user. Include, when present in the supplied data:
-            - Name & contact (email, phone, location, optionally LinkedIn/website)
-            - Professional summary
-            - Work experience (company, role, location, start/end dates, 3–6 bullet responsibilities/achievements per job)
-            - Education
-            - Skills (grouped where appropriate)
-            - Projects (title + 1–2-line description)
-            - Certifications / Awards
-            - Languages
-            - Omit any section for which no data is provided.
-            - Do not invent or infer any qualifications, dates, or content not explicitly provided in the candidate data.
-            - Do not output comments in either the HTML or CSS files.
-            - Do not include analytics, tracking, or any non-declarative content.
-            - Ensure the visual hierarchy is clear: distinct headings, readable body text, aligned dates/roles, and printer-visible links.
-            - Ensure printable page margins and that links are visible in print.
-        If the provided candidate data lacks optional fields, simply omit those items from the output file.
-        """
-        prompt = f"Generate a complete personal CV page using only HTML and CSS with no additional comments or explanations, based upon these qualifications and skills: {skills_chosen_by_llm}. candidate data: {candidate_data}. Social media accounts: {social_platforms}. Experience: {experience}. Charity involvement: {charity}. Education: {education}"
-        response = await send_req_to_llm(
-            system_prompt=create_cv_system_prompt, prompt=prompt
-        )  # .lstrip("```html").rstrip("```")
-        html, css = response.replace(
-            "", ""
-        )  # TODO: Split response into html and css properly
+        cv = await send_req_to_llm(
+            system_prompt=await load_prompt(
+                prompt_path="cv:system:cv_generation"
+            ),
+            prompt=await load_prompt(
+                prompt_path="cv:user:cv_generation",
+                skills_chosen_by_llm=skills_chosen_by_llm,
+                candidate_data=candidate_data,
+                social_platforms=social_platforms,
+                experience=experience,
+                charity=charity,
+                education=education,
+            ),
+            use_json_schema=True,
+            model=CVOutput,
+        )
     elif mode == "llm-selection":
-        prompt = f"Select candidates skills and qualifications: {data.get('tool')} that match those of job requirements: {requirements}"
-        response = send_req_to_llm(prompt)
-        prompt = f"Put all the relevant information: {skills}, {candidate_data.get('name', '')}, {social_platforms}. Into this template: {TEMPLATE}\nWhere each {{}} tells you where to put which category of information"
-        cv = send_req_to_llm(prompt)
+        skills_chosen_by_llm = await send_req_to_llm(
+            system_prompt=await load_prompt(
+                prompt_path="cv:system:skill_selection"
+            ),
+            prompt=await load_prompt(
+                prompt_path="cv:user:skill_selection",
+                skills=skills,
+                requirements=requirements,
+            ),
+        )
+        cv = send_req_to_llm(
+            prompt=await load_prompt(
+                "cv:user:cv_insert_skills",
+                skills=skills_chosen_by_llm,
+                name=candidate_data.get("name", ""),
+                social_platforms=social_platforms,
+                template=TEMPLATE,
+            )
+        )
     elif mode == "no-llm-generation":
-        cv = ""
-        # cv = TEMPLATE.format(
-        #     name=candidate_data.get("name", ""),
-        #     email=candidate_data.get("email", ""),
-        #     phone_number=candidate_data.get("phone_number", ""),
-        #     linkedin=info.get("links", {}).get(
-        #         "linkedin", "https://linkedin.com"
-        #     ),
-        #     github=info.get("links", {}).get("github", "https://github.com"),
-        #     personal_website=info.get("links", {}).get(
-        #         "personal_website", "https://personal_website.com"
-        #     ),
-        #     # experience=.get("experiences", ""),
-        #     # education=.get("education", ""),
-        #     skills=info.get("skills", ""),
-        #     # projects=.get("projects", ""),
-        #     certificates=skills.get("certificates", ""),
-        #     languages=skills.get("languages", ""),
-        # )
+        html = TEMPLATE.format(
+            name=candidate_data.get("name", ""),
+            email=candidate_data.get("email", ""),
+            phone_number=candidate_data.get("phone_number", ""),
+            linkedin=data.get("links", {}).get(
+                "linkedin", "https://linkedin.com"
+            ),
+            github=data.get("links", {}).get("github", "https://github.com"),
+            personal_website=data.get("links", {}).get(
+                "personal_website", "https://personal_website.com"
+            ),
+            # experience=.get("experiences", ""),
+            # education=.get("education", ""),
+            skills=data.get("skills", ""),
+            # projects=.get("projects", ""),
+            certificates=skills.get("certificates", ""),
+            languages=skills.get("languages", ""),
+        )
+        cv = CVOutput(html=html, css=DEFAULT_STYLING)
     elif mode == "user-specified":
         if user_preferences := get_user_preferences(session, user):
             return Path(user_preferences.cv_path)
@@ -274,16 +275,17 @@ async def create_cv(
 
     current_time = datetime.datetime.today().strftime("%Y-%m-%d_%H:%M:%S")
     cv_path = (
-        Path()
-        .joinpath(CV_DIR_NAME)
-        .joinpath(f"{job_entry.title}_{current_time}.pdf")
-    )  # TODO: change job_entry.title
+        CV_DIR_NAME
+        / f"{job_entry.title}_{current_time}.pdf"  # TODO: change job_entry.title
+    )
 
     if not os.path.isdir(CV_DIR_NAME):
         os.mkdir(CV_DIR_NAME)
 
-    if html and css:
-        HTML(string=html).write_pdf(cv_path, stylesheets=[CSS(string=css)])
+    if cv:
+        HTML(string=cv.html).write_pdf(
+            cv_path, stylesheets=[CSS(string=cv.css)]
+        )
     else:
         HTML(string=cv).write_pdf(
             cv_path, stylesheets=[CSS(string=DEFAULT_STYLING)]
