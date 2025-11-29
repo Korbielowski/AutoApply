@@ -1,5 +1,6 @@
 import datetime
 from enum import StrEnum
+from pathlib import Path
 from typing import Annotated, Callable, Literal
 
 from pydantic import BaseModel, BeforeValidator, ConfigDict, EmailStr
@@ -113,6 +114,7 @@ class UserPreferencesModel(SQLModel, table=True):
     cv_mode: Literal[
         "llm-generation", "llm-selection", "no-llm-generation", "user-specified"
     ]
+    cv_path: Path
     retries: int = 3
 
 
@@ -434,3 +436,29 @@ class ProfileInfo(BaseModel):
     projects: list[Project] | None
     social_platforms: list[SocialPlatform] | None
     websites: list[Website] | None
+
+
+class CandidateData(BaseModel):
+    full_name: str
+    age: str
+    locations: list[LocationModel] | None
+    programming_languages: list[ProgrammingLanguageModel] | None
+    languages: list[LanguageModel] | None
+    tools: list[ToolModel] | None
+    certificates: list[CertificateModel] | None
+    charities: list[CharityModel] | None
+    educations: list[EducationModel] | None
+    experiences: list[ExperienceModel] | None
+    projects: list[ProjectModel] | None
+    social_platforms: list[SocialPlatformModel] | None
+
+
+class SkillsLLMResponse(BaseModel):
+    programming_languages: list[ProgrammingLanguage] | None
+    languages: list[Language] | None
+    tools: list[Tool] | None
+    certificates: list[Certificate] | None
+    charities: list[Charity] | None
+    educations: list[Education] | None
+    experiences: list[Experience] | None
+    projects: list[Project] | None
