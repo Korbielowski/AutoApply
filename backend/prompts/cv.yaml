@@ -67,27 +67,59 @@ system:
 user:
   cv_generation:
     prompt: "
-    Generate a complete personal CV page using only HTML and CSS with no additional
-    comments or explanations, based upon these qualifications and skills:
-    {skills_chosen_by_llm}. candidate data: {candidate_data}. Social media accounts:
-    {social_platforms}. Experience: {experience}. Charity involvement: {charity}.
-    Education: {education}
+    Generate a complete personal CV page based upon these qualifications, skills and
+    information about candidate:
+    - Full name: {full_name}
+    - Programming languages: {programming_languages}
+    - Languages: {languages}
+    - Tools/Libraries/Frameworks: {tools}
+    - Certificates: {certificates}
+    - Charities: {charities}
+    - Education: {educations}
+    - Experience: {experiences}
+    - Projects: {projects}
+    - Social platforms: {social_platforms}
     "
     params:
-      - skills_chosen_by_llm
-      - candidate_data
+      - full_name
+      - programming_languages
+      - languages
+      - tools
+      - certificates
+      - charities
+      - educations
+      - experiences
+      - projects
       - social_platforms
-      - experience
-      - charity
-      - education
+
   skill_selection:
     prompt: "
-    Select candidates skills and qualifications: {skills} that match those of job
-    requirements: {requirements}
+    Select candidates skills and qualifications:
+    - Programming languages: {programming_languages}
+    - Languages: {languages}
+    - Tools/Libraries/Frameworks: {tools}
+    - Certificates: {certificates}
+    - Charities: {charities}
+    - Education: {educations}
+    - Experience: {experiences}
+    - Projects: {projects}
+    That match those of job requirements and description:
+    - requirements: {requirements}
+    - duties: {duties}
+    - about company project: {about_project}
     "
     params:
-      - skills
+      - programming_languages
+      - languages
+      - tools
+      - certificates
+      - charities
+      - educations
+      - experiences
+      - projects
       - requirements
+      - duties
+      - about_project
 
     cv_insert_skills:
       prompt: "
