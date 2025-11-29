@@ -18,5 +18,12 @@ wheels/
 .venv/
 venv/
 
-# VS Code
+# PDFs and other files
+.pdf
+
+# Code editors
+.idea/
 .vscode/
+
+# Log files
+*.log
