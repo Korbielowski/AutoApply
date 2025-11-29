@@ -2,13 +2,16 @@ from functools import lru_cache
 
 import aiofiles
 import yaml
+from pydantic import BaseModel
 
 from backend.config import settings
 
 
 # TODO: Make this function fully async
 @lru_cache()
-async def load_prompt(prompt_path: str, **kwargs) -> str:
+async def load_prompt(
+    prompt_path: str, model: BaseModel | None = None, **kwargs
+) -> str:
     paths = prompt_path.split(":")
     if len(paths) < 2:
         raise Exception(
@@ -35,6 +38,8 @@ async def load_prompt(prompt_path: str, **kwargs) -> str:
         )
 
     if params:
+        if model:
+            kwargs.update(model.model_dump())
         try:
             prompt = prompt.format_map(kwargs)
         except KeyError as e:
