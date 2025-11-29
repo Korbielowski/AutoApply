@@ -1,0 +1,14 @@
+services:
+  fast_api_backend:
+    image: .
+    depends_on:
+      - postgres_database
+    ports:
+      - "8000"
+  postgres_database:
+    image: postgres
+    volumes:
+      - database
+
+volumes:
+  database:
