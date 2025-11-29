@@ -3,6 +3,7 @@ from typing import Union
 from sqlmodel import Session, SQLModel, select
 
 from backend.database.models import (
+    CandidateData,
     CertificateModel,
     CharityModel,
     EducationModel,
@@ -124,3 +125,34 @@ def get_model(
         output.append(item)
 
     return output
+
+
+def get_candidate_data(session: Session, user: UserModel) -> CandidateData:
+    locations = get_model(session=session, user=user, model=LocationModel)
+    programming_languages = get_model(
+        session=session, user=user, model=ProgrammingLanguageModel
+    )
+    languages = get_model(session=session, user=user, model=LanguageModel)
+    tools = get_model(session=session, user=user, model=ToolModel)
+    certificates = get_model(session=session, user=user, model=CertificateModel)
+    experiences = get_model(session=session, user=user, model=ExperienceModel)
+    charities = get_model(session=session, user=user, model=CharityModel)
+    educations = get_model(session=session, user=user, model=EducationModel)
+    social_platforms = get_model(
+        session=session, user=user, model=SocialPlatformModel
+    )
+    projects = get_model(session=session, user=user, model=ProjectModel)
+    return CandidateData(
+        full_name=f"{user.first_name} {user.surname}",
+        age=user.age,
+        locations=locations,
+        programming_languages=programming_languages,
+        languages=languages,
+        tools=tools,
+        certificates=certificates,
+        charities=charities,
+        educations=educations,
+        experiences=experiences,
+        projects=projects,
+        social_platforms=social_platforms,
+    )
