@@ -144,7 +144,8 @@ def get_candidate_data(session: Session, user: UserModel) -> CandidateData:
     projects = get_model(session=session, user=user, model=ProjectModel)
     return CandidateData(
         full_name=f"{user.first_name} {user.surname}",
-        age=user.age,
+        email=user.email,
+        phone_number=user.phone_number,
         locations=locations,
         programming_languages=programming_languages,
         languages=languages,
