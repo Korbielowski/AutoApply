@@ -5,6 +5,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 from sqlmodel import func, select
 
+from backend.database.crud import get_job_entries
 from backend.database.models import UserModel, WebsiteModel
 from backend.routes.deps import CurrentUser, SessionDep
 from backend.scrapers import find_job_entries
@@ -27,8 +28,16 @@ async def index(
             url=request.url_for("load_register_page"),
             status_code=status.HTTP_303_SEE_OTHER,
         )
+
+    scraped_job_entries = get_job_entries(session, current_user)
+
     return templates.TemplateResponse(
-        request=request, name="index.html", context={"user": current_user}
+        request=request,
+        name="index.html",
+        context={
+            "user": current_user,
+            "scraped_job_entries": scraped_job_entries,
+        },
     )
 
 
