@@ -141,9 +141,14 @@ def get_candidate_data(session: Session, user: UserModel) -> CandidateData:
     social_platforms = get_model(
         session=session, user=user, model=SocialPlatformModel
     )
+    full_name = (
+        f"{user.first_name} {user.middle_name} {user.surname}"
+        if user.middle_name
+        else f"{user.first_name} {user.surname}"
+    )
     projects = get_model(session=session, user=user, model=ProjectModel)
     return CandidateData(
-        full_name=f"{user.first_name} {user.surname}",
+        full_name=full_name,
         email=user.email,
         phone_number=user.phone_number,
         locations=locations,
