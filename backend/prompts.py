@@ -1,5 +1,3 @@
-from functools import lru_cache
-
 import aiofiles
 import yaml
 from pydantic import BaseModel
@@ -8,7 +6,7 @@ from backend.config import settings
 
 
 # TODO: Make this function fully async
-@lru_cache()
+# @lru_cache() TODO: Uncomment this in the future if needed. Causes Error with Pydantic, as my models contain lists inside of them, and those cannot be hashed
 async def load_prompt(
     prompt_path: str, model: BaseModel | None = None, **kwargs
 ) -> str:
