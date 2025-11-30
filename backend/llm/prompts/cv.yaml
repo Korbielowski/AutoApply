@@ -70,6 +70,8 @@ user:
     Generate a complete personal CV page based upon these qualifications, skills and
     information about candidate:
     - Full name: {full_name}
+    - Email: {email}
+    - Phone number: {phone_number}
     - Programming languages: {programming_languages}
     - Languages: {languages}
     - Tools/Libraries/Frameworks: {tools}
@@ -82,6 +84,8 @@ user:
     "
     params:
       - full_name
+      - email
+      - phone_number
       - programming_languages
       - languages
       - tools
@@ -123,12 +127,34 @@ user:
 
     cv_insert_skills:
       prompt: "
-      Put all the relevant information: {skills}, {name}, {social_platforms}. Into
-      this template: {template}\nWhere each {{}} tells you where to put which category
-      of information
+      Put all the relevant information:
+      - Full name: {full_name}
+      - Email: {email}
+      - Phone number: {phone_number}
+      - Programming languages: {programming_languages}
+      - Languages: {languages}
+      - Tools/Libraries/Frameworks: {tools}
+      - Certificates: {certificates}
+      - Charities: {charities}
+      - Education: {educations}
+      - Experience: {experiences}
+      - Projects: {projects}
+      - Social platforms: {social_platforms}
+      Into this template: {template}
+      Where each {{}} tells you where to put which
+      category of information
       "
       params:
-        - skills
-        - name
+        - full_name
+        - email
+        - phone_number
+        - programming_languages
+        - languages
+        - tools
+        - certificates
+        - charities
+        - educations
+        - experiences
+        - projects
         - social_platforms
         - template
