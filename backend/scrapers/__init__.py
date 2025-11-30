@@ -8,7 +8,7 @@ from sqlmodel import Session
 
 from backend.database.models import UserModel
 from backend.logging import get_logger
-from backend.pdf import create_cv
+from backend.career_documents.pdf import create_cv
 from backend.scrapers.llm_scraper import LLMScraper
 
 logger = get_logger()
