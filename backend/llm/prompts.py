@@ -17,7 +17,9 @@ async def load_prompt(
         )
 
     data: dict = {}
-    prompt_file_path = settings.ROOT_DIR / "prompts" / f"{paths[0]}.yaml"
+    prompt_file_path = (
+        settings.ROOT_DIR / "llm" / "prompts" / f"{paths[0]}.yaml"
+    )
     async with aiofiles.open(prompt_file_path, "r") as file:
         file_content = await file.read()
         data = yaml.safe_load(file_content)
