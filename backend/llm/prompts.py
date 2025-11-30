@@ -37,7 +37,13 @@ async def load_prompt(
 
     if params:
         if model:
-            kwargs.update(model.model_dump())
+            kwargs.update(
+                {
+                    key: val
+                    for key, val in model.model_dump().items()
+                    if key in params
+                }
+            )
         try:
             prompt = prompt.format_map(kwargs)
         except KeyError as e:
