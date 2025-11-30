@@ -8,9 +8,9 @@ from playwright.async_api import Locator, Page, TimeoutError
 
 from backend.config import settings
 from backend.database.models import AttributeType, Step
-from backend.llm import send_req_to_llm
+from backend.llm.llm import send_req_to_llm
+from backend.llm.prompts import load_prompt
 from backend.logging import get_logger
-from backend.prompts import load_prompt
 
 TIK = tiktoken.encoding_for_model("gpt-5-")
 logger = get_logger()
