@@ -8,6 +8,7 @@ from backend.database.models import (
     CharityModel,
     EducationModel,
     ExperienceModel,
+    JobEntryModel,
     LanguageModel,
     LocationModel,
     ProgrammingLanguageModel,
@@ -162,3 +163,9 @@ def get_candidate_data(session: Session, user: UserModel) -> CandidateData:
         projects=projects,
         social_platforms=social_platforms,
     )
+
+
+def get_job_entries(session: Session, user: UserModel):
+    return session.exec(
+        select(JobEntryModel).where(JobEntryModel.user_id == user.id)
+    ).all()
