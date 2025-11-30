@@ -1,7 +1,7 @@
 import datetime
 from enum import StrEnum
 from pathlib import Path
-from typing import Annotated, Callable, Literal
+from typing import Annotated, Callable
 
 from pydantic import BaseModel, BeforeValidator, ConfigDict, EmailStr
 from sqlmodel import JSON, Column, Field, SQLModel
@@ -106,14 +106,19 @@ class User(BaseModel):
     age: str | None
 
 
+class CVModeEnum(StrEnum):
+    llm_generation = "llm-generation"
+    llm_selection = "llm-selection"
+    no_llm_generation = "no-llm-generation"
+    user_specified = "user-specified"
+
+
 class UserPreferencesModel(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     user_id: int | None = Field(
         default=None, foreign_key="usermodel.id", ondelete="CASCADE"
     )
-    cv_mode: Literal[
-        "llm-generation", "llm-selection", "no-llm-generation", "user-specified"
-    ]
+    cv_mode: CVModeEnum
     cv_path: Path
     retries: int = 3
 
@@ -440,7 +445,8 @@ class ProfileInfo(BaseModel):
 
 class CandidateData(BaseModel):
     full_name: str
-    age: str
+    email: EmailStr
+    phone_number: str
     locations: list[LocationModel] | None
     programming_languages: list[ProgrammingLanguageModel] | None
     languages: list[LanguageModel] | None
