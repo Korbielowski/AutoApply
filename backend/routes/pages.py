@@ -45,6 +45,13 @@ async def scrape_jobs(current_user: CurrentUser, session: SessionDep):
     )
 
 
+@router.get("/cv_page", response_class=HTMLResponse)
+async def cv_page(
+    current_user: CurrentUser, session: SessionDep, request: Request
+):
+    return
+
+
 @router.get("/upload_cv", response_class=HTMLResponse)
 async def upload_cv(
     current_user: CurrentUser, session: SessionDep, request: Request
