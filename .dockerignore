@@ -11,10 +11,8 @@ wheels/
 .ruff_cache/
 .pytest_cache/
 
-# Pyenv
-.python-version
-
 # Virtual environments
+requirements.txt
 .venv/
 venv/
 
@@ -27,3 +25,9 @@ venv/
 
 # Log files
 *.log
+
+# GitHub
+.github/
+
+# Documentation
+docs/
