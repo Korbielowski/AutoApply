@@ -18,6 +18,7 @@ dependencies = [
     "pydantic>=2.11.3",
     "sqlmodel>=0.0.24",
     "tiktoken>=0.9.0",
+    "uvicorn>=0.35.0",
     "weasyprint>=65.1",
 ]
 
