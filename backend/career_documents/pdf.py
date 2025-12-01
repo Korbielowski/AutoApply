@@ -119,7 +119,9 @@ async def create_cv(
                 phone_number=candidate_data.phone_number,
                 social_platforms=candidate_data.social_platforms,
                 template=html_template,
-            )
+            ),
+            use_json_schema=True,
+            model=CVOutput,
         )
     elif mode == "no-llm-generation":
         raise NotImplementedError(
@@ -131,8 +133,6 @@ async def create_cv(
     elif mode == "user-specified":
         if user_preferences := get_user_preferences(session, user):
             return Path(user_preferences.cv_path)
-
-    if not cv:
         raise Exception("Could not load or create/generate CV")
 
     current_time = datetime.datetime.today().strftime("%Y-%m-%d_%H:%M:%S")
