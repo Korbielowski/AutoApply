@@ -4,6 +4,7 @@ from playwright.async_api import BrowserContext, Locator, Page
 
 from backend.database.models import JobEntry, WebsiteModel
 from backend.llm.llm import send_req_to_llm
+from backend.llm.prompts import load_prompt
 from backend.logging import get_logger
 
 logger = get_logger()
@@ -76,7 +77,11 @@ class BaseScraper(abc.ABC):
 
         # TODO: Get user needs
         user_needs = ""
-        prompt = f"Compare user qualifications and needs: {user_needs}. With these from job offer: {job_entry.model_dump_json()}. Return only one word, True if I should apply, and False if not and no other words/characters"
+        prompt = await load_prompt(
+            prompt_path="cv:user:determine_if_offer_valuable",
+            user_needs=user_needs,
+            job_entry=job_entry.model_dump_json(),
+        )  # TODO: Fix this code, so that it behaves as other load_prompt instances
         response = await send_req_to_llm(prompt, use_openai=True)
         logger.info(f"LLM evaluation: {response}")
 
