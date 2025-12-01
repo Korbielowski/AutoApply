@@ -35,7 +35,7 @@ user:
   next_login_page:
     prompt: "Find button that moves to next part of login page."
 
-  sing_in_button:
+  sign_in_button:
     prompt: "Find the sign in/login button or button that moves to next part of login page."
 
   is_login_page:
@@ -141,3 +141,25 @@ user:
     params:
       - model_dict
       - page
+
+    determine_if_offer_valuable:
+      prompt: "
+      Compare user qualifications and needs:
+      {user_needs}
+      -
+      With these from job offer:
+      - title: {title}
+      - Company name: {company_name}
+      - Requirements: {requirements}
+      - Duties: {duties}
+      - About project: {about_project}
+      - Offer benefits: {offer_benefits}
+      - Location: {location}
+      - Contract type: {contract_type}
+      - Employment type: {employment_type}
+      - Work arrangement: {work_arrangement}
+      - Additional information: {additional_information}
+      Return only one word, True if I should apply, and False if not and
+      no other words/characters
+      "
+      params:
