@@ -5,6 +5,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlmodel import select
 
+from backend.config import settings
 from backend.database.crud import create_user, delete_user
 from backend.database.models import (
     Certificate,
@@ -51,7 +52,7 @@ from backend.routes.deps import (
 )
 
 router = APIRouter(tags=["users"])
-templates = Jinja2Templates(directory="templates")
+templates = Jinja2Templates(settings.ROOT_DIR / "templates")
 logger = get_logger()
 
 
