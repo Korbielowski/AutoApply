@@ -24,7 +24,8 @@ class Settings(BaseSettings):
     POSTGRES_USERNAME: str
     POSTGRES_PASSWORD: str
     POSTGRES_HOST: str
-    POSTGRES_DATABASE: str
+    POSTGRES_DB: str
+    POSTGRES_PORT: int = 5432
     # TODO: Check if user can specify custom drivers, so that they would not break SQLAlchemy
     DRIVERNAME: str = "postgresql+psycopg"
 
@@ -36,7 +37,8 @@ class Settings(BaseSettings):
             username=self.POSTGRES_USERNAME,
             password=self.POSTGRES_PASSWORD,
             host=self.POSTGRES_HOST,
-            path=self.POSTGRES_DATABASE,
+            port=self.POSTGRES_PORT,
+            path=self.POSTGRES_DB,
         )
 
 
