@@ -8,6 +8,7 @@ from backend.database.models import (
     CharityModel,
     EducationModel,
     ExperienceModel,
+    JobEntry,
     JobEntryModel,
     LanguageModel,
     LocationModel,
@@ -19,7 +20,7 @@ from backend.database.models import (
     UserPreferencesModel,
     WebsiteModel,
 )
-from backend.logging import get_logger
+from backend.logger import get_logger
 
 logger = get_logger()
 
@@ -169,3 +170,12 @@ def get_job_entries(session: Session, user: UserModel):
     return session.exec(
         select(JobEntryModel).where(JobEntryModel.user_id == user.id)
     ).all()
+
+
+def save_job_entry(
+    session: Session, user: UserModel, job_entry: JobEntry
+) -> None:
+    job_entry_model = JobEntryModel.model_validate(job_entry.model_dump())
+    job_entry_model.user_id = user.id
+    session.add(job_entry_model)
+    session.commit()
