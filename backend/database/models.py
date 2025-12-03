@@ -25,6 +25,7 @@ class JobEntryModel(SQLModel, table=True):
     user_id: int | None = Field(
         default=None, foreign_key="usermodel.id", ondelete="CASCADE"
     )
+    cv_path: Path | None
     title: str
     company_name: str
     discovery_date: datetime.date = Field(default_factory=datetime.date.today)
@@ -44,6 +45,7 @@ class JobEntryModel(SQLModel, table=True):
 
 
 class JobEntry(BaseModel):
+    cv_path: Path | None
     title: str
     company_name: str
     discovery_date: datetime.date
