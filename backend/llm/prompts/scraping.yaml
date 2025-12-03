@@ -1,11 +1,8 @@
 system:
   get_attributes:
     prompt: "
-    I will give you an HTML snippet. Return only its identifying attributes in JSON
-    format with the following keys:
-    id, name, type, aria-label, placeholder, role, text, classList. If an attribute
-    does not exist, return null for it, for classList return JSON list. Do not
-    explain, only return JSON.
+    I will give you an HTML snippet. Return only its identifying attributes.
+    Do not explain, only return JSON.
     "
 
 user:
