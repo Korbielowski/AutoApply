@@ -44,7 +44,7 @@ from backend.database.models import (
     WebsiteModel,
     WebsitePost,
 )
-from backend.logging import get_logger
+from backend.logger import get_logger
 from backend.routes.deps import (
     CurrentUser,
     SessionDep,
