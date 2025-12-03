@@ -74,10 +74,6 @@ async def create_cv(
             use_json_schema=True,
             model=SkillsLLMResponse,
         )
-        skills_chosen_by_llm = SkillsLLMResponse.model_validate_json(
-            skills_chosen_by_llm
-        )
-
         cv = await send_req_to_llm(
             system_prompt=await load_prompt(
                 prompt_path="cv:system:cv_generation"
@@ -101,21 +97,18 @@ async def create_cv(
             prompt=await load_prompt(
                 prompt_path="cv:user:skill_selection",
                 model=candidate_data,
+                requirements=job_entry.requirements,
                 duties=job_entry.duties,
                 about_project=job_entry.about_project,
             ),
             use_json_schema=True,
             model=SkillsLLMResponse,
         )
-        skills_chosen_by_llm = SkillsLLMResponse.model_validate_json(
-            skills_chosen_by_llm
-        )
-
-        cv = send_req_to_llm(
+        cv = await send_req_to_llm(
             prompt=await load_prompt(
                 "cv:user:cv_insert_skills",
                 model=skills_chosen_by_llm,
-                name=candidate_data.full_name,
+                full_name=candidate_data.full_name,
                 email=candidate_data.email,
                 phone_number=candidate_data.phone_number,
                 social_platforms=candidate_data.social_platforms,
