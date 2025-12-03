@@ -22,12 +22,23 @@ from backend.llm.prompts import load_prompt
 from backend.logger import get_logger
 from backend.scrapers.base_scraper import JobEntry
 
+logger = get_logger()
+PDF_ENGINE = "weasyprint"
+CV_DIR_PATH = settings.ROOT_DIR / "cv"
+HTML_TEMPLATE_PATH = settings.ROOT_DIR / "career_documents" / "template.html"
+STYLING_PATH = settings.ROOT_DIR / "career_documents" / "styling.css"
+
+
+class CVOutput(BaseModel):
+    html: str
+    css: str
+
 
 async def load_template_and_styling() -> tuple[str, str]:
     html_template, styling = "", ""
     async with (
-        aiofiles.open("", "r") as template_file,
-        aiofiles.open("", "r") as styling_file,
+        aiofiles.open(HTML_TEMPLATE_PATH, "r") as template_file,
+        aiofiles.open(STYLING_PATH, "r") as styling_file,
     ):
         html_template, styling = (
             await template_file.read(),
@@ -35,16 +46,6 @@ async def load_template_and_styling() -> tuple[str, str]:
         )
 
     return html_template, styling
-
-
-logger = get_logger()
-PDF_ENGINE = "weasyprint"
-CV_DIR_NAME = settings.ROOT_DIR / "cv"
-
-
-class CVOutput(BaseModel):
-    html: str
-    css: str
 
 
 async def create_cv(
@@ -137,12 +138,12 @@ async def create_cv(
 
     current_time = datetime.datetime.today().strftime("%Y-%m-%d_%H:%M:%S")
     cv_path = (
-        CV_DIR_NAME
+        CV_DIR_PATH
         / f"{job_entry.title}_{current_time}.pdf"  # TODO: change job_entry.title
     )
 
-    if not os.path.isdir(CV_DIR_NAME):
-        os.mkdir(CV_DIR_NAME)
+    if not os.path.isdir(CV_DIR_PATH):
+        os.mkdir(CV_DIR_PATH)
 
     HTML(string=cv.html).write_pdf(cv_path, stylesheets=[CSS(string=cv.css)])
 
