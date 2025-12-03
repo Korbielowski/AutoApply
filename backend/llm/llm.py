@@ -25,7 +25,7 @@ async def send_req_to_llm(
     use_json_schema: bool = False,
     model: type[BaseModel] | None = None,
     retry: int = 3,
-) -> str:
+) -> str | BaseModel:
     response = ""
     if settings.DEBUG:
         logger.debug(
