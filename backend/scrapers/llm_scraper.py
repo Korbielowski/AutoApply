@@ -247,7 +247,7 @@ class LLMScraper(BaseScraper):
             )
             return tuple()
 
-        class_list = attributes.get("classList", [])
+        class_list = attributes.class_list
         if not class_list:
             logger.error("Did not find class_list for selecting job tiles")
             return tuple()
