@@ -187,11 +187,18 @@
     function scrape_jobs() {
         let button = document.getElementById("scrape-btn");
         if (button.innerText === "Start job search") {
+            button.innerText = "Stop job search";
             eventSrc = new EventSource("{{ url_for('scrape_jobs') }}");
             eventSrc.onmessage = function (event) {
-                draw_job(JSON.parse(event.data));
+                const data = JSON.parse(event.data);
+                if (data === null) {
+                    button.innerText = "Start job search";
+                    eventSrc.close();
+                    eventSrc = null;
+                    return;
+                }
+                draw_job(data);
             };
-            button.innerText = "Stop job search";
         } else {
             eventSrc.close();
             eventSrc = null;
