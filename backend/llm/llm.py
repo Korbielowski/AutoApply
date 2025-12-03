@@ -7,7 +7,7 @@ from openai import AuthenticationError, OpenAI, RateLimitError
 from pydantic import BaseModel
 
 from backend.config import settings
-from backend.logging import get_logger
+from backend.logger import get_logger
 
 BASE_URL = "https://api.llm7.io/v1"
 MODEL = "deepseek-r1-0528"
