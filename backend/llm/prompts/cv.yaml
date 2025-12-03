@@ -125,8 +125,8 @@ user:
       - duties
       - about_project
 
-    cv_insert_skills:
-      prompt: "
+  cv_insert_skills:
+    prompt: "
       Put all the relevant information:
       - Full name: {full_name}
       - Email: {email}
@@ -144,17 +144,17 @@ user:
       Where each {{}} tells you where to put which
       category of information
       "
-      params:
-        - full_name
-        - email
-        - phone_number
-        - programming_languages
-        - languages
-        - tools
-        - certificates
-        - charities
-        - educations
-        - experiences
-        - projects
-        - social_platforms
-        - template
+    params:
+      - full_name
+      - email
+      - phone_number
+      - programming_languages
+      - languages
+      - tools
+      - certificates
+      - charities
+      - educations
+      - experiences
+      - projects
+      - social_platforms
+      - template
