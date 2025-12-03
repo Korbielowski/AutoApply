@@ -19,7 +19,7 @@ from backend.database.models import (
 )
 from backend.llm.llm import send_req_to_llm
 from backend.llm.prompts import load_prompt
-from backend.logging import get_logger
+from backend.logger import get_logger
 from backend.scrapers.base_scraper import JobEntry
 
 
