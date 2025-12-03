@@ -6,9 +6,10 @@ from playwright.async_api import async_playwright
 from playwright_stealth import Stealth
 from sqlmodel import Session
 
-from backend.database.models import UserModel
-from backend.logging import get_logger
 from backend.career_documents.pdf import create_cv
+from backend.database.crud import save_job_entry
+from backend.database.models import UserModel
+from backend.logger import get_logger
 from backend.scrapers.llm_scraper import LLMScraper
 
 logger = get_logger()
@@ -22,6 +23,9 @@ async def find_job_entries(
     generate_cv: bool = False,
     use_user_cv: bool = False,
 ) -> AsyncGenerator[str, Any]:
+    if not websites:
+        yield "data:null\n\n"
+
     async with Stealth().use_async(async_playwright()) as playwright:
         # TODO: Add ability for users to choose their preferred browser, recommend and default to chromium
         browser = await playwright.chromium.launch(headless=False)
@@ -47,6 +51,9 @@ async def find_job_entries(
                 for job in await scraper.get_job_entries():
                     job_data = await scraper.process_and_evaluate_job(job)
                     if job_data:
+                        save_job_entry(
+                            session=session, user=user, job_entry=job_data
+                        )
                         if not use_user_cv:
                             cv = await create_cv(
                                 user=user,
