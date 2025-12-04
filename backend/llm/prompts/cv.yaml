@@ -142,7 +142,8 @@ user:
       - Social platforms: {social_platforms}
       Into this template: {template}
       Where each {{}} tells you where to put which
-      category of information
+      category of information in the template, if there is
+      no information about certain field, ignore whole it.
       "
     params:
       - full_name
