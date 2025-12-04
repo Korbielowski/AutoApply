@@ -174,8 +174,10 @@ def get_job_entries(session: Session, user: UserModel):
 
 def save_job_entry(
     session: Session, user: UserModel, job_entry: JobEntry
-) -> None:
+) -> JobEntryModel:
     job_entry_model = JobEntryModel.model_validate(job_entry.model_dump())
     job_entry_model.user_id = user.id
     session.add(job_entry_model)
     session.commit()
+    session.refresh(job_entry_model)
+    return job_entry_model
