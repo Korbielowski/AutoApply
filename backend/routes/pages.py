@@ -8,11 +8,13 @@ from sqlmodel import func, select
 from backend.config import settings
 from backend.database.crud import get_job_entries
 from backend.database.models import UserModel, WebsiteModel
+from backend.logger import get_logger
 from backend.routes.deps import CurrentUser, SessionDep
 from backend.scrapers import find_job_entries
 
 router = APIRouter(tags=["pages"])
 templates = Jinja2Templates(settings.ROOT_DIR / "templates")
+logger = get_logger()
 
 
 @router.get("/", response_class=Union[RedirectResponse, HTMLResponse])
