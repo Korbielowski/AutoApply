@@ -68,10 +68,10 @@ async def create_cv(
             prompt=await load_prompt(
                 prompt_path="cv:user:skill_selection",
                 model=candidate_data,
+                requirements=job_entry.requirements,
                 duties=job_entry.duties,
                 about_project=job_entry.about_project,
             ),
-            use_json_schema=True,
             model=SkillsLLMResponse,
         )
         cv = await send_req_to_llm(
@@ -86,7 +86,6 @@ async def create_cv(
                 phone_number=candidate_data.phone_number,
                 social_platforms=candidate_data.social_platforms,
             ),
-            use_json_schema=True,
             model=CVOutput,
         )
     elif mode == "llm-selection":
@@ -101,7 +100,6 @@ async def create_cv(
                 duties=job_entry.duties,
                 about_project=job_entry.about_project,
             ),
-            use_json_schema=True,
             model=SkillsLLMResponse,
         )
         cv = await send_req_to_llm(
@@ -114,7 +112,6 @@ async def create_cv(
                 social_platforms=candidate_data.social_platforms,
                 template=html_template,
             ),
-            use_json_schema=True,
             model=CVOutput,
         )
     elif mode == "no-llm-generation":
