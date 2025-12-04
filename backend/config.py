@@ -15,10 +15,10 @@ class Settings(BaseSettings):
     )
     PROJECT_NAME: str = "AutoApply"
     ROOT_DIR: Path = _ROOT_DIR
-    PDF_ENGINE = "weasyprint"
-    CV_DIR_PATH = _ROOT_DIR / "cv"
-    HTML_TEMPLATE_PATH = _ROOT_DIR / "career_documents" / "template.html"
-    STYLING_PATH = _ROOT_DIR / "career_documents" / "styling.css"
+    CV_DIR_PATH: Path = _ROOT_DIR / "cv"
+    HTML_TEMPLATE_PATH: Path = _ROOT_DIR / "career_documents" / "template.html"
+    STYLING_PATH: Path = _ROOT_DIR / "career_documents" / "styling.css"
+    PDF_ENGINE: str = "weasyprint"
     DEBUG: bool = False
     LOG_TO_FILE: bool = True
     API_KEY: str
