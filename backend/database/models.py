@@ -1,6 +1,5 @@
 import datetime
 from enum import StrEnum
-from pathlib import Path
 from typing import Annotated, Callable
 
 from pydantic import BaseModel, BeforeValidator, ConfigDict, EmailStr
@@ -25,7 +24,7 @@ class JobEntryModel(SQLModel, table=True):
     user_id: int | None = Field(
         default=None, foreign_key="usermodel.id", ondelete="CASCADE"
     )
-    cv_path: Path | None
+    cv_path: str = ""
     title: str
     company_name: str
     discovery_date: datetime.date = Field(default_factory=datetime.date.today)
@@ -45,7 +44,7 @@ class JobEntryModel(SQLModel, table=True):
 
 
 class JobEntry(BaseModel):
-    cv_path: Path | None
+    cv_path: str = ""
     title: str
     company_name: str
     discovery_date: datetime.date
@@ -121,7 +120,7 @@ class UserPreferencesModel(SQLModel, table=True):
         default=None, foreign_key="usermodel.id", ondelete="CASCADE"
     )
     cv_mode: CVModeEnum
-    cv_path: Path
+    cv_path: str
     retries: int = 3
 
 
