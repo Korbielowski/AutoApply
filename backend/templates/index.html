@@ -5,7 +5,7 @@
 {% block styles %}
 {{ super() }}
 <style>
-    #scrape-container {
+    #scrape-container, #already-scraped-jobs {
         padding: 10px 10px;
         width: 100%;
         display: flex;
@@ -13,7 +13,7 @@
         gap: 10px;
     }
 
-    #job-entries-container li {
+    #job-entries-container, #already-scraped-jobs li {
         margin: 10px 0;
         padding: 10px;
         background-color: var(--surface);
@@ -32,10 +32,6 @@
 
     }
 
-    #already-scraped-jobs {
-
-    }
-
 </style>
 {% endblock styles %}
 
@@ -43,6 +39,9 @@
 
 <div id="user-info-container"></div>
 <div id="already-scraped-jobs">
+    {% if scraped_job_entries %}
+    <h2>Already Scraped Job Entries</h2>
+    {% endif %}
     <ul>
         {% for job_entry in scraped_job_entries %}
         <li>
@@ -61,20 +60,22 @@
                 <div class="job-data-container">
                     <h5>CV Path: </h5>
                     <p>
-                        {{ job_entry.cv_path }}
+                        <a href="{{ job_entry.cv_path }}" target="_blank">{{
+                            job_entry.cv_path }}</a>
+
                     </p>
                 </div>
                 <div class="job-data-container">
                     <h5>Job Url: </h5>
                     <p>
-                        <a href="${data.job_url}" target="_blank">{{
+                        <a href="{{ job_entry.job_url }}" target="_blank">{{
                             job_entry.job_url }}</a>
                     </p>
                 </div>
                 <div class="job-data-container">
                     <h5>Company Url: </h5>
                     <p>
-                        <a href="${data.company_url}" target="_blank">{{
+                        <a href="{{ job_entry.company_url }}" target="_blank">{{
                             job_entry.company_url }}</a>
                     </p>
                 </div>
