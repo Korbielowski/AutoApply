@@ -1,6 +1,4 @@
-import os
-from pathlib import Path
-from typing import Any, AsyncGenerator
+from typing import Any, AsyncGenerator, Literal
 
 from playwright.async_api import async_playwright
 from playwright_stealth import Stealth
@@ -19,9 +17,10 @@ async def find_job_entries(
     user: UserModel,
     session: Session,
     websites,
+    cv_creation_mode: Literal[
+        "llm-generation", "llm-selection", "no-llm-generation", "user-specified"
+    ] = "llm-selection",
     auto_apply: bool = False,
-    generate_cv: bool = False,
-    use_user_cv: bool = False,
 ) -> AsyncGenerator[str, Any]:
     if not websites:
         yield "data:null\n\n"
@@ -51,35 +50,18 @@ async def find_job_entries(
                 for job in await scraper.get_job_entries():
                     job_data = await scraper.process_and_evaluate_job(job)
                     if job_data:
+                        cv_path = await create_cv(
+                            user=user,
+                            session=session,
+                            job_entry=job_data,
+                            mode=cv_creation_mode,
+                        )
+                        job_data.cv_path = cv_path
                         save_job_entry(
                             session=session, user=user, job_entry=job_data
                         )
-                        if not use_user_cv:
-                            cv = await create_cv(
-                                user=user,
-                                session=session,
-                                job_entry=job_data,
-                                mode="llm-selection",
-                            )
-                        else:
-                            path = os.getenv("USER_CV", "")
-                            if not path:
-                                logger.error(
-                                    "USER_CV variable with path to user's cv is not set"
-                                )
-                                yield f"data:{job_data}\n\n"
-                            cv = Path(path)
-                        logger.info(cv)
-                    # TODO: Create CV in here and then apply ;)
-                    if job_data:
-                        logger.error("Sending data to client")
                         yield f"data:{job_data.model_dump_json()}\n\n"
-                    else:
-                        logger.error("Sending just nothing to client")
-                        yield "data:null\n\n"
                 running = await scraper.navigate_to_next_page()
-                logger.info(f"Running: {running}")
-                running = False
 
 
 __all__ = ["find_job_entries"]
