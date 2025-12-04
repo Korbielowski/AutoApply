@@ -23,10 +23,6 @@ from backend.logger import get_logger
 from backend.scrapers.base_scraper import JobEntry
 
 logger = get_logger()
-PDF_ENGINE = "weasyprint"
-CV_DIR_PATH = settings.ROOT_DIR / "cv"
-HTML_TEMPLATE_PATH = settings.ROOT_DIR / "career_documents" / "template.html"
-STYLING_PATH = settings.ROOT_DIR / "career_documents" / "styling.css"
 
 
 class CVOutput(BaseModel):
@@ -37,8 +33,8 @@ class CVOutput(BaseModel):
 async def load_template_and_styling() -> tuple[str, str]:
     html_template, styling = "", ""
     async with (
-        aiofiles.open(HTML_TEMPLATE_PATH, "r") as template_file,
-        aiofiles.open(STYLING_PATH, "r") as styling_file,
+        aiofiles.open(settings.HTML_TEMPLATE_PATH, "r") as template_file,
+        aiofiles.open(settings.STYLING_PATH, "r") as styling_file,
     ):
         html_template, styling = (
             await template_file.read(),
@@ -128,12 +124,12 @@ async def create_cv(
 
     current_time = datetime.datetime.today().strftime("%Y-%m-%d_%H:%M:%S")
     cv_path = (
-        CV_DIR_PATH
+        settings.CV_DIR_PATH
         / f"{job_entry.title}_{current_time}.pdf"  # TODO: change job_entry.title
     )
 
-    if not os.path.isdir(CV_DIR_PATH):
-        os.mkdir(CV_DIR_PATH)
+    if not os.path.isdir(settings.CV_DIR_PATH):
+        os.mkdir(settings.CV_DIR_PATH)
 
     HTML(string=cv.html).write_pdf(cv_path, stylesheets=[CSS(string=cv.css)])
 
