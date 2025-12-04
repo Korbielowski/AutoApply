@@ -60,14 +60,8 @@ class BaseScraper(abc.ABC):
     async def process_and_evaluate_job(
         self, locator: Locator
     ) -> JobEntry | None:
-        url_2 = await locator.get_attribute("href")
-        url = await locator.get_attribute(
-            "href"
-        )  # FIXME: This does not return url as this locator is more general and is a parent for other elements, also for a tag with url to job offer
-        logger.info(
-            f"Url with get_by_role: {url_2}\nUrl with get_attribute: {url}"
-        )
-        job_entry = await self._get_job_information(url_2)
+        url = await locator.get_attribute("href")
+        job_entry = await self._get_job_information(url)
 
         if not job_entry:
             logger.error(f"job_entry: {job_entry}")
