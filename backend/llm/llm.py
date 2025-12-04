@@ -22,21 +22,20 @@ async def send_req_to_llm(
     system_prompt: str = "",
     temperature: float = 1,
     use_openai: bool = True,
-    use_json_schema: bool = False,
     model: type[BaseModel] | None = None,
     retry: int = 3,
 ) -> str | BaseModel:
     response = ""
     if settings.DEBUG:
         logger.debug(
-            f"Prompt token count: {len(TIK.encode(system_prompt + prompt))}, temperature: {temperature}, use_openai: {use_openai}, use_json_schema: {use_json_schema}, model: {model}, retry: {retry}"
+            f"Prompt token count: {len(TIK.encode(system_prompt + prompt))}, temperature: {temperature}, use_openai: {use_openai}, model: {model}, retry: {retry}"
         )
 
     if use_openai:
         client = OpenAI(api_key=settings.OPENAI_API_KEY)
         while not response and retry > 0:
             try:
-                if use_json_schema and model:
+                if model:
                     response = client.responses.parse(
                         model=OPENAI_MODEL,
                         input=[
