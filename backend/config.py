@@ -17,8 +17,6 @@ class Settings(BaseSettings):
     ROOT_DIR: Path = _ROOT_DIR
     DEBUG: bool = False
     LOG_TO_FILE: bool = True
-    USER_EMAIL: str
-    PASSWORD: str
     API_KEY: str
     OPENAI_API_KEY: str
     POSTGRES_USERNAME: str
