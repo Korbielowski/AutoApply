@@ -19,7 +19,7 @@ async def find_job_entries(
     websites,
     cv_creation_mode: Literal[
         "llm-generation", "llm-selection", "no-llm-generation", "user-specified"
-    ] = "llm-selection",
+    ] = "llm-generation",
     auto_apply: bool = False,
 ) -> AsyncGenerator[str, Any]:
     if not websites:
@@ -56,11 +56,11 @@ async def find_job_entries(
                             job_entry=job_data,
                             mode=cv_creation_mode,
                         )
-                        job_data.cv_path = cv_path
-                        save_job_entry(
+                        job_data.cv_path = cv_path.as_uri()
+                        job_entry_model = save_job_entry(
                             session=session, user=user, job_entry=job_data
                         )
-                        yield f"data:{job_data.model_dump_json()}\n\n"
+                        yield f"data:{job_entry_model.model_dump_json()}\n\n"
                 running = await scraper.navigate_to_next_page()
 
 
