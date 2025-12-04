@@ -44,63 +44,72 @@
 <div id="user-info-container"></div>
 <div id="already-scraped-jobs">
     <ul>
-        {% for job_entry in job_entries %}
+        {% for job_entry in scraped_job_entries %}
         <li>
             <div>
                 <h5>Job Title: </h5>
-                <p class="job-data">${job_entry.title}</p>
+                <p class="job-data">{{ job_entry.title }}</p>
                 <br>
                 <h5>Location: </h5>
-                <p class="job-data">${job_entry.location}</p>
+                <p class="job-data">{{ job_entry.location }}</p>
                 <br>
                 <h5>Company Name: </h5>
-                <p class="job-data">${job_entry.company_name}</p>
+                <p class="job-data">{{ job_entry.company_name }}</p>
             </div>
             <details>
                 <summary>Job details</summary>
                 <div class="job-data-container">
+                    <h5>CV Path: </h5>
+                    <p>
+                        {{ job_entry.cv_path }}
+                    </p>
+                </div>
+                <div class="job-data-container">
                     <h5>Job Url: </h5>
                     <p>
-                        <a href="${data.job_url}" target="_blank">${job_entry.job_url}</a>
+                        <a href="${data.job_url}" target="_blank">{{
+                            job_entry.job_url }}</a>
                     </p>
                 </div>
                 <div class="job-data-container">
                     <h5>Company Url: </h5>
                     <p>
-                        <a href="${data.company_url}" target="_blank">${job_entry.company_url}</a>
+                        <a href="${data.company_url}" target="_blank">{{
+                            job_entry.company_url }}</a>
                     </p>
                 </div>
                 <div class="job-data-container">
                     <h5>Contract Type: </h5>
-                    <p class="job-data">${job_entry.contract_type}</p>
+                    <p class="job-data">{{ job_entry.contract_type }}</p>
                 </div>
                 <div class="job-data-container">
                     <h5>Employment Type: </h5>
-                    <p class="job-data">${job_entry.employment_type}</p>
+                    <p class="job-data">{{ job_entry.employment_type }}</p>
                 </div>
                 <div class="job-data-container">
                     <h5>Work Arrangement: </h5>
-                    <p class="job-data">${job_entry.work_arrangement}</p>
+                    <p class="job-data">{{ job_entry.work_arrangement }}</p>
                 </div>
                 <div class="job-data-container">
                     <h5>Job Requirements: </h5>
-                    <p class="job-data">${job_entry.requirements}</p>
+                    <p class="job-data">{{ job_entry.requirements }}</p>
                 </div>
                 <div class="job-data-container">
                     <h5>Duties: </h5>
-                    <p class="job-data">${job_entry.duties}</p>
+                    <p class="job-data">{{ job_entry.duties }}</p>
                 </div>
                 <div class="job-data-container">
                     <h5>About Project: </h5>
-                    <p class="job-data">${job_entry.about_project}</p>
+                    <p class="job-data">{{ job_entry.about_project }}</p>
                 </div>
                 <div class="job-data-container">
                     <h5>Company Benefits: </h5>
-                    <p class="job-data">${job_entry.offer_benefits}</p>
+                    <p class="job-data">{{ job_entry.offer_benefits }}</p>
                 </div>
                 <div class="job-data-container">
                     <h5>Additional Information: </h5>
-                    <p class="job-data">${job_entry.additional_information}</p>
+                    <p class="job-data">{{ job_entry.additional_information
+                        }}</p>
                 </div>
             </details>
         </li>
