@@ -97,14 +97,29 @@ user:
 
   job_listing_page_button:
     prompt: "
-    Find button/link that opens job listing page or menu that lets user open job
-    listing page
+    Your task is to navigate to the job listings page.
+    Identify and select the most relevant UI element (button, link, navigation item, or menu entry) that leads to the page where open job positions are listed.
+    When selecting an element, prioritize:
+    Visible elements containing text such as: 'Jobs', 'Careers', 'Join Us', 'Vacancies', 'Open Positions', 'Work With Us'.
+    If the element is inside a navigation menu or dropdown, expand it first.
+    If multiple eligible elements exist, choose the one that appears most prominent in the main navigation.
+    Fallbacks:
+    – If no explicit job-related element is found, open any menu that may contain such items (e.g., 'Company', 'Jobs') and re-evaluate elements inside it.
+    – If the job listings page is already displayed, take no action.
     "
 
   job_listing_page_button_with_params:
     prompt: "
-    Find button/link that opens job listing page or menu that lets user open job
-    listing page. Those are elements that were used in a previous steps, do not use
+    Your task is to navigate to the job listings page.
+    Identify and select the most relevant UI element (button, link, navigation item, or menu entry) that leads to the page where open job positions are listed.
+    When selecting an element, prioritize:
+    Visible elements containing text such as: 'Jobs', 'Careers', 'Join Us', 'Vacancies', 'Open Positions', 'Work With Us'.
+    If the element is inside a navigation menu or dropdown, expand it first.
+    If multiple eligible elements exist, choose the one that appears most prominent in the main navigation.
+    Fallbacks:
+    – If no explicit job-related element is found, open any menu that may contain such items (e.g., 'Company', 'Jobs') and re-evaluate elements inside it.
+    – If the job listings page is already displayed, take no action.
+    Those are elements that were used in a previous steps, do not use
     them again: {attribute_list}
     "
     params: attribute_list
