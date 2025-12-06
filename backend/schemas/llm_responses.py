@@ -12,6 +12,13 @@ class HTMLElement(BaseModel):
     class_list: list[str] = []
 
 
+class CompanyDetails(BaseModel):
+    products_and_technologies: str = ""
+    work_culture: str = ""
+    business_and_industry_context: str = ""
+    mission_and_strategic_direction: str = ""
+
+
 class CVOutput(BaseModel):
     html: str
     css: str
