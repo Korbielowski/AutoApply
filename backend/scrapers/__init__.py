@@ -1,11 +1,13 @@
+import datetime
 from typing import Any, AsyncGenerator, Literal
 
 from playwright.async_api import async_playwright
 from playwright_stealth import Stealth
 from sqlmodel import Session
 
-from backend.career_documents.pdf import create_cv
-from backend.database.crud import save_job_entry
+from backend.career_documents.pdf import (
+    generate_career_documents,
+)
 from backend.database.models import UserModel
 from backend.logger import get_logger
 from backend.scrapers.llm_scraper import LLMScraper
@@ -50,15 +52,14 @@ async def find_job_entries(
                 for job in await scraper.get_job_entries():
                     job_data = await scraper.process_and_evaluate_job(job)
                     if job_data:
-                        cv_path = await create_cv(
+                        job_entry_model = await generate_career_documents(
                             user=user,
                             session=session,
                             job_entry=job_data,
+                            current_time=datetime.datetime.today().strftime(
+                                "%Y-%m-%d_%H:%M:%S"
+                            ),
                             mode=cv_creation_mode,
-                        )
-                        job_data.cv_path = cv_path.as_uri()
-                        job_entry_model = save_job_entry(
-                            session=session, user=user, job_entry=job_data
                         )
                         yield f"data:{job_entry_model.model_dump_json()}\n\n"
                 running = await scraper.navigate_to_next_page()
