@@ -4,7 +4,6 @@ from pathlib import Path
 from typing import Literal
 
 import aiofiles
-from pydantic import BaseModel
 from sqlmodel import Session
 from weasyprint import CSS, HTML
 
@@ -20,14 +19,10 @@ from backend.database.models import (
 from backend.llm.llm import send_req_to_llm
 from backend.llm.prompts import load_prompt
 from backend.logger import get_logger
+from backend.schemas.llm_responses import CVOutput
 from backend.scrapers.base_scraper import JobEntry
 
 logger = get_logger()
-
-
-class CVOutput(BaseModel):
-    html: str
-    css: str
 
 
 async def load_template_and_styling() -> tuple[str, str]:
