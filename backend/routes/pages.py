@@ -1,7 +1,11 @@
 from typing import Union
 
 from fastapi import APIRouter, Request, status
-from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
+from fastapi.responses import (
+    HTMLResponse,
+    RedirectResponse,
+    StreamingResponse,
+)
 from fastapi.templating import Jinja2Templates
 from sqlmodel import func, select
 
@@ -55,6 +59,13 @@ async def scrape_jobs(current_user: CurrentUser, session: SessionDep):
         ),
         media_type="text/event-stream",
     )
+
+
+# TODO: In the future
+# @router.post("/download_cv", response_class=FileResponse)
+# async def download_cv(request: Request, path: str):
+#     return FileResponse(path=path)
+#
 
 
 @router.get("/cv_page", response_class=HTMLResponse)
