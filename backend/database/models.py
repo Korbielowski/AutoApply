@@ -25,6 +25,7 @@ class JobEntryModel(SQLModel, table=True):
         default=None, foreign_key="usermodel.id", ondelete="CASCADE"
     )
     cv_path: str = ""
+    cover_letter_path: str = ""
     title: str
     company_name: str
     discovery_date: datetime.date = Field(default_factory=datetime.date.today)
@@ -45,6 +46,7 @@ class JobEntryModel(SQLModel, table=True):
 
 class JobEntry(BaseModel):
     cv_path: str = ""
+    cover_letter_path: str = ""
     title: str
     company_name: str
     discovery_date: datetime.date
