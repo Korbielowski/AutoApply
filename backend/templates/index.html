@@ -60,9 +60,7 @@
                 <div class="job-data-container">
                     <h5>CV Path: </h5>
                     <p>
-                        <a href="{{ job_entry.cv_path }}" target="_blank">{{
-                            job_entry.cv_path }}</a>
-
+                        {{job_entry.cv_path }}
                     </p>
                 </div>
                 <div class="job-data-container">
@@ -128,6 +126,19 @@
 <script>
     let eventSrc = null;
 
+    // TODO: In the future
+    // async function download_cv(path) {
+    //     const response = await fetch("{ url_('download_cv') }}", {
+    //         method: "POST",
+    //         headers: {
+    //             Accept: "application/json",
+    //             "Content-Type": "application/json",
+    //         },
+    //         body: JSON.stringify(path),
+    //     });
+    // }
+    // <a onclick="download_cv(${data.cv_path})">${data.cv_path}</a>
+
     function draw_job(data) {
         let jobContainer = document.getElementById("job-entries-container");
         let li = document.createElement("li");
@@ -144,6 +155,10 @@
                 <p class="job-data">${data.company_name}</p>
             </div>
             <details>
+                <div class="job-data-container">
+                    <h5>CV Path: </h5>
+                    <p>${data.cv_path}</p>
+                </div>
                 <summary>Job details</summary>
                 <div class="job-data-container">
                     <h5>Job Url: </h5>
