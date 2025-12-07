@@ -14,6 +14,7 @@ from backend.database.crud import get_job_entries
 from backend.database.models import UserModel, WebsiteModel
 from backend.logger import get_logger
 from backend.routes.deps import CurrentUser, SessionDep
+from backend.schemas.endpoints import UserPreferences
 from backend.scrapers import find_job_entries
 
 router = APIRouter(tags=["pages"])
@@ -49,13 +50,22 @@ async def index(
 
 
 @router.get("/scrape_jobs", response_class=StreamingResponse)
-async def scrape_jobs(current_user: CurrentUser, session: SessionDep):
+async def scrape_jobs(
+    current_user: CurrentUser,
+    session: SessionDep,
+    user_preferences: UserPreferences,
+):
     websites = session.exec(
         select(WebsiteModel).where(WebsiteModel.user_id == current_user.id)
     ).all()
     return StreamingResponse(
         content=find_job_entries(
-            user=current_user, session=session, websites=websites
+            user=current_user,
+            session=session,
+            websites=websites,
+            cv_creation_mode=user_preferences.cv_creation_mode,
+            generate_cover_letter=user_preferences.generate_cover_letter,
+            retries=user_preferences.retries,
         ),
         media_type="text/event-stream",
     )
