@@ -58,7 +58,12 @@ logger = get_logger()
 
 @router.get("/login", response_class=HTMLResponse)
 async def load_login_page(session: SessionDep, request: Request):
-    users = session.exec(select(UserModel))
+    users = session.exec(select(UserModel)).all()
+    if not users:
+        return RedirectResponse(
+            url=request.url_for("load_register_page"),
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
     return templates.TemplateResponse(
         request=request, name="login.html", context={"users": users}
     )
