@@ -1,6 +1,5 @@
 import os
 from pathlib import Path
-from typing import Literal
 
 import aiofiles
 import devtools
@@ -14,6 +13,7 @@ from backend.database.crud import (
     save_job_entry,
 )
 from backend.database.models import (
+    CVModeEnum,
     JobEntryModel,
     SkillsLLMResponse,
     UserModel,
@@ -21,7 +21,11 @@ from backend.database.models import (
 from backend.llm.llm import send_req_to_llm
 from backend.llm.prompts import load_prompt
 from backend.logger import get_logger
-from backend.schemas.llm_responses import CompanyDetails, CVOutput
+from backend.schemas.llm_responses import (
+    CompanyDetails,
+    CoverLetterOutput,
+    CVOutput,
+)
 from backend.scrapers.base_scraper import JobEntry
 
 logger = get_logger()
@@ -42,7 +46,11 @@ async def load_template_and_styling() -> tuple[str, str]:
 
 
 async def create_cover_letter(
-    user: UserModel, session: Session, job_entry: JobEntry, current_time: str
+    user: UserModel,
+    session: Session,
+    job_entry: JobEntry,
+    current_time: str,
+    path: Path,
 ) -> str:
     if not job_entry.company_name:
         return ""
@@ -52,20 +60,26 @@ async def create_cover_letter(
 
     company_details = await send_req_to_llm(
         prompt=await load_prompt(
-            prompt_path="cover_letter:user:company_data_search",
+            prompt_path="career_documents:user:company_data_search",
             company_name=job_entry.company_name,
         ),
         model=CompanyDetails,
     )
-
     logger.debug(f"Company info: {devtools.pformat(company_details)}")
 
-    cover_letter_path = (
-        settings.CV_DIR_PATH
-        / f"{job_entry.title}_{current_time}.pdf"  # TODO: change job_entry.title
+    cover_letter = await send_req_to_llm(
+        prompt=await load_prompt(
+            prompt_path="career_documents:user:cover_letter_generation",
+            model=company_details,
+        ),
+        model=CoverLetterOutput,
     )
 
-    return cover_letter_path
+    cover_letter_path = path / f"{job_entry.title}_{current_time}.pdf"
+
+    HTML(string=cover_letter.html).write_pdf(cover_letter_path)
+
+    return cover_letter_path.as_uri()
 
 
 async def create_cv(
@@ -73,21 +87,20 @@ async def create_cv(
     session: Session,
     job_entry: JobEntry,
     current_time: str,
-    mode: Literal[
-        "llm-generation", "llm-selection", "no-llm-generation", "user-specified"
-    ] = "llm-selection",
+    path: Path,
+    cv_creation_mode: CVModeEnum,
 ) -> str:
     candidate_data = get_candidate_data(session=session, user=user)
     html_template, styling = await load_template_and_styling()
     cv = None
 
-    if mode == "llm-generation":
+    if cv_creation_mode == "llm-generation":
         skills_chosen_by_llm = await send_req_to_llm(
             system_prompt=await load_prompt(
-                prompt_path="cv:system:skill_selection"
+                prompt_path="career_documents:system:skill_selection"
             ),
             prompt=await load_prompt(
-                prompt_path="cv:user:skill_selection",
+                prompt_path="career_documents:user:skill_selection",
                 model=candidate_data,
                 requirements=job_entry.requirements,
                 duties=job_entry.duties,
@@ -97,10 +110,10 @@ async def create_cv(
         )
         cv = await send_req_to_llm(
             system_prompt=await load_prompt(
-                prompt_path="cv:system:cv_generation"
+                prompt_path="career_documents:system:cv_generation"
             ),
             prompt=await load_prompt(
-                prompt_path="cv:user:cv_generation",
+                prompt_path="career_documents:user:cv_generation",
                 model=skills_chosen_by_llm,
                 full_name=candidate_data.full_name,
                 email=candidate_data.email,
@@ -109,13 +122,13 @@ async def create_cv(
             ),
             model=CVOutput,
         )
-    elif mode == "llm-selection":
+    elif cv_creation_mode == "llm-selection":
         skills_chosen_by_llm = await send_req_to_llm(
             system_prompt=await load_prompt(
-                prompt_path="cv:system:skill_selection"
+                prompt_path="career_documents:system:skill_selection"
             ),
             prompt=await load_prompt(
-                prompt_path="cv:user:skill_selection",
+                prompt_path="career_documents:user:skill_selection",
                 model=candidate_data,
                 requirements=job_entry.requirements,
                 duties=job_entry.duties,
@@ -125,7 +138,7 @@ async def create_cv(
         )
         cv = await send_req_to_llm(
             prompt=await load_prompt(
-                "cv:user:cv_insert_skills",
+                "career_documents:user:cv_insert_skills",
                 model=skills_chosen_by_llm,
                 full_name=candidate_data.full_name,
                 email=candidate_data.email,
@@ -135,7 +148,7 @@ async def create_cv(
             ),
             model=CVOutput,
         )
-    elif mode == "no-llm-generation":
+    elif cv_creation_mode == "no-llm-generation":
         raise NotImplementedError(
             "no-llm-generation option is not fully implemented yet"
         )
@@ -148,22 +161,16 @@ async def create_cv(
         #     personal_website=,
         # )
         # cv = CVOutput(html=html, css=styling)
-    elif mode == "user-specified":
+    elif cv_creation_mode == "user-specified":
         if user_preferences := get_user_preferences(session, user):
             return Path(user_preferences.cv_path).as_uri()
         raise Exception("Could not load or create/generate CV")
 
-    cv_path = (
-        settings.CV_DIR_PATH
-        / f"{job_entry.title}_{current_time}.pdf"  # TODO: change job_entry.title
-    ).as_uri()
-
-    if not os.path.isdir(settings.CV_DIR_PATH):
-        os.mkdir(settings.CV_DIR_PATH)
+    cv_path = path / f"{job_entry.title}_{current_time}.pdf"
 
     HTML(string=cv.html).write_pdf(cv_path, stylesheets=[CSS(string=cv.css)])
 
-    return cv_path
+    return cv_path.as_uri()
 
 
 async def generate_career_documents(
@@ -171,23 +178,31 @@ async def generate_career_documents(
     session: Session,
     job_entry: JobEntry,
     current_time: str,
-    mode: Literal[
-        "llm-generation", "llm-selection", "no-llm-generation", "user-specified"
-    ] = "llm-selection",
+    cv_creation_mode: CVModeEnum,
+    generate_cover_letter: bool,
 ) -> JobEntryModel:
+    if not os.path.isdir(settings.CV_DIR_PATH):
+        os.mkdir(settings.CV_DIR_PATH)
+
+    documents_path = settings.CV_DIR_PATH / f"{job_entry.title}_{current_time}"
+    os.mkdir(documents_path)
+
     job_entry.cv_path = await create_cv(
         user=user,
         session=session,
         job_entry=job_entry,
         current_time=current_time,
-        mode=mode,
+        path=documents_path,
+        cv_creation_mode=cv_creation_mode,
     )
-    job_entry.cover_letter_path = await create_cover_letter(
-        user=user,
-        session=session,
-        job_entry=job_entry,
-        current_time=current_time,
-    )
+    if generate_cover_letter:
+        job_entry.cover_letter_path = await create_cover_letter(
+            user=user,
+            session=session,
+            job_entry=job_entry,
+            current_time=current_time,
+            path=documents_path,
+        )
     job_entry_model = save_job_entry(
         session=session, user=user, job_entry=job_entry
     )
