@@ -19,6 +19,7 @@ class BaseScraper(abc.ABC):
         context: BrowserContext,
         page: Page,
         website_info: WebsiteModel | None,
+        retries: int,
     ) -> None:
         self.url = url
         self.email = (
@@ -28,6 +29,7 @@ class BaseScraper(abc.ABC):
         self.context = context
         self.page = page
         self.website_info = website_info if website_info else WebsiteModel()
+        self.retries = retries
 
     @abc.abstractmethod
     async def login_to_page(self) -> None:
@@ -62,6 +64,8 @@ class BaseScraper(abc.ABC):
     ) -> JobEntry | None:
         url = await locator.get_attribute("href")
         job_entry = await self._get_job_information(url)
+
+        return job_entry
 
         if not job_entry:
             logger.error(f"job_entry: {job_entry}")
