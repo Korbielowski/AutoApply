@@ -1,6 +1,8 @@
-from typing import Union
+import os.path
+from typing import Annotated, Union
 
-from fastapi import APIRouter, Request, status
+import aiofiles
+from fastapi import APIRouter, File, Request, UploadFile, status
 from fastapi.responses import (
     HTMLResponse,
     RedirectResponse,
@@ -11,10 +13,13 @@ from sqlmodel import func, select
 
 from backend.config import settings
 from backend.database.crud import get_job_entries
-from backend.database.models import UserModel, WebsiteModel
+from backend.database.models import (
+    UserModel,
+    UserPreferencesModel,
+    WebsiteModel,
+)
 from backend.logger import get_logger
 from backend.routes.deps import CurrentUser, SessionDep
-from backend.schemas.endpoints import UserPreferences
 from backend.scrapers import find_job_entries
 
 router = APIRouter(tags=["pages"])
@@ -49,15 +54,32 @@ async def index(
     )
 
 
-@router.get("/scrape_jobs", response_class=StreamingResponse)
-async def scrape_jobs(
-    current_user: CurrentUser,
-    session: SessionDep,
-    user_preferences: UserPreferences,
+@router.post("/save_preferences/")
+async def save_preferences(
+    # cv_creation_mode: Annotated[CVModeEnum, Form()],
+    # generate_cover_letter: Annotated[bool, Form()],
+    # retries: Annotated[int, Form()],
+    cv_file: Annotated[UploadFile, File],
 ):
+    file = cv_file
+    logger.info(cv_file.filename)
+    if file:
+        path = settings.CV_DIR_PATH / "user_specified_cv"
+        if not os.path.isdir(path):
+            os.mkdir(path)
+            file_path = path / file.filename
+            if not os.path.isfile(file_path):
+                async with aiofiles.open(file_path, "wb") as save_file:
+                    await save_file.write(await file.read())
+    return
+
+
+@router.get("/scrape_jobs", response_class=StreamingResponse)
+async def scrape_jobs(current_user: CurrentUser, session: SessionDep):
     websites = session.exec(
         select(WebsiteModel).where(WebsiteModel.user_id == current_user.id)
     ).all()
+    user_preferences = UserPreferencesModel  # TODO: Add logic here:
     return StreamingResponse(
         content=find_job_entries(
             user=current_user,
