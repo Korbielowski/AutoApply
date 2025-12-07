@@ -159,3 +159,18 @@ user:
       - projects
       - social_platforms
       - template
+
+  company_data_search:
+    prompt: "
+    Find most important information about company, using your search tool: {company_name}
+    "
+    params:
+      - company_name
+
+  cover_letter_generation:
+    prompt: "
+    Generate concise and professional cover letter.
+    Information about candidate:
+    - {}
+
+    "
