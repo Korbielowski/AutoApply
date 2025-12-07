@@ -20,5 +20,9 @@ class CompanyDetails(BaseModel):
 
 
 class CVOutput(BaseModel):
-    html: str
-    css: str
+    html: str = ""
+    css: str = ""
+
+
+class CoverLetterOutput(BaseModel):
+    html: str = ""
