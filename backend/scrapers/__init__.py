@@ -57,7 +57,7 @@ async def find_job_entries(
                             user=user,
                             session=session,
                             job_entry=job_data,
-                            current_time=datetime.datetime.today.strftime(
+                            current_time=datetime.datetime.today().strftime(
                                 "%Y-%m-%d_%H:%M:%S"
                             ),
                             cv_creation_mode=cv_creation_mode,
