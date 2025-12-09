@@ -49,33 +49,6 @@ def get_user_preferences(
     ).first()
 
 
-def get_skills(session: Session, user: UserModel) -> dict:
-    skills_dict = {
-        "programming_languages": session.exec(
-            select(ProgrammingLanguageModel).where(
-                ProgrammingLanguageModel.user_id == user.id
-            )
-        ).all(),
-        "languages": session.exec(
-            select(LanguageModel).where(LanguageModel.user_id == user.id)
-        ).all(),
-        "tools": session.exec(
-            select(ToolModel).where(ToolModel.user_id == user.id)
-        ).all(),
-        "certificates": session.exec(
-            select(CertificateModel).where(CertificateModel.user_id == user.id)
-        ).all(),
-    }
-    for key, val in skills_dict.items():
-        for index, model in enumerate(val):
-            model = model.model_dump()
-            model.pop("id", None)
-            model.pop("user_id", None)
-            val[index] = model
-
-    return skills_dict
-
-
 def get_model(
     session: Session,
     user: UserModel,
@@ -181,3 +154,31 @@ def save_job_entry(
     session.commit()
     session.refresh(job_entry_model)
     return job_entry_model
+
+
+def save_model(
+    session: Session,
+    user: UserModel,
+    model: SQLModel,
+    validator: type[SQLModel] | None = None,
+) -> None:
+    if validator:
+        model = validator.model_validate(model.model_dump())
+    model.user_id = user.id
+    session.add(model)
+    session.commit()
+
+
+def save_and_return_model(
+    session: Session,
+    user: UserModel,
+    model: SQLModel,
+    validator: type[SQLModel] | None = None,
+) -> SQLModel:
+    if validator:
+        model = validator.model_validate(model.model_dump())
+    model.user_id = user.id
+    session.add(model)
+    session.commit()
+    session.refresh(model)
+    return model
