@@ -2,7 +2,7 @@ import os.path
 from typing import Annotated, Union
 
 import aiofiles
-from fastapi import APIRouter, File, Request, UploadFile, status
+from fastapi import APIRouter, File, Form, Request, UploadFile, status
 from fastapi.responses import (
     HTMLResponse,
     RedirectResponse,
@@ -12,8 +12,9 @@ from fastapi.templating import Jinja2Templates
 from sqlmodel import func, select
 
 from backend.config import settings
-from backend.database.crud import get_job_entries
+from backend.database.crud import get_job_entries, save_model
 from backend.database.models import (
+    CVModeEnum,
     UserModel,
     UserPreferencesModel,
     WebsiteModel,
@@ -28,10 +29,8 @@ logger = get_logger()
 
 
 @router.get("/", response_class=Union[RedirectResponse, HTMLResponse])
-async def index(
-    current_user: CurrentUser, session: SessionDep, request: Request
-):
-    if not current_user:
+async def index(user: CurrentUser, session: SessionDep, request: Request):
+    if not user:
         if session.scalar(func.count(UserModel.id)) >= 1:
             return RedirectResponse(
                 url=request.url_for("load_login_page"),
@@ -42,47 +41,56 @@ async def index(
             status_code=status.HTTP_303_SEE_OTHER,
         )
 
-    scraped_job_entries = get_job_entries(session, current_user)
+    scraped_job_entries = get_job_entries(session, user)
 
     return templates.TemplateResponse(
         request=request,
         name="index.html",
         context={
-            "user": current_user,
+            "user": user,
             "scraped_job_entries": scraped_job_entries,
         },
     )
 
 
-@router.post("/save_preferences/")
+@router.post("/save_preferences")
 async def save_preferences(
-    # cv_creation_mode: Annotated[CVModeEnum, Form()],
-    # generate_cover_letter: Annotated[bool, Form()],
-    # retries: Annotated[int, Form()],
-    cv_file: Annotated[UploadFile, File],
+    user: CurrentUser,
+    session: SessionDep,
+    cv_creation_mode: Annotated[CVModeEnum, Form()],
+    generate_cover_letter: Annotated[bool, Form()],
+    retries: Annotated[int, Form()],
+    cv_file: Annotated[UploadFile | None, File],
 ):
-    file = cv_file
-    logger.info(cv_file.filename)
-    if file:
+    file_path = ""
+    if cv_file:
+        logger.info(cv_file.filename)
         path = settings.CV_DIR_PATH / "user_specified_cv"
         if not os.path.isdir(path):
             os.mkdir(path)
-            file_path = path / file.filename
+            file_path = (path / cv_file.filename).as_uri()
             if not os.path.isfile(file_path):
                 async with aiofiles.open(file_path, "wb") as save_file:
-                    await save_file.write(await file.read())
-    return
+                    await save_file.write(await cv_file.read())
+
+    preferences_model = UserPreferencesModel(
+        cv_mode=cv_creation_mode,
+        generate_cover_letter=generate_cover_letter,
+        cv_path=file_path,
+        retries=retries,
+    )
+    save_model(session=session, user=user, model=preferences_model)
 
 
 @router.get("/scrape_jobs", response_class=StreamingResponse)
-async def scrape_jobs(current_user: CurrentUser, session: SessionDep):
+async def scrape_jobs(user: CurrentUser, session: SessionDep):
     websites = session.exec(
-        select(WebsiteModel).where(WebsiteModel.user_id == current_user.id)
+        select(WebsiteModel).where(WebsiteModel.user_id == user.id)
     ).all()
     user_preferences = UserPreferencesModel  # TODO: Add logic here:
     return StreamingResponse(
         content=find_job_entries(
-            user=current_user,
+            user=user,
             session=session,
             websites=websites,
             cv_creation_mode=user_preferences.cv_creation_mode,
