@@ -53,10 +53,15 @@ async def create_cover_letter(
     path: Path,
 ) -> str:
     if not job_entry.company_name:
+        logger.warning(
+            f"Company name does not exist, cannot create cover letter, {job_entry.company_name=}"
+        )
         return ""
 
     if job_entry.company_url:
-        pass
+        logger.debug(
+            f"Company url does not exist, and it will not be included in LLM request, {job_entry.company_url=}"
+        )
 
     company_details = await send_req_to_llm(
         prompt=await load_prompt(
